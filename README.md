@@ -9,3 +9,7 @@ hocon current configuration configuration library
 - default values from tag in structures
 
 ### Version: 0.1
+
+## Menu
+
+- [Reserved Tags](https://github.com/goreflect/go_structor/blob/master/tags/README.md)
