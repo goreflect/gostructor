@@ -1,4 +1,4 @@
-# Go_structor [![Actions Status](https://github.com/kubitre/diplom/workflows/CI_dev/badge.svg)](https://github.com/kubitre/diplom/actions?query=workflow%3ACI_dev) 
+# Go_structor [![Actions Status](https://github.com/goreflect/go_structor/workflows/CI_dev/badge.svg)](https://github.com/goreflect/go_structor/actions?query=workflow%3ACI_dev) 
 
 hocon current configuration configuration library
 
