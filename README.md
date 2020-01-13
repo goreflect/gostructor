@@ -1,37 +1,11 @@
-## Welcome to GitHub Pages
+# Go_structor [![Actions Status](https://github.com/kubitre/diplom/workflows/CI_dev/badge.svg)](https://github.com/kubitre/diplom/actions?query=workflow%3ACI_dev) 
 
-You can use the [editor on GitHub](https://github.com/goreflect/go_structor/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+hocon current configuration configuration library
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## Current supporting input formats
 
-### Markdown
+- hocon
+- environment variables
+- default values from tag in structures
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/goreflect/go_structor/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+### Version: 0.1

@@ -1,0 +1,67 @@
+on: [push, pull_request]
+name: CI_dev
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13.x
+    - name: Checkout code
+      uses: actions/checkout@v1
+    - name: Install golangci-lint
+      run: |
+        go get github.com/golangci/golangci-lint/cmd/golangci-lint
+    - name: Run linters
+      run: |
+        export PATH=$PATH:$(go env GOPATH)/bin   
+        ls -la
+        golangci-lint run ./...
+  test:
+    strategy:
+      matrix:
+        go-version: [1.12.x, 1.13.x]
+        platform: [ubuntu-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+    - name: Install Go
+      if: success()
+      uses: actions/setup-go@v1
+      with:
+        go-version: ${{ matrix.go-version }}
+    - name: Checkout code
+      uses: actions/checkout@v1
+    - name: check current docker
+      run: docker version
+    - name: Run tests
+      run: go test ./... -v -covermode=count
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Go
+      if: success()
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13.x
+    - name: Checkout code
+      uses: actions/checkout@v1
+    - name: Calc coverage 
+      run: |
+        export PATH=$PATH:$(go env GOPATH)/bin   
+        go test ./... -race -coverprofile=coverage.out -covermode=atomic
+        cat coverage.out
+    - name: Convert coverage to lcov
+      uses: jandelgado/gcov2lcov-action@v1.0.0
+      with:
+          infile: coverage.out
+          outfile: coverage.lcov
+    - name: Coveralls
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }} #required
+        file: ./coverage.lcov #optional
+        fail_ci_if_error: true #optional (default = false)
+    - name: Go Report Card
+      uses: creekorful/goreportcard-action@v0.4
