@@ -2,12 +2,13 @@ package tags
 
 // Main specification tags in out configurator
 const (
-	TagHocon       = "hocon"
-	TagJson        = "json"
-	TagYaml        = "yaml"
-	TagYml         = "yml"
-	TagDefault     = "defaultValue"
-	TagEnvironment = "environment_name"
-	TagValidation  = "validation"
-	// TagConfigServer = "config_server"
+	prefixLibTag      = "cf_"
+	TagHocon          = prefixLibTag + "hocon"
+	TagJson           = prefixLibTag + "json"
+	TagYaml           = prefixLibTag + "yaml"
+	TagDefault        = prefixLibTag + "default"
+	TagEnvironment    = prefixLibTag + "env"
+	TagValidation     = prefixLibTag + "validate"
+	TagConfigServer   = prefixLibTag + "server"
+	TagHashiCorpVault = prefixLibTag + "vault"
 )
