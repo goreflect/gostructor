@@ -9,6 +9,5 @@ Current library reserved tags:
 3. cf_yaml
 4. cf_defaul
 5. cf_env
-6. cf_validate
-7. cf_server
-8. cf_vault
+6. cf_server
+7. cf_vault
