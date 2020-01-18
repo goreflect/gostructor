@@ -3,7 +3,6 @@ package pipeline
 import "fmt"
 
 type EnvironmentConfig struct {
-	next IConfigure
 }
 
 func (config EnvironmentConfig) Configure() error {

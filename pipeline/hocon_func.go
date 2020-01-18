@@ -3,7 +3,6 @@ package pipeline
 import "fmt"
 
 type HoconConfig struct {
-	Next IConfigure
 }
 
 func (config HoconConfig) Configure() error {

@@ -1,4 +1,4 @@
-module github.com/goreflect/go_structor
+module github.com/goreflect/gostructor
 
 go 1.13
 
