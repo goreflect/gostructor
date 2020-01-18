@@ -1,7 +1,7 @@
-package go_structor
+package gostructor
 
 import (
-	"github.com/goreflect/go_structor/pipeline"
+	"github.com/goreflect/gostructor/pipeline"
 )
 
 // ConfigureEasy - default pipeline setup for configure your structure
