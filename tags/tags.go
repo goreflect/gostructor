@@ -8,7 +8,6 @@ const (
 	TagYaml           = prefixLibTag + "yaml"
 	TagDefault        = prefixLibTag + "default"
 	TagEnvironment    = prefixLibTag + "env"
-	TagValidation     = prefixLibTag + "validate"
 	TagConfigServer   = prefixLibTag + "server"
 	TagHashiCorpVault = prefixLibTag + "vault"
 )
