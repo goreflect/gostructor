@@ -89,7 +89,12 @@ func Configure(
 	fileName string,
 	pipelineChaines []FuncType) (err error) {
 
-	defer reestablish()
+	defer func() {
+		if e := recover(); e != nil {
+			err = e.(error)
+		}
+	}()
+
 	pipeline := getFunctionChain(pipelineChaines)
 	currentChain := pipeline.chains
 
@@ -103,13 +108,6 @@ func Configure(
 		} else {
 			break
 		}
-	}
-	return nil
-}
-
-func reestablish() error {
-	if err := recover(); err != nil {
-		return err.(error)
 	}
 	return nil
 }
