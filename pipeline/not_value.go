@@ -1,6 +1,6 @@
 package pipeline
 
-// NotAValue - value for check setuping in fields
+// NotAValue - value for check setup in fields
 type NotAValue struct {
 	ValueAddress interface{}
 }
