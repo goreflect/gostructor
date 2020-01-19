@@ -1,4 +1,4 @@
-# Go_structor [![Actions Status](https://github.com/goreflect/gostructor/workflows/CI_dev/badge.svg)](https://github.com/goreflect/gostructor/actions?query=workflow%3ACI_dev) [![Go Report Card](https://goreportcard.com/badge/github.com/goreflect/gostructor)](https://goreportcard.com/report/github.com/goreflect/gostructor)
+# Gostructor [![Actions Status](https://github.com/goreflect/gostructor/workflows/CI_dev/badge.svg)](https://github.com/goreflect/gostructor/actions?query=workflow%3ACI_dev) [![Go Report Card](https://goreportcard.com/badge/github.com/goreflect/gostructor)](https://goreportcard.com/report/github.com/goreflect/gostructor)
 ____
 ### Version: 0.1
 
@@ -35,7 +35,7 @@ If you have validate your data you should write in source tag validate after com
 
 ## Running configuring by easy way
 
-For easy way you can chose go_structor.ConfigureEasy(). And if you have use one of file sources like: json, hocon, yaml, txt your files should ended by type (if your file not ended of type, this source will be ignored by function chainer)
+For easy way you can chose gostructor.ConfigureEasy(). And if you have use one of file sources like: json, hocon, yaml, txt your files should ended by type (if your file not ended of type, this source will be ignored by function chainer)
 
 ## Running configuring by setup way
 
@@ -57,7 +57,7 @@ type ExampleType struct {
     Field1      string `cfg_default:"tururutest"`
 }
 ...
-go_structor.ConfigureSetup(&ExampleType{}, "test.hocon", []pipeline.FuncType{
+gostructor.ConfigureSetup(&ExampleType{}, "test.hocon", []pipeline.FuncType{
     pipeline.FunctionSetupHocon,
     pipeline.FunctionSetupDefault,
 })

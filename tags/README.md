@@ -1,6 +1,6 @@
 # Tags
 
-[Back to main](https://github.com/goreflect/go_structor/blob/master)
+[Back to main](https://github.com/goreflect/gostructor/blob/master)
 
 Current library reserved tags:
 
