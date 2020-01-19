@@ -83,21 +83,18 @@ func getChainByIdentifier(
 
 // Configure - main configurer
 func Configure(
-	// Needed confgiure structure
+	// Needed configure structure
 	structure interface{},
 	// filename for file configuring
 	fileName string,
-	pipelineChanes []FuncType) (err error) {
-	pipeline := getFunctionChain(pipelineChanes)
+	pipelineChaines []FuncType) (err error) {
+
+	defer reestablish()
+	pipeline := getFunctionChain(pipelineChaines)
 	currentChain := pipeline.chains
+
 	for {
 		fmt.Println("Level: Debug. current stage function.")
-		defer func() {
-			if e := recover(); e != nil {
-				// return after panic error
-				err = e.(error)
-			}
-		}()
 		if err := currentChain.stageFunction.Configure(); err != nil {
 			fmt.Println("Level: Warning. can not chain function source setuping value. Error: ", err.Error())
 		}
@@ -106,6 +103,13 @@ func Configure(
 		} else {
 			break
 		}
+	}
+	return nil
+}
+
+func reestablish() error {
+	if err := recover(); err != nil {
+		return err.(error)
 	}
 	return nil
 }

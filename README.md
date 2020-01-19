@@ -1,4 +1,4 @@
-# Go_structor [![Actions Status](https://github.com/goreflect/go_structor/workflows/CI_dev/badge.svg)](https://github.com/goreflect/go_structor/actions?query=workflow%3ACI_dev) [![Go Report Card](https://goreportcard.com/badge/github.com/goreflect/go_structor)](https://goreportcard.com/report/github.com/goreflect/go_structor)
+# Go_structor [![Actions Status](https://github.com/goreflect/gostructor/workflows/CI_dev/badge.svg)](https://github.com/goreflect/gostructor/actions?query=workflow%3ACI_dev) [![Go Report Card](https://goreportcard.com/badge/github.com/goreflect/gostructor)](https://goreportcard.com/report/github.com/goreflect/gostructor)
 ____
 ### Version: 0.1
 
@@ -30,8 +30,8 @@ If you have validate your data you should write in source tag validate after com
 
 ## Menu
 
-- [Reserved Tags](https://github.com/goreflect/go_structor/blob/master/tags)
-- [Specifications](https://github.com/goreflect/go_structor/blob/master/specifications)
+- [Reserved Tags](https://github.com/goreflect/gostructor/blob/master/tags)
+- [Specifications](https://github.com/goreflect/gostructor/blob/master/specifications)
 
 ## Running configuring by easy way
 
