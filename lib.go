@@ -12,13 +12,14 @@ func ConfigureEasy(
 		pipeline.FunctionSetupEnvironment,
 		pipeline.FunctionSetupHocon,
 		pipeline.FunctionSetupDefault,
-	})
+	}, pipeline.EmptyAdditionalPrefix)
 }
 
 // ConfigureSetup - pipeline with your settings stages for your structure
 func ConfigureSetup(
 	structure interface{},
 	fileName string,
+	prefix string,
 	functions []pipeline.FuncType) error {
-	return pipeline.Configure(structure, fileName, functions)
+	return pipeline.Configure(structure, fileName, functions, prefix)
 }
