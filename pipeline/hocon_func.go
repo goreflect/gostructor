@@ -55,16 +55,30 @@ func (config *HoconConfig) getSliceFromHocon(context *structContext) (err error)
 	fmt.Println("level: debug. get path from hocon: ", path)
 	list := config.configureFileParsed.GetStringList(path)
 	valueList := reflect.ValueOf(list)
-	setupSlice := reflect.MakeSlice(context.Value.Elem().Type(), valueList.Len(), valueList.Cap())
+	valueIndirect := reflect.Indirect(context.Value)
+	setupSlice := reflect.MakeSlice(valueIndirect.Type(), valueList.Len(), valueList.Cap())
 	for i := 0; i < valueList.Len(); i++ {
-		insertedValue := valueList.Index(i).Convert(context.StructField.Type.Elem())
+		// fmt.Println("type convertable: ", valueIndirect.Index(0).Type())
+		fmt.Println("type source: ", valueList.Index(i).Type())
+		// elementSetupSlice := reflect.Indirect(setupSlice.Index(0))
+		fmt.Println("type of 1 element makeble slice: ", setupSlice.Index(0).Type())
+		insertedValue := valueList.Index(i).Type().ConvertibleTo(setupSlice.Index(0).Type())
+		fmt.Println("value can be convertable to: ", insertedValue)
+
+		if insertedValue {
+			convertableValue := valueList.Index(i).Convert(setupSlice.Index(0).Type())
+			reflect.Indirect(setupSlice.Index(i)).Set(convertableValue)
+		} else {
+			fmt.Println("can not convert your types. Converte from: ", valueList.Index(0).Type(), " to: ", setupSlice.Index(0).Type())
+		}
 		// result, err := context.conversion(valueList.Index(i), valueNotPointer.Elem().Type())
 		// if err != nil {
 		// fmt.Println("can not insert in your slice: ", path, " value. Error: ", err.Error())
 		// return errors.New(err.Error())
 		// }
-		setupSlice.Set(insertedValue)
+
 	}
+	fmt.Println("Setuped slice: ", setupSlice.Interface())
 	return nil
 }
 
