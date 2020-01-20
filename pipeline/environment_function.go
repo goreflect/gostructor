@@ -5,7 +5,7 @@ import "fmt"
 type EnvironmentConfig struct {
 }
 
-func (config EnvironmentConfig) Configure() error {
+func (config EnvironmentConfig) Configure(context *structContext) error {
 	fmt.Println("Level: Debug. environment values sources start")
 
 	return nil
