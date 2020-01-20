@@ -7,7 +7,7 @@ import (
 )
 
 type MyStruct struct {
-	Field1 []*string `cf_hocon:"field1"`
+	Field1 []string  `cf_hocon:"field1"`
 	Field2 []int32   `cf_hocon:"field2"`
 	Field3 []float32 `cf_hocon:"field3"`
 	Field4 []bool    `cf_hocon:"field4"`
