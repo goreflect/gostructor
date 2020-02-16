@@ -20,7 +20,7 @@ func checkFileAccessibility(filename string) error {
 	return nil
 }
 
-// get type configuration file by name: configuration file can be ended by .hocon, .json, .yml, .yaml. In version > 1.0 this will be moved into another lib
-func getTypeConfigurationFile(fileName string) error {
-	return nil
-}
+// // get type configuration file by name: configuration file can be ended by .hocon, .json, .yml, .yaml. In version > 1.0 this will be moved into another lib
+// func getTypeConfigurationFile(fileName string) error {
+// 	return nil
+// }
