@@ -27,7 +27,6 @@ func Test_parseHocon(t *testing.T) {
 		fmt.Println("error while configuring: ", err)
 	}
 	fmt.Println("parsed strcture: ", myStruct)
-	t.Error()
 }
 
 // func Test_parseCustomStructureName(t *testing.T) {
