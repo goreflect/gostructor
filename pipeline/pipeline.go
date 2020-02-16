@@ -17,7 +17,6 @@ type (
 	Pipeline struct {
 		chains       *Chain
 		errors       []string
-		fileName     string
 		sourcesTypes []int
 	}
 
@@ -237,6 +236,7 @@ func (pipeline *Pipeline) addNewErrorWhileParsing(err string) {
 	pipeline.errors = append(pipeline.errors, err)
 }
 
+// no-lint
 func (pipeline *Pipeline) clearErrors() {
 	pipeline.errors = []string{}
 }
@@ -316,15 +316,4 @@ func (pipeline *Pipeline) checkValuePrefix(prefix string) error {
 		return errors.New("can not entry point")
 	}
 	return nil
-}
-
-func (context *structContext) conversion(send reflect.Value, recive reflect.Type) (convertResult *reflect.Value, err error) {
-	defer func() {
-		if errPanic := recover(); errPanic != nil {
-			err = errPanic.(error)
-			convertResult = nil
-		}
-	}()
-	result := send.Convert(recive)
-	return &result, nil
 }
