@@ -1,0 +1,11 @@
+MyStruct2 = {
+    MyMap = {
+        1= test,
+        2= test2,
+        3= test3
+    }
+    tururur = {
+    test1 = "testvalueInNestedStructure"
+}
+}
+
