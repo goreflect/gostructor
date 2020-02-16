@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/goreflect/gostructor/tags"
 )
 
 type (
@@ -52,6 +54,29 @@ const (
 	EmptyAdditionalPrefix = ""
 )
 
+// bool - skip preview prefix or not
+func (context structContext) getFieldName() (bool, string) {
+	for _, val := range []string{tags.TagHocon, tags.TagJson, tags.TagYaml, tags.TagDefault, tags.TagEnvironment, tags.TagConfigServer, tags.TagHashiCorpVault} {
+		tag := context.StructField.Tag.Get(val)
+		if tag == "" {
+			continue
+		}
+		tagCustomer := strings.Split(tag, "=")
+		if len(tagCustomer) == 0 {
+			continue
+		}
+		for _, tagCustom := range []string{tags.TagCustomerNode, tags.TagCustomerPath} {
+			if tagCustomer[0] == tagCustom {
+				if tagCustomer[1] != "" {
+					return true, tagCustomer[1]
+				}
+			}
+		}
+		return false, tag
+	}
+	return false, context.StructField.Name
+}
+
 // get pipeline of functions in chain notation
 func getFunctionChain(fileName string, pipelineChanes []FuncType) *Pipeline {
 	chain := &Chain{
@@ -65,7 +90,7 @@ func getFunctionChain(fileName string, pipelineChanes []FuncType) *Pipeline {
 	for _, pipelineChain := range pipelineChanes {
 		stageFunction, sourceType, err := getChainByIdentifier(pipelineChain, fileName)
 		if err != nil {
-			fmt.Println("error while getting chain stage function. Error: " + err.Error())
+			fmt.Println("[Pipeline]: level: debuf. error while getting chain stage function. Error: " + err.Error())
 			continue
 		}
 		sourcesTypes[sourceType]++
@@ -120,6 +145,7 @@ func Configure(
 
 	defer func() {
 		if e := recover(); e != nil {
+			fmt.Println(e)
 			err = e.(error)
 		}
 	}()
@@ -128,14 +154,15 @@ func Configure(
 	// currentChain := pipeline.chains
 	if err := pipeline.setFile(fileName); err != nil {
 		if pipeline.checkSourcesConfigure() {
-			fmt.Println("level: Warning. can not be access to file or server. ", err.Error())
+			fmt.Println("[Pipeline]: level: Warning. can not be access to file or server. ", err.Error())
 		}
 	}
+
 	if err := pipeline.recursiveParseFields(&structContext{
 		Value:  reflect.ValueOf(structure),
 		Prefix: prefix,
 	}); err != nil {
-		fmt.Println("level: error. error while configuring your structure. Errors: ", err.Error())
+		fmt.Println("[Pipeline]: level: error. error while configuring your structure. Errors: ", err.Error())
 	}
 	return nil
 }
@@ -144,8 +171,7 @@ func Configure(
 func (pipeline *Pipeline) checkSourcesConfigure() bool {
 	for source, amount := range pipeline.sourcesTypes {
 		switch source {
-		case sourceFileInDisk:
-		case sourceFielInServer:
+		case sourceFileInDisk, sourceFielInServer:
 			if amount > 0 {
 				return true
 			}
@@ -174,15 +200,27 @@ func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 	valuePtr := reflect.Indirect(context.Value)
 	switch valuePtr.Kind() {
 	case reflect.Struct:
+		newPrefix := valuePtr.Type().Name()
+		if context.Prefix == "" {
+			context.Prefix += newPrefix
+		} else {
+			context.Prefix += "." + newPrefix
+		}
 		for i := 0; i < valuePtr.NumField(); i++ {
 			prefix := context.Prefix
 			if err := pipeline.checkValuePrefix(context.Prefix); err == nil {
 				prefix += "."
 			}
+			ok, getPrefix := (structContext{StructField: valuePtr.Type().Field(i)}.getFieldName())
+			if ok {
+				prefix = getPrefix
+			} else {
+				prefix += getPrefix
+			}
 			if err := pipeline.recursiveParseFields(&structContext{
 				Value:       valuePtr.Field(i).Addr(),
 				StructField: valuePtr.Type().Field(i),
-				Prefix:      prefix + valuePtr.Type().Name(),
+				Prefix:      prefix,
 			}); err != nil {
 				pipeline.addNewErrorWhileParsing(err.Error())
 			}
@@ -233,30 +271,37 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 	// }
 	valueIndirect := reflect.Indirect(context.Value)
 	switch valueIndirect.Kind() {
-	case reflect.Slice:
-		valueIndirect := reflect.Indirect(context.Value)
+	case reflect.Slice, reflect.Map, reflect.Array:
+		// valueIndirect := reflect.Indirect(context.Value)
 		valueGet := pipeline.chains.stageFunction.GetComplexType(context)
-
-		// return config.getSliceFromHocon(context)
-	case reflect.Array:
-	case reflect.Map:
-	case reflect.Uint:
-	case reflect.Uint8:
-	case reflect.Uint16:
-	case reflect.Uint32:
-	case reflect.Uint64:
-	case reflect.String:
-	case reflect.Float32:
-	case reflect.Float64:
-	case reflect.Bool:
-	case reflect.Int:
-	case reflect.Int8:
-	case reflect.Int16:
-	case reflect.Int32:
-	case reflect.Int64:
+		if valueGet.CheckIsValue() {
+			fmt.Println("[Pipeline]: Level: debug. value get from parsing slice: ", valueGet)
+			if valueIndirect.CanSet() {
+				valueIndirect.Set(valueGet.Value)
+			} else {
+				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")
+			}
+		} else {
+			return errors.New("Level: debug. value get not setupable value: ")
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return errors.New("not supported types of unsigned integer")
+	case reflect.String, reflect.Float32, reflect.Float64, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		valueGet := pipeline.chains.stageFunction.GetBaseType(context)
+		if valueGet.CheckIsValue() {
+			fmt.Println("[Pipeline]: Level: debug. value get from parsing "+valueGet.Value.Kind().String()+": ", valueGet)
+			if valueIndirect.CanSet() {
+				valueIndirect.Set(valueGet.Value)
+			} else {
+				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")
+			}
+		} else {
+			return errors.New("Level: debug. value get not setupable value: ")
+		}
 	default:
 		return errors.New("not supported type for hocon parsing")
 	}
+	return nil
 }
 
 func (pipeline *Pipeline) checkValueTypeIsPointer(value reflect.Value) error {
