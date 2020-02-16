@@ -236,10 +236,10 @@ func (pipeline *Pipeline) addNewErrorWhileParsing(err string) {
 	pipeline.errors = append(pipeline.errors, err)
 }
 
-// no-lint
-func (pipeline *Pipeline) clearErrors() {
-	pipeline.errors = []string{}
-}
+// // no-lint
+// func (pipeline *Pipeline) clearErrors() {
+// 	pipeline.errors = []string{}
+// }
 
 func (pipeline *Pipeline) getErrorAsOne() error {
 	if len(pipeline.errors) > 0 {
