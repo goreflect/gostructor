@@ -2,5 +2,6 @@ package pipeline
 
 // IConfigure - configurer interface for chain pipeline configuration
 type IConfigure interface {
-	Configure(*structContext) error
+	GetComplexType(*structContext) GoStructorValue
+	GetBaseType(*structContext) GoStructorValue
 }

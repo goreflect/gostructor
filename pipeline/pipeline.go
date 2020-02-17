@@ -188,7 +188,7 @@ func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 			}
 		}
 	default:
-		if err := pipeline.startConfiguringByFunctions(context); err != nil {
+		if err := pipeline.configuringValues(context); err != nil {
 			pipeline.addNewErrorWhileParsing(err.Error())
 		}
 	}
@@ -204,22 +204,58 @@ func (pipeline *Pipeline) clearErrors() {
 }
 
 func (pipeline *Pipeline) getErrorAsOne() error {
-	return errors.New("on stage recurisiveParseFields will have any of this errors: " + strings.Join(pipeline.errors, "\n"))
+	if len(pipeline.errors) > 0 {
+		return errors.New("on stage recurisiveParseFields will have any of this errors: " + strings.Join(pipeline.errors, "\n"))
+	} else {
+		return nil
+	}
 }
 
-// startConfiguringByFunctions - starting configuratino your structure field by functions pipeline
-func (pipeline *Pipeline) startConfiguringByFunctions(context *structContext) error {
-	currentChain := pipeline.chains
-	for {
-		if err := currentChain.stageFunction.Configure(context); err != nil {
-			if currentChain.next != nil {
-				currentChain = currentChain.next
-			} else {
-				return errors.New("can not configure field: " + context.Prefix)
-			}
-		} else {
-			return nil
-		}
+// //environment values sourcesing configuratino your structure field by functions pipeline
+// func (pipeline *Pipeline) startConfiguringByFunctions(context *structContext) error {
+// 	currentChain := pipeline.chains
+// 	for {
+// 		if err := currentChain.stageFunction.Configure(context); err != nil {
+// 			if currentChain.next != nil {
+// 				currentChain = currentChain.next
+// 			} else {
+// 				return errors.New("can not configure field: " + context.Prefix)
+// 			}
+// 		} else {
+// 			return nil
+// 		}
+// 	}
+// }
+
+func (pipeline *Pipeline) configuringValues(context *structContext) error {
+	// if config.configureFileParsed == nil {
+	// 	config.configureFileParsed = gohocon.LoadConfig(config.fileName)
+	// }
+	valueIndirect := reflect.Indirect(context.Value)
+	switch valueIndirect.Kind() {
+	case reflect.Slice:
+		valueIndirect := reflect.Indirect(context.Value)
+		valueGet := pipeline.chains.stageFunction.GetComplexType(context)
+
+		// return config.getSliceFromHocon(context)
+	case reflect.Array:
+	case reflect.Map:
+	case reflect.Uint:
+	case reflect.Uint8:
+	case reflect.Uint16:
+	case reflect.Uint32:
+	case reflect.Uint64:
+	case reflect.String:
+	case reflect.Float32:
+	case reflect.Float64:
+	case reflect.Bool:
+	case reflect.Int:
+	case reflect.Int8:
+	case reflect.Int16:
+	case reflect.Int32:
+	case reflect.Int64:
+	default:
+		return errors.New("not supported type for hocon parsing")
 	}
 }
 
