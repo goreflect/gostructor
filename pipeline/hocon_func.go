@@ -13,81 +13,115 @@ type HoconConfig struct {
 	configureFileParsed *gohocon.Config
 }
 
-// Configure - configuration struct value by hocon file configuration
-func (config HoconConfig) Configure(context *structContext) error {
-	fmt.Println("Level: Debug. hocon values sources start")
-	if config.configureFileParsed == nil {
-		config.configureFileParsed = gohocon.LoadConfig(config.fileName)
-	}
+func (config HoconConfig) GetComplexType(context *structContext) GoStructorValue {
 	valueIndirect := reflect.Indirect(context.Value)
 	switch valueIndirect.Kind() {
+	case reflect.Array:
+		return config.getSliceFromHocon(context)
 	case reflect.Slice:
 		return config.getSliceFromHocon(context)
-	case reflect.Array:
 	case reflect.Map:
-	case reflect.Uint:
-	case reflect.Uint8:
-	case reflect.Uint16:
-	case reflect.Uint32:
-	case reflect.Uint64:
-	case reflect.String:
-	case reflect.Float32:
-	case reflect.Float64:
-	case reflect.Bool:
-	case reflect.Int:
-	case reflect.Int8:
-	case reflect.Int16:
-	case reflect.Int32:
-	case reflect.Int64:
+		return config.getMapFromHocon(context)
 	default:
-		return errors.New("not supported type for hocon parsing")
+		return config.GetBaseType(context)
 	}
-	return nil
 }
 
-func (config *HoconConfig) getSliceFromHocon(context *structContext) (err error) {
-	defer func() {
-		if errPanic := recover(); errPanic != nil {
-			err = errPanic.(error)
-		}
-	}()
+func (config *HoconConfig) GetBaseType(context *structContext) GoStructorValue {
+	valueIndirect := reflect.Indirect(context.Value)
+	path := context.Prefix + "." + context.StructField.Name
+	switch valueIndirect.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		valueParsedFromConfigFile := config.configureFileParsed.GetInt64(path)
+		return NewGoStructorTrueValue(reflect.ValueOf(valueParsedFromConfigFile))
+	case reflect.Float32:
+		valueParsedFromConfigFile := config.configureFileParsed.GetFloat32(path)
+		return NewGoStructorTrueValue(reflect.ValueOf(valueParsedFromConfigFile))
+	case reflect.Float64:
+		valueParsedFromConfigFile := config.configureFileParsed.GetFloat64(path)
+		return NewGoStructorTrueValue(reflect.ValueOf(valueParsedFromConfigFile))
+	case reflect.Bool:
+		valueParsedFromConfigFile := config.configureFileParsed.GetBoolean(path)
+		return NewGoStructorTrueValue(reflect.ValueOf(valueParsedFromConfigFile))
+	case reflect.String:
+		valueParsedFromConfigFile := config.configureFileParsed.GetString(path)
+		return NewGoStructorTrueValue(reflect.ValueOf(valueParsedFromConfigFile))
+	default:
+		return NewGoStructorNoValue(context.Value.Interface(), errors.New("can not parsed inserted type in GetBaseType of configuration by hocon"))
+	}
+}
+
+func (config *HoconConfig) getSliceFromHocon(context *structContext) GoStructorValue {
+
 	path := context.Prefix + "." + context.StructField.Name
 	fmt.Println("level: debug. get path from hocon: ", path)
-	list := config.configureFileParsed.GetStringList(path)
-	valueList := reflect.ValueOf(list)
 	valueIndirect := reflect.Indirect(context.Value)
-	setupSlice := reflect.MakeSlice(valueIndirect.Type(), valueList.Len(), valueList.Cap())
-	for i := 0; i < valueList.Len(); i++ {
-		// fmt.Println("type convertable: ", valueIndirect.Index(0).Type())
-		fmt.Println("type source: ", valueList.Index(i).Type())
-		// elementSetupSlice := reflect.Indirect(setupSlice.Index(0))
-		fmt.Println("type of 1 element makeble slice: ", setupSlice.Index(0).Type())
-		insertedValue := valueList.Index(i).Type().ConvertibleTo(setupSlice.Index(0).Type())
-		fmt.Println("value can be convertable to: ", insertedValue)
-
-		if insertedValue {
-			convertableValue := valueList.Index(i).Convert(setupSlice.Index(0).Type())
-			reflect.Indirect(setupSlice.Index(i)).Set(convertableValue)
-		} else {
-			fmt.Println("can not convert your types. Converte from: ", valueList.Index(0).Type(), " to: ", setupSlice.Index(0).Type())
-		}
-		// result, err := context.conversion(valueList.Index(i), valueNotPointer.Elem().Type())
+	setupSlice := reflect.MakeSlice(valueIndirect.Type(), 1, 1)
+	switch setupSlice.Index(0).Kind() {
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32:
+		neededValues := config.configureFileParsed.GetInt32List(path)
 		// if err != nil {
-		// fmt.Println("can not insert in your slice: ", path, " value. Error: ", err.Error())
-		// return errors.New(err.Error())
+		// 	return reflect.Zero(nil), err
 		// }
+		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
+	case reflect.Uint64, reflect.Int64:
+		neededValues := config.configureFileParsed.GetInt64List(path)
+		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
+	case reflect.Float32:
+		neededValues := config.configureFileParsed.GetFloat32List(path)
+		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
+	case reflect.Float64:
+		neededValues := config.configureFileParsed.GetFloat64List(path)
+		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
+	case reflect.Bool:
+		neededValues := config.configureFileParsed.GetBooleanList(path)
+		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
+	case reflect.Complex64, reflect.Complex128:
+		return NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet a complex values"))
+	default:
+		return NewGoStructorNoValue(context.Value.Interface(), errors.New("can not recognize inserted type"))
+	}
+	// list := config.configureFileParsed.GetStringList(path)
+	// valueList := reflect.ValueOf(list)
+	// return valueList, nil
+	// valueIndirect := reflect.Indirect(context.Value)
+	// setupSlice := reflect.MakeSlice(valueIndirect.Type(), valueList.Len(), valueList.Cap())
+	// for i := 0; i < valueList.Len(); i++ {
+	// 	// fmt.Println("type convertable: ", valueIndirect.Index(0).Type())
+	// 	fmt.Println("type source: ", valueList.Index(i).Type())
+	// 	// elementSetupSlice := reflect.Indirect(setupSlice.Index(0))
+	// 	fmt.Println("type of 1 element makeble slice: ", setupSlice.Index(0).Type())
+	// 	resultConvert, errResult := converters.Convert(valueList.Index(i), setupSlice.Index(0))
+	// 	if errResult != nil {
+	// 		fmt.Println("Error converted value: ", errResult)
+	// 	}
+	// 	fmt.Println("result of convert: ", resultConvert)
+	// 	insertedValue := valueList.Index(i).Type().ConvertibleTo(setupSlice.Index(0).Type())
+	// 	fmt.Println("value can be convertable to: ", insertedValue)
+
+	// 	if insertedValue {
+	// 		convertableValue := valueList.Index(i).Convert(setupSlice.Index(0).Type())
+	// 		reflect.Indirect(setupSlice.Index(i)).Set(convertableValue)
+	// 	} else {
+	// 		fmt.Println("can not convert your types. Converte from: ", valueList.Index(0).Type(), " to: ", setupSlice.Index(0).Type())
+	// 	}
+	// 	// result, err := context.conversion(valueList.Index(i), valueNotPointer.Elem().Type())
+	// 	// if err != nil {
+	// 	// fmt.Println("can not insert in your slice: ", path, " value. Error: ", err.Error())
+	// 	// return errors.New(err.Error())
+	// 	// }
+
+	// }
+	// fmt.Println("Setuped slice: ", setupSlice.Interface())
+	// return nil
+}
+
+func (config *HoconConfig) getMapFromHocon(context *structContext) GoStructorValue {
+	// config.configureFileParsed
+	// valueIndirect := reflect.Indirect(context.Value)
+	makebleMap := reflect.MakeMap(context.Value.Type())
+	for key, value := range makebleMap.MapRange() {
 
 	}
-	fmt.Println("Setuped slice: ", setupSlice.Interface())
-	return nil
-}
-
-func (config *HoconConfig) getArrayFromHocon(context *structContext) error {
-
-	return nil
-}
-
-func (config *HoconConfig) getMapFromHocon(context *structContext) error {
-
-	return nil
+	return NewGoStructorNoValue(context.Value.Interface(), errors.New("not implement getMap from hocon configuring"))
 }
