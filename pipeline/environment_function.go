@@ -17,8 +17,11 @@ func (config EnvironmentConfig) GetComplexType(context *structContext) GoStructo
 	valueIndirect := reflect.Indirect(context.Value)
 	switch valueIndirect.Kind() {
 	case reflect.Slice:
+		NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type slice not implement in environment parsing"))
 	case reflect.Map:
+		NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type map not implement in environment parsing"))
 	case reflect.Array:
+		NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type array not implement in environment parsing"))
 	default:
 		return config.GetBaseType(context)
 	}
@@ -59,6 +62,16 @@ func (config EnvironmentConfig) GetBaseType(context *structContext) GoStructorVa
 			return NewGoStructorTrueValue(reflect.ValueOf(parsing).Convert(valueIndirect.Type()))
 		case reflect.Bool:
 			value := os.Getenv(valueTag)
+			if config.checksByMiddlewares(value) {
+				NewGoStructorNoValue(context.Value.Interface(), errors.New("getBaseType can not get empty value from environment by key: "+valueTag))
+			}
+			parsing, errParsing := strconv.ParseBool(value)
+			if errParsing != nil {
+				NewGoStructorNoValue(context.Value.Interface(), errParsing)
+			}
+			return NewGoStructorTrueValue(reflect.ValueOf(parsing))
+		default:
+			return NewGoStructorNoValue(valueIndirect.Interface(), errors.New("can not recognized type of you variable"))
 		}
 	}
 	return NewGoStructorNoValue(context.Value.Interface(), errors.New("getBaseType can not getting field by empty tag value of tag: "+tags.TagEnvironment))
