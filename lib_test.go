@@ -18,6 +18,7 @@ type (
 		NestedStruct1 struct {
 			Field1 string `cf_hocon:"test1"`
 		} `cf_hocon:"tururur"`
+		MyMap map[int]string `cf_hocon:"MyMap"`
 	}
 )
 
