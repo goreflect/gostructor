@@ -40,7 +40,6 @@ func Test_parseHocon1(t *testing.T) {
 		t.Error("error while configuring: ", err)
 	}
 	t.Log("parsed structure: ", myStruct.(*MyStruct))
-	t.Error()
 }
 
 func Test_parseHocon(t *testing.T) {
