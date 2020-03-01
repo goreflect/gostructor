@@ -1,14 +1,21 @@
 # Gostructor [![Actions Status](https://github.com/goreflect/gostructor/workflows/CI_dev/badge.svg)](https://github.com/goreflect/gostructor/actions?query=workflow%3ACI_dev) [![Go Report Card](https://goreportcard.com/badge/github.com/goreflect/gostructor)](https://goreportcard.com/report/github.com/goreflect/gostructor)
 ____
-### Version: 0.1
+### Version: 0.1.2
 
 hocon current configuration configuration library
 
 ## Current supporting input formats
 
 - hocon
-- environment variables
-- default values from tag in structures
+
+## Current supporting types
+
+- int32, int64
+- float32, float64
+- string
+- bool
+- map[string\int]string\int\float32\float64
+- slices of any types from (int32, int64, int, string, bool, float32, float64)
 
 ## Tags
 
@@ -68,3 +75,9 @@ gostructor.ConfigureSetup(&ExampleType{}, "test.hocon", []pipeline.FuncType{
 ## Many examples
 
 In this section will added any examples of using this library
+
+## TODO
+
+1. Implement self converters for all sources
+2. Write unit tests for any cases
+3. Move getFieldName methods for any source func parsers because in any of source have available any naming sources

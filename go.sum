@@ -5,6 +5,10 @@ github.com/go-akka/configuration v0.0.0-20190919102339-a31c845c4b1b h1:3tSuByOnO
 github.com/go-akka/configuration v0.0.0-20190919102339-a31c845c4b1b/go.mod h1:19bUnum2ZAeftfwwLZ/wRe7idyfoW2MfmXO464Hrfbw=
 github.com/go-akka/configuration v0.0.0-20200115015912-550403a6bd87 h1:qsA6HPoRXYJ1a2fsHVUmieRTg+otMAM4wEJgSWzumL8=
 github.com/go-akka/configuration v0.0.0-20200115015912-550403a6bd87/go.mod h1:19bUnum2ZAeftfwwLZ/wRe7idyfoW2MfmXO464Hrfbw=
+github.com/goreflect/go_hocon v0.0.1 h1:n05o2/7F4S2Q6ZOnn02Sm3kEj/zmkvThk2m7uQQ1Ong=
+github.com/goreflect/go_hocon v0.0.1/go.mod h1:+Ty2MKNMIhPNLYWpO4BqpH0W9qZOhKB/upHgEYAlRB8=
+github.com/goreflect/go_hocon v0.0.2 h1:8r5kdjE4iG+Hfv1qScSR2LUNcwUwTmFdqpCN/yKY/uA=
+github.com/goreflect/go_hocon v0.0.2/go.mod h1:Pw26F1wCoERtcchtIfjcTLO/wb9slw11ZSCvUbOgrYU=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/sirupsen/logrus v1.4.2 h1:SPIRibHv4MatM3XXNO2BJeFLZwZ2LvZgfQ5+UNI2im4=

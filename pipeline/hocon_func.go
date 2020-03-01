@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	gohocon "github.com/go-akka/configuration"
+	gohocon "github.com/goreflect/go_hocon"
 	"github.com/goreflect/gostructor/tags"
 )
 
@@ -33,8 +33,9 @@ func (config HoconConfig) getElementName(context *structContext) string {
 }
 
 func (config HoconConfig) GetComplexType(context *structContext) GoStructorValue {
-	if config.configureFileParsed == nil {
-		config.configureFileParsed = gohocon.LoadConfig(config.fileName)
+	loaded, structValue := config.typeSafeLoadConfigFile(context)
+	if !loaded {
+		return *structValue
 	}
 	valueIndirect := reflect.Indirect(context.Value)
 	switch valueIndirect.Kind() {
@@ -49,90 +50,156 @@ func (config HoconConfig) GetComplexType(context *structContext) GoStructorValue
 	}
 }
 
-func (config *HoconConfig) GetBaseType(context *structContext) GoStructorValue {
-	valueIndirect := reflect.Indirect(context.Value)
+// return true - if loaded config or successfully load config by filename
+func (config *HoconConfig) typeSafeLoadConfigFile(context *structContext) (bool, *GoStructorValue) {
 	if config.configureFileParsed == nil {
-		config.configureFileParsed = gohocon.LoadConfig(config.fileName)
+		configParsed, err := gohocon.LoadConfig(config.fileName)
+		if err != nil {
+			return false, &GoStructorValue{notAValue: &NotAValue{
+				ValueAddress: context.Value.Interface(),
+				Error:        err,
+			},
+			}
+		}
+		config.configureFileParsed = configParsed
+		return true, nil
 	}
+	return true, nil
+}
+
+func (config *HoconConfig) GetBaseType(context *structContext) GoStructorValue {
+	configLoad, structValue := config.typeSafeLoadConfigFile(context)
+	if !configLoad {
+		return *structValue
+	}
+	valueIndirect := reflect.Indirect(context.Value)
 	path := config.getElementName(context)
 	switch valueIndirect.Kind() {
 	case reflect.Int:
-		valueParsedFromConfigFile, errParsed := strconv.ParseInt(config.configureFileParsed.GetString(path), 10, 16)
+		loadValue, errLoading := config.configureFileParsed.GetString(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
+		valueParsedFromConfigFile, errParsed := strconv.ParseInt(loadValue, 10, 16)
 		if errParsed != nil {
 			return NewGoStructorNoValue(valueIndirect, errParsed)
 		}
 		return NewGoStructorTrueValue(reflect.ValueOf(int(valueParsedFromConfigFile)))
 	case reflect.Int8:
-		valueParsedFromConfigFile, errParsed := strconv.ParseInt(config.configureFileParsed.GetString(path), 10, 8)
+		loadValue, errLoading := config.configureFileParsed.GetString(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
+		valueParsedFromConfigFile, errParsed := strconv.ParseInt(loadValue, 10, 8)
 		if errParsed != nil {
 			return NewGoStructorNoValue(valueIndirect, errParsed)
 		}
 		return NewGoStructorTrueValue(reflect.ValueOf(int8(valueParsedFromConfigFile)))
 	case reflect.Int16:
-		valueParsedFromConfigFile, errParsed := strconv.ParseInt(config.configureFileParsed.GetString(path), 10, 16)
+		loadValue, errLoading := config.configureFileParsed.GetString(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
+		valueParsedFromConfigFile, errParsed := strconv.ParseInt(loadValue, 10, 16)
 		if errParsed != nil {
 			return NewGoStructorNoValue(valueIndirect, errParsed)
 		}
 		return NewGoStructorTrueValue(reflect.ValueOf(int16(valueParsedFromConfigFile)))
 	case reflect.Int32:
-		// TODO: upgrade while completing lib for safety parsing from file
-		valueParsedFromConfigFile := config.configureFileParsed.GetInt32(path)
-		return NewGoStructorTrueValue(reflect.ValueOf(valueParsedFromConfigFile))
+		loadValue, errLoading := config.configureFileParsed.GetInt32(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
+		return NewGoStructorTrueValue(reflect.ValueOf(loadValue))
 	case reflect.Int64:
-		// TODO: upgrade while completing lib for safety parsing from file
-		valueParsedFromConfigFile := config.configureFileParsed.GetInt64(path)
-		return NewGoStructorTrueValue(reflect.ValueOf(valueParsedFromConfigFile))
+		loadValue, errLoading := config.configureFileParsed.GetInt64(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
+		return NewGoStructorTrueValue(reflect.ValueOf(loadValue))
 	case reflect.Float32:
-		// TODO: upgrade while completing lib for safety parsing from file
-		valueParsedFromConfigFile := config.configureFileParsed.GetFloat32(path)
-		return NewGoStructorTrueValue(reflect.ValueOf(valueParsedFromConfigFile))
+		loadValue, errLoading := config.configureFileParsed.GetFloat32(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
+		return NewGoStructorTrueValue(reflect.ValueOf(loadValue))
 	case reflect.Float64:
-		// TODO: upgrade while completing lib for safety parsing from file
-		valueParsedFromConfigFile := config.configureFileParsed.GetFloat64(path)
-		return NewGoStructorTrueValue(reflect.ValueOf(valueParsedFromConfigFile))
+		loadValue, errLoading := config.configureFileParsed.GetFloat64(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
+		return NewGoStructorTrueValue(reflect.ValueOf(loadValue))
 	case reflect.Bool:
-		// TODO: upgrade while completing lib for safety parsing from file
-		valueParsedFromConfigFile := config.configureFileParsed.GetBoolean(path)
-		return NewGoStructorTrueValue(reflect.ValueOf(valueParsedFromConfigFile))
+		loadValue, errLoading := config.configureFileParsed.GetBoolean(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
+		return NewGoStructorTrueValue(reflect.ValueOf(loadValue))
 	case reflect.String:
-		// TODO: upgrade while completing lib for safety parsing from file
-		valueParsedFromConfigFile := config.configureFileParsed.GetString(path)
-		fmt.Println("[HOCON]: Level: debug. Get value from config file: ", valueParsedFromConfigFile)
-		return NewGoStructorTrueValue(reflect.ValueOf(valueParsedFromConfigFile))
+		loadValue, errLoading := config.configureFileParsed.GetString(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
+		return NewGoStructorTrueValue(reflect.ValueOf(loadValue))
 	default:
 		return NewGoStructorNoValue(context.Value.Interface(), errors.New("can not parsed inserted type in GetBaseType of configuration by hocon"))
 	}
 }
 
 func (config *HoconConfig) getSliceFromHocon(context *structContext) GoStructorValue {
-
+	configLoad, structValue := config.typeSafeLoadConfigFile(context)
+	if !configLoad {
+		return *structValue
+	}
 	path := config.getElementName(context)
 	fmt.Println("[HOCON]: level: debug. get path from hocon: ", path)
 	valueIndirect := reflect.Indirect(context.Value)
 	setupSlice := reflect.MakeSlice(valueIndirect.Type(), 1, 1)
+	fmt.Println("[HOCON]: level: debug. type of first element at slice: ", setupSlice.Index(0).Kind())
 	switch setupSlice.Index(0).Kind() {
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32:
-		// TODO: upgrade while completing lib for safety parsing from file
-		neededValues := config.configureFileParsed.GetInt32List(path)
+	case reflect.Int, reflect.Int8, reflect.Int16:
+		return NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet"))
+
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
+		return NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet"))
+	case reflect.Int32:
+		neededValues, errLoading := config.configureFileParsed.GetInt32List(path)
+		if errLoading != nil {
+			fmt.Println("loading error: ", errLoading)
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
 		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
-	case reflect.Uint64, reflect.Int64:
-		// TODO: upgrade while completing lib for safety parsing from file
-		neededValues := config.configureFileParsed.GetInt64List(path)
+	case reflect.Int64:
+		neededValues, errLoading := config.configureFileParsed.GetInt64List(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
 		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
 	case reflect.Float32:
-		// TODO: upgrade while completing lib for safety parsing from file
-		neededValues := config.configureFileParsed.GetFloat32List(path)
+		neededValues, errLoading := config.configureFileParsed.GetFloat32List(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
 		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
 	case reflect.Float64:
-		// TODO: upgrade while completing lib for safety parsing from file
-		neededValues := config.configureFileParsed.GetFloat64List(path)
+		neededValues, errLoading := config.configureFileParsed.GetFloat64List(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
 		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
 	case reflect.Bool:
-		// TODO: upgrade while completing lib for safety parsing from file
-		neededValues := config.configureFileParsed.GetBooleanList(path)
+		neededValues, errLoading := config.configureFileParsed.GetBooleanList(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
 		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
+	case reflect.String:
+		needValues, errLoading := config.configureFileParsed.GetStringList(path)
+		if errLoading != nil {
+			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		}
+		return NewGoStructorTrueValue(reflect.ValueOf(needValues))
 	case reflect.Complex64, reflect.Complex128:
-		// TODO: upgrade while completing lib for safety parsing from file
 		return NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet a complex values"))
 	default:
 		return NewGoStructorNoValue(context.Value.Interface(), errors.New("can not recognize inserted type"))
@@ -140,24 +207,31 @@ func (config *HoconConfig) getSliceFromHocon(context *structContext) GoStructorV
 }
 
 func (config *HoconConfig) getMapFromHocon(context *structContext) GoStructorValue {
-	// config.configureFileParsed
-	if config.configureFileParsed == nil {
-		config.configureFileParsed = gohocon.LoadConfig(config.fileName)
+	configLoad, structValue := config.typeSafeLoadConfigFile(context)
+	if !configLoad {
+		return *structValue
 	}
 	valueIndirect := reflect.Indirect(context.Value)
 	path := config.getElementName(context)
 	fmt.Println("[HOCON]: level: debuf. current type: ", valueIndirect.Kind().String())
 	fmt.Println("[HOCON]: level: debuf.key of map: ", valueIndirect.Type().Key().Kind())
 	fmt.Println("[HOCON]: level: debuf.value of map: ", valueIndirect.Type().Elem().Kind())
-	getValue := config.configureFileParsed.GetValue(path)
-	keys := getValue.GetObject().GetKeys()
+	getValue, errLoading := config.configureFileParsed.GetValue(path)
+	if errLoading != nil {
+		return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+	}
+	object, errLoad := getValue.GetObject()
+	if errLoad != nil {
+		return NewGoStructorNoValue(context.Value.Interface(), errLoad)
+	}
+	keys := object.GetKeys()
 	makebleMap := reflect.MakeMapWithSize(valueIndirect.Type(), 0)
 	for _, key := range keys {
 		value := config.GetBaseType(&structContext{
 			StructField: reflect.StructField{
 				Name: key,
 			},
-			Prefix: context.Prefix + "." + context.StructField.Name,
+			Prefix: context.Prefix + "." + key,
 			Value:  reflect.New(valueIndirect.Type().Elem()),
 		})
 
