@@ -60,15 +60,20 @@ Examples = {
 
 ```golang
 type ExampleType struct {
-    fieldTest1  string `cfg_hocon:"Examples.FieldExample"`
-    Field1      string `cfg_default:"tururutest"`
+    fieldTest1  string `cf_hocon:"Examples.FieldExample"`
+    Field1      string `cf_default:"tururutest"`
 }
 ...
-gostructor.ConfigureSetup(&ExampleType{}, "test.hocon", []pipeline.FuncType{
+value, err := gostructor.ConfigureSetup(&ExampleType{}, "test.hocon", []pipeline.FuncType{
     pipeline.FunctionSetupHocon,
     pipeline.FunctionSetupDefault,
 })
 
+```
+
+Where Value is Interface therefore you should cast to your type with Pointer like this:
+```golang
+value.(*ExampleType)
 ```
 
 
