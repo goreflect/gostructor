@@ -140,11 +140,11 @@ func Configure(
 	// functions will be configure structure
 	pipelineChaines []FuncType,
 	// prefix by getting data from source placed in entry
-	prefix string) (err error) {
+	prefix string) (result interface{}, err error) {
 
 	defer func() {
 		if e := recover(); e != nil {
-			fmt.Println(e)
+			fmt.Println("[Pipeline]: ERROR: ", e)
 			err = e.(error)
 		}
 	}()
@@ -163,7 +163,7 @@ func Configure(
 	}); err != nil {
 		fmt.Println("[Pipeline]: level: error. error while configuring your structure. Errors: ", err.Error())
 	}
-	return nil
+	return structure, nil
 }
 
 // if the source is a file or server, a warning will be added if the resource is not available to receive data from it
@@ -272,11 +272,13 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 	valueIndirect := reflect.Indirect(context.Value)
 	switch valueIndirect.Kind() {
 	case reflect.Slice, reflect.Map, reflect.Array:
-		// valueIndirect := reflect.Indirect(context.Value)
 		valueGet := pipeline.chains.stageFunction.GetComplexType(context)
+		fmt.Println("[Pipeline]: Level: debug. value get from parsing slice: ", valueGet)
 		if valueGet.CheckIsValue() {
-			fmt.Println("[Pipeline]: Level: debug. value get from parsing slice: ", valueGet)
+
+			// add check for setuping valueGet in valueIndirect
 			if valueIndirect.CanSet() {
+				fmt.Println("[Pipeline]: setupe value in struct")
 				valueIndirect.Set(valueGet.Value)
 			} else {
 				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")
@@ -291,6 +293,7 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 		if valueGet.CheckIsValue() {
 			fmt.Println("[Pipeline]: Level: debug. value get from parsing "+valueGet.Value.Kind().String()+": ", valueGet)
 			if valueIndirect.CanSet() {
+				fmt.Println("[Pipeline]: setupe value")
 				valueIndirect.Set(valueGet.Value)
 			} else {
 				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")

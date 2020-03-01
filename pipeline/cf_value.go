@@ -36,5 +36,5 @@ func NewGoStructorNoValue(value interface{}, err error) GoStructorValue {
 }
 
 func (gostructvalue GoStructorValue) CheckIsValue() bool {
-	return gostructvalue.Value.Kind() == reflect.Invalid
+	return gostructvalue.Value.Kind() != reflect.Invalid
 }

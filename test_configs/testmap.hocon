@@ -5,7 +5,20 @@ MyStruct2 = {
         3= test3
     }
     tururur = {
-    test1 = "testvalueInNestedStructure"
-}
+        test1 = "testvalueInNestedStructure"
+    }
 }
 
+planB = {
+    test1 = "testValueByNodeInTag"
+}
+
+planC = {
+    tururu = {
+        tratatat = {
+            planZ = {
+                Field1 = "testValueByTest"
+            }
+        }
+    }
+}

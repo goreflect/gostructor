@@ -7,7 +7,7 @@ import (
 // ConfigureEasy - default pipeline setup for configure your structure
 func ConfigureEasy(
 	structure interface{},
-	fileName string) error {
+	fileName string) (interface{}, error) {
 	return pipeline.Configure(structure, fileName, []pipeline.FuncType{
 		pipeline.FunctionSetupEnvironment,
 		pipeline.FunctionSetupHocon,
@@ -20,6 +20,6 @@ func ConfigureSetup(
 	structure interface{},
 	fileName string,
 	prefix string,
-	functions []pipeline.FuncType) error {
+	functions []pipeline.FuncType) (interface{}, error) {
 	return pipeline.Configure(structure, fileName, functions, prefix)
 }
