@@ -1,9 +1,9 @@
-on: [pull_request]
+on: pull_request
 name: CI_dev
 jobs:
-    coverage:
-        runs-on: ubuntu-latest
-        steps:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
         - name: Install Go
             if: success()
             uses: actions/setup-go@v1
