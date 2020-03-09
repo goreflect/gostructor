@@ -161,7 +161,7 @@ func Configure(
 		Value:  reflect.ValueOf(structure),
 		Prefix: prefix,
 	}); err != nil {
-		fmt.Println("[Pipeline]: level: error. error while configuring your structure. Errors: ", err.Error())
+		fmt.Println("Level: error. Message: [Pipeline]: error while configuring your structure. Errors: ", err.Error())
 	}
 	return structure, nil
 }
@@ -176,6 +176,8 @@ func (pipeline *Pipeline) checkSourcesConfigure() bool {
 			}
 		case sourceFileNotUsed:
 			continue
+		default:
+			return false
 		}
 	}
 	return false
@@ -236,11 +238,6 @@ func (pipeline *Pipeline) addNewErrorWhileParsing(err string) {
 	pipeline.errors = append(pipeline.errors, err)
 }
 
-// // no-lint
-// func (pipeline *Pipeline) clearErrors() {
-// 	pipeline.errors = []string{}
-// }
-
 func (pipeline *Pipeline) getErrorAsOne() error {
 	if len(pipeline.errors) > 0 {
 		return errors.New("on stage recurisiveParseFields will have any of this errors: " + strings.Join(pipeline.errors, "\n"))
@@ -249,49 +246,30 @@ func (pipeline *Pipeline) getErrorAsOne() error {
 	}
 }
 
-// //environment values sourcesing configuratino your structure field by functions pipeline
-// func (pipeline *Pipeline) startConfiguringByFunctions(context *structContext) error {
-// 	currentChain := pipeline.chains
-// 	for {
-// 		if err := currentChain.stageFunction.Configure(context); err != nil {
-// 			if currentChain.next != nil {
-// 				currentChain = currentChain.next
-// 			} else {
-// 				return errors.New("can not configure field: " + context.Prefix)
-// 			}
-// 		} else {
-// 			return nil
-// 		}
-// 	}
-// }
-
 func (pipeline *Pipeline) configuringValues(context *structContext) error {
-	// if config.configureFileParsed == nil {
-	// 	config.configureFileParsed = gohocon.LoadConfig(config.fileName)
-	// }
 	valueIndirect := reflect.Indirect(context.Value)
 	switch valueIndirect.Kind() {
 	case reflect.Slice, reflect.Map, reflect.Array:
 		valueGet := pipeline.chains.stageFunction.GetComplexType(context)
-		fmt.Println("[Pipeline]: Level: debug. value get from parsing slice: ", valueGet)
+		fmt.Println("Loglevel: Debug Message: [Pipeline]:  value get from parsing slice: ", valueGet)
 		if valueGet.CheckIsValue() {
 
 			// add check for setuping valueGet in valueIndirect
 			if valueIndirect.CanSet() {
-				fmt.Println("[Pipeline]: setupe value in struct")
+				fmt.Println("Loglevel: Debug Message: [Pipeline]: setupe value in struct")
 				valueIndirect.Set(valueGet.Value)
 			} else {
 				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")
 			}
 		} else {
-			return errors.New("Level: debug. value get not setupable value: ")
+			return errors.New("Loglevel: Debug Message:  value get not implementedable value: ")
 		}
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		return errors.New("not supported types of unsigned integer")
 	case reflect.String, reflect.Float32, reflect.Float64, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		valueGet := pipeline.chains.stageFunction.GetBaseType(context)
 		if valueGet.CheckIsValue() {
-			fmt.Println("[Pipeline]: Level: debug. value get from parsing "+valueGet.Value.Kind().String()+": ", valueGet)
+			fmt.Println("Loglevel: Debug Message: [Pipeline]: value get from parsing "+valueGet.Value.Kind().String()+": ", valueGet)
 			if valueIndirect.CanSet() {
 				fmt.Println("[Pipeline]: setupe value")
 				valueIndirect.Set(valueGet.Value)
@@ -299,7 +277,7 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")
 			}
 		} else {
-			return errors.New("Level: debug. value get not setupable value: ")
+			return errors.New("value get not implementedable value: ")
 		}
 	default:
 		return errors.New("not supported type for hocon parsing")
@@ -309,7 +287,7 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 
 func (pipeline *Pipeline) checkValueTypeIsPointer(value reflect.Value) error {
 	if value.Kind() != reflect.Ptr {
-		return errors.New("not working without pointer types")
+		return errors.New("does not work without pointer types")
 	}
 	return nil
 }

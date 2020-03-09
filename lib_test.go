@@ -65,10 +65,3 @@ func Test_parseHoconWithNodeNotation2(t *testing.T) {
 	}
 	fmt.Println("parsed structure: ", myStruct)
 }
-
-// func Test_parseCustomStructureName(t *testing.T) {
-// 	myStruct := struct {
-// 		Field1 string `cf_hocon:"test1"`
-// 	} `cf_hocon:"test2"`{}
-
-// }
