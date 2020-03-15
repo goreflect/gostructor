@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+
+	"github.com/goreflect/gostructor/pipeline"
 )
 
 /*ConvertBetweenPrimitiveTypes - method for converting from any of base types into any of base types,
-// like string, bool, int, int8, int16. int32, int64
+like string, bool, int, int8, int16. int32, int64
 */
-func ConvertBetweenPrimitiveTypes(source reflect.Value, destination reflect.Value) (reflect.Value, error) {
+func ConvertBetweenPrimitiveTypes(source reflect.Value, destination reflect.Value) pipeline.GoStructorValue {
 	fmt.Println("Level: Debug. Message: start converting source: ", source.Kind().String(), " destination: ", destination.Kind().String())
 	switch destination.Kind() {
 	case reflect.Int:
@@ -28,51 +30,130 @@ func ConvertBetweenPrimitiveTypes(source reflect.Value, destination reflect.Valu
 	case reflect.Bool:
 		return convertToBool(source, destination)
 	default:
-		return reflect.Zero(nil), errors.New("can not converted to this type: " + destination.Kind().String())
+		return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted to this type "+destination.Kind().String()+" beacuse this type not supported"))
 	}
 }
 
-func convertToInt(source reflect.Value, destination reflect.Value) (reflect.Value, error) {
+func convertToInt(source reflect.Value, destination reflect.Value) pipeline.GoStructorValue {
 	switch source.Kind() {
 	case reflect.String:
-		convertByReflection := source.String()
-		fmt.Println("Level: Debug. Message: start convert value ", convertByReflection, " into int type")
-
-		// fmt.Println("Level: Debug. Message: Convert by reflection: ", convertByReflection.Kind(), " can set?:", convertByReflection.CanSet())
+		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int type")
 		convertedValue, errorConvert := strconv.ParseInt(source.String(), 10, 64)
 		if errorConvert != nil {
-			return reflect.ValueOf(-1), errorConvert
+			return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted to this type: "+destination.Kind().String()))
 		}
-		return reflect.ValueOf(int(convertedValue)), nil
-	case reflect.Int64:
-		convertByreflection := source.Convert(destination.Type())
-		fmt.Println("LogLevel: debug. Message: Convert by reflection: ", convertByreflection.Kind(), " can set?:", convertByreflection.CanSet())
-		return reflect.Zero(nil), errors.New("not implemented")
+		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(int(convertedValue)))
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int type")
+		if source.Type().ConvertibleTo(destination.Type()) {
+			return pipeline.NewGoStructorTrueValue(source.Convert(destination.Type()))
+		}
+		return pipeline.NewGoStructorNoValue(destination, errors.New("can not be converted from "+source.Kind().String()+" into int"))
 	default:
-		return reflect.Zero(nil), errors.New("cannot convert " + source.Kind().String() + " to " + reflect.Int.String())
+		return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
 	}
 }
 
-func convertToInt8(source reflect.Value, destination reflect.Value) (reflect.Value, error) {
-	return reflect.Zero(nil), errors.New("not implemented")
+func convertToInt8(source reflect.Value, destination reflect.Value) pipeline.GoStructorValue {
+	switch source.Kind() {
+	case reflect.String:
+		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int8 type")
+		convertedValue, errorConvert := strconv.ParseInt(source.String(), 10, 8)
+		if errorConvert != nil {
+			return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted to this type: "+destination.Kind().String()))
+		}
+		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(int8(convertedValue)))
+	case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64:
+		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int8 type")
+		if source.Type().ConvertibleTo(destination.Type()) {
+			return pipeline.NewGoStructorTrueValue(source.Convert(destination.Type()))
+		}
+		return pipeline.NewGoStructorNoValue(destination, errors.New("can not be converted from "+source.Kind().String()+" into int8"))
+	default:
+		return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+	}
 }
 
-func convertToInt16(source reflect.Value, destination reflect.Value) (reflect.Value, error) {
-	return reflect.Zero(nil), errors.New("not implemented")
+func convertToInt16(source reflect.Value, destination reflect.Value) pipeline.GoStructorValue {
+	switch source.Kind() {
+	case reflect.String:
+		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int16 type")
+		convertedValue, errorConvert := strconv.ParseInt(source.String(), 10, 16)
+		if errorConvert != nil {
+			return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted to this type: "+destination.Kind().String()))
+		}
+		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(int16(convertedValue)))
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int16 type")
+		if source.Type().ConvertibleTo(destination.Type()) {
+			return pipeline.NewGoStructorTrueValue(source.Convert(destination.Type()))
+		}
+		return pipeline.NewGoStructorNoValue(destination, errors.New("can not be converted from "+source.Kind().String()+" into int16"))
+	default:
+		return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+	}
 }
 
-func convertToInt32(source reflect.Value, destination reflect.Value) (reflect.Value, error) {
-	return reflect.Zero(nil), errors.New("not implemented")
+func convertToInt32(source reflect.Value, destination reflect.Value) pipeline.GoStructorValue {
+	switch source.Kind() {
+	case reflect.String:
+		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int32 type")
+		convertedValue, errorConvert := strconv.ParseInt(source.String(), 10, 32)
+		if errorConvert != nil {
+			return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted to this type: "+destination.Kind().String()))
+		}
+		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(int8(convertedValue)))
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int32 type")
+		if source.Type().ConvertibleTo(destination.Type()) {
+			return pipeline.NewGoStructorTrueValue(source.Convert(destination.Type()))
+		}
+		return pipeline.NewGoStructorNoValue(destination, errors.New("can not be converted from "+source.Kind().String()+" into int32"))
+	default:
+		return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+	}
 }
 
-func convertToInt64(source reflect.Value, destination reflect.Value) (reflect.Value, error) {
-	return reflect.Zero(nil), errors.New("not implemented")
+func convertToInt64(source reflect.Value, destination reflect.Value) pipeline.GoStructorValue {
+	switch source.Kind() {
+	case reflect.String:
+		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int64 type")
+		convertedValue, errorConvert := strconv.ParseInt(source.String(), 10, 64)
+		if errorConvert != nil {
+			return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted to this type: "+destination.Kind().String()))
+		}
+		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(int8(convertedValue)))
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int64 type")
+		if source.Type().ConvertibleTo(destination.Type()) {
+			return pipeline.NewGoStructorTrueValue(source.Convert(destination.Type()))
+		}
+		return pipeline.NewGoStructorNoValue(destination, errors.New("can not be converted from "+source.Kind().String()+" into int64"))
+	default:
+		return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+	}
 }
 
-func convertToBool(source reflect.Value, destination reflect.Value) (reflect.Value, error) {
-	return reflect.Zero(nil), errors.New("not implemented")
+func convertToBool(source reflect.Value, destination reflect.Value) pipeline.GoStructorValue {
+	switch source.Kind() {
+	case reflect.String:
+		converted, errConvert := strconv.ParseBool(source.String())
+		if errConvert != nil {
+			return pipeline.NewGoStructorNoValue(destination, errors.New("can not be converted from "+source.Kind().String()+" into bool"))
+		}
+		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(converted))
+	case reflect.Bool:
+		return pipeline.NewGoStructorTrueValue(source)
+	default:
+		return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+	}
 }
 
-func convertToString(source reflect.Value, destination reflect.Value) (reflect.Value, error) {
-	return reflect.Zero(nil), errors.New("not implemented")
+func convertToString(source reflect.Value, destination reflect.Value) pipeline.GoStructorValue {
+	switch source.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float32, reflect.Float64, reflect.Bool:
+		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(source.String()))
+	default:
+		return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+	}
 }
