@@ -49,7 +49,7 @@ func convertToInt(source reflect.Value, destination reflect.Value) (reflect.Valu
 		fmt.Println("LogLevel: debug. Message: Convert by reflection: ", convertByreflection.Kind(), " can set?:", convertByreflection.CanSet())
 		return reflect.Zero(nil), errors.New("not implemented")
 	default:
-		return reflect.Zero(nil), errors.New("can not be convert " + source.Kind().String() + " to " + reflect.Int.String())
+		return reflect.Zero(nil), errors.New("cannot convert " + source.Kind().String() + " to " + reflect.Int.String())
 	}
 }
 
