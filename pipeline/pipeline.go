@@ -310,7 +310,7 @@ func (pipeline *Pipeline) checkValueTypeIsPointer(value reflect.Value) error {
 
 func (pipeline *Pipeline) checkValuePrefix(prefix string) error {
 	if prefix == "" || prefix[len(prefix)-1] == '.' || len(prefix) <= 1 {
-		return errors.New("can not entry point")
+		return errors.New("can not have entry point")
 	}
 	return nil
 }
