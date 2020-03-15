@@ -6,18 +6,18 @@ import (
 	gohocon "github.com/goreflect/go_hocon"
 )
 
-// preparing test structure for unit test below
-func prepareTestFile() (*gohocon.Config, error) {
-	result := `testMap = {
-		Field1 = ""
-	}
-	`
-	config, err := gohocon.ParseString(result)
-	if err != nil {
-		return nil, err
-	}
-	return config, nil
-}
+// preparing test structure for unit test below. It will be uncommented in the next issues while implementing infrastructures for writing unit tests
+// func prepareTestFile() (*gohocon.Config, error) {
+// 	result := `testMap = {
+// 		Field1 = ""
+// 	}
+// 	`
+// 	config, err := gohocon.ParseString(result)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return config, nil
+// }
 
 func TestHoconConfig_getElementName(t *testing.T) {
 	type fields struct {
