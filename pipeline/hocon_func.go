@@ -97,10 +97,7 @@ func (config *HoconConfig) getSliceFromHocon(context *structContext) infra.GoStr
 	setupSlice := reflect.MakeSlice(valueIndirect.Type(), 1, 1)
 	fmt.Println("[HOCON]: level: debug. type of first element at slice: ", setupSlice.Index(0).Kind())
 	switch setupSlice.Index(0).Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16:
-		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet"))
-
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
 		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet"))
 	case reflect.Int32:
 		neededValues, errLoading := config.configureFileParsed.GetInt32List(path)

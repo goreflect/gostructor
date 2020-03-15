@@ -33,6 +33,9 @@ func ConvertBetweenPrimitiveTypes(source reflect.Value, destination reflect.Valu
 	}
 }
 
-func ConvertBetweenComplexTypes(source reflect.Value, destination reflect.Value) {
-
+/*
+ConvertBetweenComplexTypes - converting between complex types like slice to slice, map to map
+*/
+func ConvertBetweenComplexTypes(source reflect.Value, destination reflect.Value) infra.GoStructorValue {
+	return infra.NewGoStructorNoValue(destination, errors.New("not implemented"))
 }
