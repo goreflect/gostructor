@@ -33,10 +33,13 @@ type (
 )
 
 const (
+<<<<<<< HEAD
 	SmartConfiguring = true
 	/*DirtyConfiguring - flag*/
 	DirtyConfiguring = false
 
+=======
+>>>>>>> start writing
 	sourceFileInDisk   = 0
 	sourceFielInServer = 1
 	sourceFileNotUsed  = 2
