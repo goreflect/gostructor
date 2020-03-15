@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 
 	gohocon "github.com/goreflect/go_hocon"
@@ -141,7 +140,7 @@ func (config *HoconConfig) getMapFromHocon(context *structContext) infra.GoStruc
 			Value:  reflect.New(valueIndirect.Type().Elem()),
 		})
 
-		parsedKey := parseMapType(valueIndirect.Type().Key(), reflect.ValueOf(key))
+		parsedKey := converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(key), reflect.Indirect(reflect.New(valueIndirect.Type().Key())))
 		if parsedKey.CheckIsValue() {
 			if value.CheckIsValue() {
 				makebleMap.SetMapIndex(reflect.Indirect(parsedKey.Value).Convert(valueIndirect.Type().Key()), value.Value)
@@ -154,34 +153,4 @@ func (config *HoconConfig) getMapFromHocon(context *structContext) infra.GoStruc
 
 	}
 	return infra.NewGoStructorTrueValue(makebleMap)
-}
-
-func parseMapType(needType reflect.Type, value reflect.Value) infra.GoStructorValue {
-	switch needType.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		parsedValue, errParsed := strconv.ParseInt(reflect.Indirect(value).Interface().(string), 10, 64)
-		if errParsed != nil {
-			return infra.NewGoStructorNoValue(nil, errParsed)
-		}
-
-		return infra.NewGoStructorTrueValue(reflect.ValueOf(parsedValue))
-	case reflect.String:
-		return infra.NewGoStructorTrueValue(value)
-	case reflect.Float32:
-		parsedValue, errParsed := strconv.ParseFloat(reflect.Indirect(value).Interface().(string), 32)
-		if errParsed != nil {
-			return infra.NewGoStructorNoValue(nil, errParsed)
-		}
-
-		return infra.NewGoStructorTrueValue(reflect.ValueOf(parsedValue))
-	case reflect.Float64:
-		parsedValue, errParsed := strconv.ParseFloat(reflect.Indirect(value).Interface().(string), 64)
-		if errParsed != nil {
-			return infra.NewGoStructorNoValue(nil, errParsed)
-		}
-
-		return infra.NewGoStructorTrueValue(reflect.ValueOf(parsedValue))
-	default:
-		return infra.NewGoStructorNoValue(nil, errors.New("can not set for map key by insert type: "+needType.Kind().String()))
-	}
 }
