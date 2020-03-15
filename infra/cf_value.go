@@ -1,4 +1,4 @@
-package pipeline
+package infra
 
 import "reflect"
 
@@ -26,7 +26,7 @@ func NewNotAValue(field interface{}, err error) *NotAValue {
 	}
 }
 
-/*NewGoStructorTrueValue - generate new GoStructorValue with completed preparing field
+/*infra.NewGoStructorTrueValue - generate new GoStructorValue with completed preparing field
  */
 func NewGoStructorTrueValue(value reflect.Value) GoStructorValue {
 	return GoStructorValue{
@@ -34,7 +34,7 @@ func NewGoStructorTrueValue(value reflect.Value) GoStructorValue {
 	}
 }
 
-/*NewGoStructorNoValue - generate new GoStructorValue with error handling value
+/*infra.NewGoStructorNoValue - generate new GoStructorValue with error handling value
  */
 func NewGoStructorNoValue(value interface{}, err error) GoStructorValue {
 	return GoStructorValue{

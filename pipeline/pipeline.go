@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/goreflect/gostructor/infra"
 	"github.com/goreflect/gostructor/tags"
 )
 
@@ -23,7 +24,7 @@ type (
 	Chain struct {
 		stageFunction IConfigure
 		// middleWares   IMiddleware realize in #7 issue
-		notAValues []*NotAValue
+		notAValues []*infra.NotAValue
 		next       *Chain
 	}
 

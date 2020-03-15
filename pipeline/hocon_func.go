@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	gohocon "github.com/goreflect/go_hocon"
+	"github.com/goreflect/gostructor/converters"
+	"github.com/goreflect/gostructor/infra"
 	"github.com/goreflect/gostructor/tags"
 )
 
@@ -32,7 +34,7 @@ func (config HoconConfig) getElementName(context *structContext) string {
 	return returnName
 }
 
-func (config HoconConfig) GetComplexType(context *structContext) GoStructorValue {
+func (config HoconConfig) GetComplexType(context *structContext) infra.GoStructorValue {
 	loaded, structValue := config.typeSafeLoadConfigFile(context)
 	if !loaded {
 		return *structValue
@@ -51,15 +53,12 @@ func (config HoconConfig) GetComplexType(context *structContext) GoStructorValue
 }
 
 // return true - if loaded config or successfully load config by filename
-func (config *HoconConfig) typeSafeLoadConfigFile(context *structContext) (bool, *GoStructorValue) {
+func (config *HoconConfig) typeSafeLoadConfigFile(context *structContext) (bool, *infra.GoStructorValue) {
 	if config.configureFileParsed == nil {
 		configParsed, err := gohocon.LoadConfig(config.fileName)
 		if err != nil {
-			return false, &GoStructorValue{notAValue: &NotAValue{
-				ValueAddress: context.Value.Interface(),
-				Error:        err,
-			},
-			}
+			notValue := infra.NewGoStructorNoValue(context.Value, err)
+			return false, &notValue
 		}
 		config.configureFileParsed = configParsed
 		return true, nil
@@ -67,7 +66,7 @@ func (config *HoconConfig) typeSafeLoadConfigFile(context *structContext) (bool,
 	return true, nil
 }
 
-func (config *HoconConfig) GetBaseType(context *structContext) GoStructorValue {
+func (config *HoconConfig) GetBaseType(context *structContext) infra.GoStructorValue {
 	configLoad, structValue := config.typeSafeLoadConfigFile(context)
 	if !configLoad {
 		return *structValue
@@ -75,78 +74,19 @@ func (config *HoconConfig) GetBaseType(context *structContext) GoStructorValue {
 	valueIndirect := reflect.Indirect(context.Value)
 	path := config.getElementName(context)
 	switch valueIndirect.Kind() {
-	case reflect.Int:
+	case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float32, reflect.Float64, reflect.Bool, reflect.String:
 		loadValue, errLoading := config.configureFileParsed.GetString(path)
 		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+			return infra.NewGoStructorNoValue(context.Value.Interface(), errLoading)
 		}
-		valueParsedFromConfigFile, errParsed := strconv.ParseInt(loadValue, 10, 64)
-		if errParsed != nil {
-			return NewGoStructorNoValue(valueIndirect, errParsed)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(int(valueParsedFromConfigFile)))
-	case reflect.Int8:
-		loadValue, errLoading := config.configureFileParsed.GetString(path)
-		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		valueParsedFromConfigFile, errParsed := strconv.ParseInt(loadValue, 10, 8)
-		if errParsed != nil {
-			return NewGoStructorNoValue(valueIndirect, errParsed)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(int8(valueParsedFromConfigFile)))
-	case reflect.Int16:
-		loadValue, errLoading := config.configureFileParsed.GetString(path)
-		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		valueParsedFromConfigFile, errParsed := strconv.ParseInt(loadValue, 10, 16)
-		if errParsed != nil {
-			return NewGoStructorNoValue(valueIndirect, errParsed)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(int16(valueParsedFromConfigFile)))
-	case reflect.Int32:
-		loadValue, errLoading := config.configureFileParsed.GetInt32(path)
-		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(loadValue))
-	case reflect.Int64:
-		loadValue, errLoading := config.configureFileParsed.GetInt64(path)
-		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(loadValue))
-	case reflect.Float32:
-		loadValue, errLoading := config.configureFileParsed.GetFloat32(path)
-		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(loadValue))
-	case reflect.Float64:
-		loadValue, errLoading := config.configureFileParsed.GetFloat64(path)
-		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(loadValue))
-	case reflect.Bool:
-		loadValue, errLoading := config.configureFileParsed.GetBoolean(path)
-		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(loadValue))
-	case reflect.String:
-		loadValue, errLoading := config.configureFileParsed.GetString(path)
-		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(loadValue))
+		return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(loadValue), context.Value)
 	default:
-		return NewGoStructorNoValue(context.Value.Interface(), errors.New("can not parsed inserted type in GetBaseType of configuration by hocon"))
+		return infra.NewGoStructorNoValue(context.Value.Interface(),
+			errors.New("can not parsed inserted type in GetBaseType of configuration by hocon"))
 	}
 }
 
-func (config *HoconConfig) getSliceFromHocon(context *structContext) GoStructorValue {
+func (config *HoconConfig) getSliceFromHocon(context *structContext) infra.GoStructorValue {
 	configLoad, structValue := config.typeSafeLoadConfigFile(context)
 	if !configLoad {
 		return *structValue
@@ -158,55 +98,25 @@ func (config *HoconConfig) getSliceFromHocon(context *structContext) GoStructorV
 	fmt.Println("[HOCON]: level: debug. type of first element at slice: ", setupSlice.Index(0).Kind())
 	switch setupSlice.Index(0).Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16:
-		return NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet"))
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet"))
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
-		return NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet"))
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet"))
 	case reflect.Int32:
 		neededValues, errLoading := config.configureFileParsed.GetInt32List(path)
 		if errLoading != nil {
 			fmt.Println("loading error: ", errLoading)
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+			return infra.NewGoStructorNoValue(context.Value.Interface(), errLoading)
 		}
-		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
-	case reflect.Int64:
-		neededValues, errLoading := config.configureFileParsed.GetInt64List(path)
-		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
-	case reflect.Float32:
-		neededValues, errLoading := config.configureFileParsed.GetFloat32List(path)
-		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
-	case reflect.Float64:
-		neededValues, errLoading := config.configureFileParsed.GetFloat64List(path)
-		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
-	case reflect.Bool:
-		neededValues, errLoading := config.configureFileParsed.GetBooleanList(path)
-		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(neededValues))
-	case reflect.String:
-		needValues, errLoading := config.configureFileParsed.GetStringList(path)
-		if errLoading != nil {
-			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		return NewGoStructorTrueValue(reflect.ValueOf(needValues))
+		return infra.NewGoStructorTrueValue(reflect.ValueOf(neededValues))
 	case reflect.Complex64, reflect.Complex128:
-		return NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet a complex values"))
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet a complex values"))
 	default:
-		return NewGoStructorNoValue(context.Value.Interface(), errors.New("can not recognize inserted type"))
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("can not recognize inserted type"))
 	}
 }
 
-func (config *HoconConfig) getMapFromHocon(context *structContext) GoStructorValue {
+func (config *HoconConfig) getMapFromHocon(context *structContext) infra.GoStructorValue {
 	configLoad, structValue := config.typeSafeLoadConfigFile(context)
 	if !configLoad {
 		return *structValue
@@ -218,11 +128,11 @@ func (config *HoconConfig) getMapFromHocon(context *structContext) GoStructorVal
 	fmt.Println("[HOCON]: level: debuf.value of map: ", valueIndirect.Type().Elem().Kind())
 	getValue, errLoading := config.configureFileParsed.GetValue(path)
 	if errLoading != nil {
-		return NewGoStructorNoValue(context.Value.Interface(), errLoading)
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errLoading)
 	}
 	object, errLoad := getValue.GetObject()
 	if errLoad != nil {
-		return NewGoStructorNoValue(context.Value.Interface(), errLoad)
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errLoad)
 	}
 	keys := object.GetKeys()
 	makebleMap := reflect.MakeMapWithSize(valueIndirect.Type(), 0)
@@ -240,42 +150,42 @@ func (config *HoconConfig) getMapFromHocon(context *structContext) GoStructorVal
 			if value.CheckIsValue() {
 				makebleMap.SetMapIndex(reflect.Indirect(parsedKey.Value).Convert(valueIndirect.Type().Key()), value.Value)
 			} else {
-				return NewGoStructorNoValue(parsedKey.Value, errors.New("can not parsed value for map"))
+				return infra.NewGoStructorNoValue(parsedKey.Value, errors.New("can not parsed value for map"))
 			}
 		} else {
-			return NewGoStructorNoValue(parsedKey.Value, errors.New("can not parsed key for map"))
+			return infra.NewGoStructorNoValue(parsedKey.Value, errors.New("can not parsed key for map"))
 		}
 
 	}
-	return NewGoStructorTrueValue(makebleMap)
+	return infra.NewGoStructorTrueValue(makebleMap)
 }
 
-func parseMapType(needType reflect.Type, value reflect.Value) GoStructorValue {
+func parseMapType(needType reflect.Type, value reflect.Value) infra.GoStructorValue {
 	switch needType.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		parsedValue, errParsed := strconv.ParseInt(reflect.Indirect(value).Interface().(string), 10, 64)
 		if errParsed != nil {
-			return NewGoStructorNoValue(nil, errParsed)
+			return infra.NewGoStructorNoValue(nil, errParsed)
 		}
 
-		return NewGoStructorTrueValue(reflect.ValueOf(parsedValue))
+		return infra.NewGoStructorTrueValue(reflect.ValueOf(parsedValue))
 	case reflect.String:
-		return NewGoStructorTrueValue(value)
+		return infra.NewGoStructorTrueValue(value)
 	case reflect.Float32:
 		parsedValue, errParsed := strconv.ParseFloat(reflect.Indirect(value).Interface().(string), 32)
 		if errParsed != nil {
-			return NewGoStructorNoValue(nil, errParsed)
+			return infra.NewGoStructorNoValue(nil, errParsed)
 		}
 
-		return NewGoStructorTrueValue(reflect.ValueOf(parsedValue))
+		return infra.NewGoStructorTrueValue(reflect.ValueOf(parsedValue))
 	case reflect.Float64:
 		parsedValue, errParsed := strconv.ParseFloat(reflect.Indirect(value).Interface().(string), 64)
 		if errParsed != nil {
-			return NewGoStructorNoValue(nil, errParsed)
+			return infra.NewGoStructorNoValue(nil, errParsed)
 		}
 
-		return NewGoStructorTrueValue(reflect.ValueOf(parsedValue))
+		return infra.NewGoStructorTrueValue(reflect.ValueOf(parsedValue))
 	default:
-		return NewGoStructorNoValue(nil, errors.New("can not set for map key by insert type: "+needType.Kind().String()))
+		return infra.NewGoStructorNoValue(nil, errors.New("can not set for map key by insert type: "+needType.Kind().String()))
 	}
 }
