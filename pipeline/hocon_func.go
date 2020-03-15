@@ -80,7 +80,7 @@ func (config *HoconConfig) GetBaseType(context *structContext) GoStructorValue {
 		if errLoading != nil {
 			return NewGoStructorNoValue(context.Value.Interface(), errLoading)
 		}
-		valueParsedFromConfigFile, errParsed := strconv.ParseInt(loadValue, 10, 32)
+		valueParsedFromConfigFile, errParsed := strconv.ParseInt(loadValue, 10, 64)
 		if errParsed != nil {
 			return NewGoStructorNoValue(valueIndirect, errParsed)
 		}
