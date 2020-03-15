@@ -190,7 +190,8 @@ func Test_convertToInt8FromStringSuccess(t *testing.T) {
 				source:      reflect.ValueOf("111.1"),
 				destination: reflect.ValueOf(int8(0)),
 			},
-			want: pipeline.NewGoStructorNoValue(reflect.ValueOf(int8(0)), errors.New("can not converted to this type: "+reflect.Int8.String())),
+			want: pipeline.NewGoStructorNoValue(reflect.ValueOf(int8(0)),
+				errors.New("can not converted to this type: "+reflect.Int8.String())),
 		},
 		{
 			name: "convert from struct to int8 failed",
@@ -198,7 +199,8 @@ func Test_convertToInt8FromStringSuccess(t *testing.T) {
 				source:      reflect.ValueOf(struct{ fieldTest string }{fieldTest: "test"}),
 				destination: destination,
 			},
-			want: pipeline.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+			want: pipeline.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+
+				reflect.Struct.String()+" beacuse this type not supported")),
 		},
 	}
 	for _, tt := range tests {
@@ -210,7 +212,7 @@ func Test_convertToInt8FromStringSuccess(t *testing.T) {
 	}
 }
 
-func Test_convertToInt16(t *testing.T) {
+func Test_convertToInt16FromString(t *testing.T) {
 	type args struct {
 		source      reflect.Value
 		destination reflect.Value
@@ -228,11 +230,383 @@ func Test_convertToInt16(t *testing.T) {
 			},
 			want: pipeline.NewGoStructorTrueValue(reflect.ValueOf(int16(1234))),
 		},
+		// {
+		// 	name: "convert from",
+		// }
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt16(tt.args.source, tt.args.destination); !reflect.DeepEqual(got, tt.want) {
+			if got := convertToInt16(tt.args.source, tt.args.destination); got.Value.Interface().(int16) != int16(1234) {
 				t.Errorf("convertToInt16() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_convertToInt16FromInt(t *testing.T) {
+	type args struct {
+		source      reflect.Value
+		destination reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want pipeline.GoStructorValue
+	}{
+		{
+			name: "convert from int into int16 success",
+			args: args{
+				source:      reflect.ValueOf(int(1234)),
+				destination: reflect.ValueOf(int16(0)),
+			},
+			want: pipeline.NewGoStructorTrueValue(reflect.ValueOf(int16(1234))),
+		},
+		// {
+		// 	name: "convert from",
+		// }
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertToInt16(tt.args.source, tt.args.destination); got.Value.Interface().(int16) != int16(1234) {
+				t.Errorf("convertToInt16() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_convertToInt16FromStruct(t *testing.T) {
+	type args struct {
+		source      reflect.Value
+		destination reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want pipeline.GoStructorValue
+	}{
+		{
+			name: "convert from struct into int16 failed",
+			args: args{
+				source:      reflect.ValueOf(struct{ field string }{field: "test"}),
+				destination: reflect.ValueOf(int16(0)),
+			},
+			want: pipeline.NewGoStructorNoValue(reflect.ValueOf(int16(0)),
+				errors.New("can not converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+		},
+		// {
+		// 	name: "convert from",
+		// }
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertToInt16(tt.args.source, tt.args.destination); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
+				t.Log("converted error: ", got.GetNotAValue().Error.Error())
+				t.Log("expected error: ", tt.want.GetNotAValue().Error)
+				t.Errorf("convertToInt16() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_convertToInt32(t *testing.T) {
+	type args struct {
+		source      reflect.Value
+		destination reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want pipeline.GoStructorValue
+	}{
+		{
+			name: "convert to int32 from string",
+			args: args{
+				source:      reflect.ValueOf("1234"),
+				destination: reflect.ValueOf(int32(0)),
+			},
+			want: pipeline.NewGoStructorTrueValue(reflect.ValueOf(int32(1234))),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertToInt32(tt.args.source, tt.args.destination); got.Value.Interface().(int32) != tt.want.Value.Interface().(int32) {
+				t.Errorf("convertToInt32() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_convertToInt32FromInt(t *testing.T) {
+	type args struct {
+		source      reflect.Value
+		destination reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want pipeline.GoStructorValue
+	}{
+		{
+			name: "convert to int32 from int",
+			args: args{
+				source:      reflect.ValueOf(int(1234)),
+				destination: reflect.ValueOf(int32(0)),
+			},
+			want: pipeline.NewGoStructorTrueValue(reflect.ValueOf(int32(1234))),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertToInt32(tt.args.source, tt.args.destination); got.Value.Interface().(int32) != tt.want.Value.Interface().(int32) {
+				t.Errorf("convertToInt32() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_convertToInt32FromInt64(t *testing.T) {
+	type args struct {
+		source      reflect.Value
+		destination reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want pipeline.GoStructorValue
+	}{
+		{
+			name: "convert to int32 from int",
+			args: args{
+				source:      reflect.ValueOf(int64(1234123123123123132)),
+				destination: reflect.ValueOf(int32(0)),
+			},
+			want: pipeline.NewGoStructorTrueValue(reflect.ValueOf(int32(450458556))),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertToInt32(tt.args.source, tt.args.destination); got.Value.Interface().(int32) != tt.want.Value.Interface().(int32) {
+				t.Errorf("convertToInt32() = %v, want %v", got.Value.Interface(), tt.want.Value.Interface())
+			}
+		})
+	}
+}
+
+func Test_convertToInt32FromStruct(t *testing.T) {
+	type args struct {
+		source      reflect.Value
+		destination reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want pipeline.GoStructorValue
+	}{
+		{
+			name: "convert to int32 from struct",
+			args: args{
+				source:      reflect.ValueOf(struct{ field string }{field: "test"}),
+				destination: reflect.ValueOf(int32(0)),
+			},
+			want: pipeline.NewGoStructorNoValue(reflect.ValueOf(int32(0)), errors.New("can not converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertToInt32(tt.args.source, tt.args.destination); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
+				t.Errorf("convertToInt32() = %v, want %v", got.Value.Interface(), tt.want.Value.Interface())
+			}
+		})
+	}
+}
+
+func Test_convertToInt64(t *testing.T) {
+	type args struct {
+		source      reflect.Value
+		destination reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want pipeline.GoStructorValue
+	}{
+		{
+			name: "convert from string into int64",
+			args: args{
+				source:      reflect.ValueOf("12345"),
+				destination: reflect.ValueOf(int64(0)),
+			},
+			want: pipeline.NewGoStructorTrueValue(reflect.ValueOf(int64(12345))),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertToInt64(tt.args.source, tt.args.destination); got.Value.Interface().(int64) != tt.want.Value.Interface().(int64) {
+				t.Errorf("convertToInt64() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_convertToInt64FromInt(t *testing.T) {
+	type args struct {
+		source      reflect.Value
+		destination reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want pipeline.GoStructorValue
+	}{
+		{
+			name: "convert from int into int64",
+			args: args{
+				source:      reflect.ValueOf(int(12345)),
+				destination: reflect.ValueOf(int64(0)),
+			},
+			want: pipeline.NewGoStructorTrueValue(reflect.ValueOf(int64(12345))),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertToInt64(tt.args.source, tt.args.destination); got.Value.Interface().(int64) != tt.want.Value.Interface().(int64) {
+				t.Errorf("convertToInt64() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_convertToInt64FromStruct(t *testing.T) {
+	type args struct {
+		source      reflect.Value
+		destination reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want pipeline.GoStructorValue
+	}{
+		{
+			name: "convert from struct into int64",
+			args: args{
+				source:      reflect.ValueOf(struct{ field string }{field: "test"}),
+				destination: reflect.ValueOf(int64(0)),
+			},
+			want: pipeline.NewGoStructorNoValue(reflect.ValueOf(int64(0)), errors.New("can not converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertToInt64(tt.args.source, tt.args.destination); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
+				t.Errorf("convertToInt64() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_convertToBool(t *testing.T) {
+	type args struct {
+		source      reflect.Value
+		destination reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want pipeline.GoStructorValue
+	}{
+
+		{
+			name: "convert to bool from string",
+			args: args{
+				source:      reflect.ValueOf("true"),
+				destination: reflect.ValueOf(false),
+			},
+			want: pipeline.NewGoStructorTrueValue(reflect.ValueOf(true)),
+		},
+		{
+			name: "convert to bool from string",
+			args: args{
+				source:      reflect.ValueOf("true1"),
+				destination: reflect.ValueOf(false),
+			},
+			want: pipeline.NewGoStructorNoValue(reflect.ValueOf(false), errors.New("can not be converted from "+reflect.String.String()+" into bool")),
+		},
+		{
+			name: "convert from bool to bool",
+			args: args{
+				source:      reflect.ValueOf(true),
+				destination: reflect.ValueOf(false),
+			},
+			want: pipeline.NewGoStructorTrueValue(reflect.ValueOf(true)),
+		},
+		{
+			name: "error convert from struct into bool",
+			args: args{
+				source:      reflect.ValueOf(struct{ field string }{field: "test"}),
+				destination: reflect.ValueOf(false),
+			},
+			want: pipeline.NewGoStructorNoValue(reflect.ValueOf(false), errors.New("can not converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertToBool(tt.args.source, tt.args.destination); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("convertToBool() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_convertToBoolFromString(t *testing.T) {
+	type args struct {
+		source      reflect.Value
+		destination reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want pipeline.GoStructorValue
+	}{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertToBool(tt.args.source, tt.args.destination); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("convertToBool() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_convertToString(t *testing.T) {
+	type args struct {
+		source      reflect.Value
+		destination reflect.Value
+	}
+	tests := []struct {
+		name string
+		args args
+		want pipeline.GoStructorValue
+	}{
+		{
+			name: "convert to string from string",
+			args: args{
+				source:      reflect.ValueOf("1234"),
+				destination: reflect.ValueOf(""),
+			},
+			want: pipeline.NewGoStructorTrueValue(reflect.ValueOf("1234")),
+		},
+		{
+			name: "convert from int to string",
+			args: args{
+				source:      reflect.ValueOf(1234),
+				destination: reflect.ValueOf(""),
+			},
+			want: pipeline.NewGoStructorTrueValue(reflect.ValueOf("1234")),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertToString(tt.args.source, tt.args.destination); got.Value.String() != tt.want.Value.String() {
+				t.Errorf("convertToString() = %v, want %v", got, tt.want)
 			}
 		})
 	}

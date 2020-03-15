@@ -102,7 +102,7 @@ func convertToInt32(source reflect.Value, destination reflect.Value) pipeline.Go
 		if errorConvert != nil {
 			return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted to this type: "+destination.Kind().String()))
 		}
-		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(int8(convertedValue)))
+		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(int32(convertedValue)))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int32 type")
 		if source.Type().ConvertibleTo(destination.Type()) {
@@ -122,7 +122,7 @@ func convertToInt64(source reflect.Value, destination reflect.Value) pipeline.Go
 		if errorConvert != nil {
 			return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted to this type: "+destination.Kind().String()))
 		}
-		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(int8(convertedValue)))
+		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(int64(convertedValue)))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int64 type")
 		if source.Type().ConvertibleTo(destination.Type()) {
@@ -151,6 +151,8 @@ func convertToBool(source reflect.Value, destination reflect.Value) pipeline.GoS
 
 func convertToString(source reflect.Value, destination reflect.Value) pipeline.GoStructorValue {
 	switch source.Kind() {
+	case reflect.String:
+		return pipeline.NewGoStructorTrueValue(source)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float32, reflect.Float64, reflect.Bool:
 		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(source.String()))
 	default:
