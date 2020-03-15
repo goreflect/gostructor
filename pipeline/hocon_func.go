@@ -79,7 +79,7 @@ func (config *HoconConfig) GetBaseType(context *structContext) infra.GoStructorV
 		if errLoading != nil {
 			return infra.NewGoStructorNoValue(context.Value.Interface(), errLoading)
 		}
-		return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(loadValue), context.Value)
+		return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(loadValue), reflect.Indirect(context.Value))
 	default:
 		return infra.NewGoStructorNoValue(context.Value.Interface(),
 			errors.New("can not parsed inserted type in GetBaseType of configuration by hocon"))
@@ -96,21 +96,20 @@ func (config *HoconConfig) getSliceFromHocon(context *structContext) infra.GoStr
 	valueIndirect := reflect.Indirect(context.Value)
 	setupSlice := reflect.MakeSlice(valueIndirect.Type(), 1, 1)
 	fmt.Println("[HOCON]: level: debug. type of first element at slice: ", setupSlice.Index(0).Kind())
-	switch setupSlice.Index(0).Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
-		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet"))
-	case reflect.Int32:
-		neededValues, errLoading := config.configureFileParsed.GetInt32List(path)
+	// get string list
+	valuesFromHocon, errGetting := config.configureFileParsed.GetStringList(path)
+	if errGetting != nil {
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errGetting)
+	}
+	if setupSlice.Index(0).Kind() == reflect.Bool {
+		neededValues, errLoading := config.configureFileParsed.GetBooleanList(path)
 		if errLoading != nil {
-			fmt.Println("loading error: ", errLoading)
 			return infra.NewGoStructorNoValue(context.Value.Interface(), errLoading)
 		}
 		return infra.NewGoStructorTrueValue(reflect.ValueOf(neededValues))
-	case reflect.Complex64, reflect.Complex128:
-		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("not supported yet a complex values"))
-	default:
-		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("can not recognize inserted type"))
 	}
+	convertedSlice := converters.ConvertBetweenComplexTypes(reflect.ValueOf(valuesFromHocon), valueIndirect)
+	return convertedSlice
 }
 
 func (config *HoconConfig) getMapFromHocon(context *structContext) infra.GoStructorValue {

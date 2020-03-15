@@ -148,3 +148,39 @@ func convertToString(source reflect.Value, destination reflect.Value) infra.GoSt
 		return infra.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
 	}
 }
+
+func convertToFloat32(source reflect.Value, destination reflect.Value) infra.GoStructorValue {
+	switch source.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return infra.NewGoStructorTrueValue(reflect.ValueOf(float32(source.Int())))
+	case reflect.String:
+		parsed, errParsed := strconv.ParseFloat(source.String(), 32)
+		if errParsed != nil {
+			return infra.NewGoStructorNoValue(destination, errParsed)
+		}
+		return infra.NewGoStructorTrueValue(reflect.ValueOf(float32(parsed)))
+	case reflect.Float32:
+		return infra.NewGoStructorTrueValue(reflect.ValueOf(float32(source.Float())))
+	case reflect.Float64:
+		return infra.NewGoStructorNoValue(destination, errors.New("can not convert from float64 into float32"))
+	default:
+		return infra.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+	}
+}
+
+func convertToFloat64(source reflect.Value, destination reflect.Value) infra.GoStructorValue {
+	switch source.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return infra.NewGoStructorTrueValue(reflect.ValueOf(float64(source.Int())))
+	case reflect.String:
+		parsed, errParsed := strconv.ParseFloat(source.String(), 64)
+		if errParsed != nil {
+			return infra.NewGoStructorNoValue(destination, errParsed)
+		}
+		return infra.NewGoStructorTrueValue(reflect.ValueOf(parsed))
+	case reflect.Float32, reflect.Float64:
+		return infra.NewGoStructorTrueValue(reflect.ValueOf(source.Float()))
+	default:
+		return infra.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+	}
+}

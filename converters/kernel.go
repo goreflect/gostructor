@@ -26,6 +26,10 @@ func ConvertBetweenPrimitiveTypes(source reflect.Value, destination reflect.Valu
 		return convertToInt64(source, destination)
 	case reflect.String:
 		return convertToString(source, destination)
+	case reflect.Float32:
+		return convertToFloat32(source, destination)
+	case reflect.Float64:
+		return convertToFloat64(source, destination)
 	case reflect.Bool:
 		return convertToBool(source, destination)
 	default:
@@ -37,5 +41,10 @@ func ConvertBetweenPrimitiveTypes(source reflect.Value, destination reflect.Valu
 ConvertBetweenComplexTypes - converting between complex types like slice to slice, map to map
 */
 func ConvertBetweenComplexTypes(source reflect.Value, destination reflect.Value) infra.GoStructorValue {
-	return infra.NewGoStructorNoValue(destination, errors.New("not implemented"))
+	switch destination.Kind() {
+	case reflect.Slice:
+		return convertSlice(source, destination)
+	default:
+		return infra.NewGoStructorNoValue(destination, errors.New("not implemented"))
+	}
 }
