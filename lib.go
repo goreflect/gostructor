@@ -4,7 +4,9 @@ import (
 	"github.com/goreflect/gostructor/pipeline"
 )
 
-// ConfigureEasy - default pipeline setup for configure your structure
+/*
+ConfigureEasy - default pipeline setup for configure your structure
+*/
 func ConfigureEasy(
 	structure interface{},
 	fileName string) (interface{}, error) {
@@ -15,7 +17,9 @@ func ConfigureEasy(
 	}, pipeline.EmptyAdditionalPrefix)
 }
 
-// ConfigureSetup - pipeline with your settings stages for your structure
+/*
+ConfigureSetup - pipeline with your settings stages for your structure
+*/
 func ConfigureSetup(
 	structure interface{},
 	fileName string,

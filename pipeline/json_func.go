@@ -10,10 +10,10 @@ type JsonConfig struct {
 
 func (json JsonConfig) GetComplexType(context *structContext) GoStructorValue {
 	fmt.Println("Level: Debug. Json configurator source start.")
-	return NewGoStructorNoValue(context.Value.Interface(), errors.New("getcomplext type from json not implement"))
+	return NewGoStructorNoValue(context.Value.Interface(), errors.New("getcomplext type from json not implemented"))
 }
 
 func (json JsonConfig) GetBaseType(context *structContext) GoStructorValue {
 	fmt.Println("Level: Debug. Json configurator source start.")
-	return NewGoStructorNoValue(context.Value.Interface(), errors.New("getbase type from json not implement"))
+	return NewGoStructorNoValue(context.Value.Interface(), errors.New("getbase type from json not implemented"))
 }
