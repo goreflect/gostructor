@@ -153,8 +153,22 @@ func convertToString(source reflect.Value, destination reflect.Value) pipeline.G
 	switch source.Kind() {
 	case reflect.String:
 		return pipeline.NewGoStructorTrueValue(source)
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float32, reflect.Float64, reflect.Bool:
-		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(source.String()))
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(
+			strconv.FormatInt(source.Int(), 10),
+		))
+	case reflect.Float32:
+		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(
+			strconv.FormatFloat(source.Float(), 'E', -1, 32),
+		))
+	case reflect.Float64:
+		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(
+			strconv.FormatFloat(source.Float(), 'E', -1, 64),
+		))
+	case reflect.Bool:
+		return pipeline.NewGoStructorTrueValue(reflect.ValueOf(
+			strconv.FormatBool(source.Bool()),
+		))
 	default:
 		return pipeline.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
 	}
