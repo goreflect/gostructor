@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/goreflect/gostructor/pipeline"
+	"github.com/stretchr/testify/assert"
 )
 
 type (
@@ -14,11 +15,12 @@ type (
 		Field3 []float32
 		Field4 []bool `cf_hocon:"field4"`
 	}
+	NestedStruct1 struct {
+		Field1 string `cf_hocon:"test1"`
+	}
 	MyStruct2 struct {
-		NestedStruct1 struct {
-			Field1 string `cf_hocon:"test1"`
-		} `cf_hocon:"tururur"`
-		MyMap map[int]string `cf_hocon:"MyMap"`
+		NestedStruct1 NestedStruct1  `cf_hocon:"tururur"`
+		MyMap         map[int]string `cf_hocon:"MyMap"`
 	}
 
 	MyStruct3 struct {
@@ -30,7 +32,7 @@ type (
 	MyStruct4 struct {
 		NestedStruct4 struct {
 			Field1 string
-		} `cf_hocon:"node=planZ"`
+		} `cf_hocon:"node=planC.tururu.tratatat.planZ"`
 	}
 )
 
@@ -39,7 +41,12 @@ func Test_parseHocon1(t *testing.T) {
 	if err != nil {
 		t.Error("error while configuring: ", err)
 	}
-	t.Log("parsed structure: ", myStruct.(*MyStruct))
+	assert.Equal(t, &MyStruct{
+		Field1: []string{"test1", "test2", "test3"},
+		Field2: []int32{112312323, 2, 123123123, 4},
+		Field3: []float32{1.2, 1.5, 1.7, 11.2},
+		Field4: []bool{true, false, false, true},
+	}, myStruct.(*MyStruct))
 }
 
 func Test_parseHocon(t *testing.T) {
@@ -47,7 +54,16 @@ func Test_parseHocon(t *testing.T) {
 	if err != nil {
 		t.Error("error while configuring: ", err)
 	}
-	fmt.Println("parsed strcture: ", myStruct)
+	assert.Equal(t, &MyStruct2{
+		NestedStruct1: NestedStruct1{
+			Field1: "testvalueInNestedStructure",
+		},
+		MyMap: map[int]string{
+			1: "test",
+			2: "test2",
+			3: "test3",
+		},
+	}, myStruct.(*MyStruct2))
 }
 
 func Test_parseHoconWithNodeNotation(t *testing.T) {
@@ -55,7 +71,13 @@ func Test_parseHoconWithNodeNotation(t *testing.T) {
 	if err != nil {
 		fmt.Println("error while configuring: ", err)
 	}
-	fmt.Println("parsed structure: ", mystruct)
+	assert.Equal(t, &MyStruct3{
+		NestedStruct2: struct {
+			Field1 string "cf_hocon:\"test1\""
+		}{
+			Field1: "testValueByNodeInTag",
+		},
+	}, mystruct.(*MyStruct3))
 }
 
 func Test_parseHoconWithNodeNotation2(t *testing.T) {
@@ -63,5 +85,9 @@ func Test_parseHoconWithNodeNotation2(t *testing.T) {
 	if err != nil {
 		fmt.Println("error while configuring: ", err)
 	}
-	fmt.Println("parsed structure: ", myStruct)
+	assert.Equal(t, &MyStruct4{
+		NestedStruct4: struct{ Field1 string }{
+			Field1: "testValueByTest",
+		},
+	}, myStruct.(*MyStruct4))
 }

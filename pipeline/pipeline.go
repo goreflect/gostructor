@@ -53,9 +53,17 @@ const (
 	EmptyAdditionalPrefix = ""
 )
 
-// bool - skip preview prefix or not
+// bool - skip preview prefix or not (if user setup node it is return true, if user setup path that's return false)
+// TODO: add error interface while user setup not knowing type of tags. And maybe if user make a mistake (this case need for autocorrection or autofill)
 func (context structContext) getFieldName() (bool, string) {
-	for _, val := range []string{tags.TagHocon, tags.TagJson, tags.TagYaml, tags.TagDefault, tags.TagEnvironment, tags.TagConfigServer, tags.TagHashiCorpVault} {
+	for _, val := range []string{
+		tags.TagHocon,
+		tags.TagJson,
+		tags.TagYaml,
+		tags.TagDefault,
+		tags.TagEnvironment,
+		tags.TagConfigServer,
+		tags.TagHashiCorpVault} {
 		tag := context.StructField.Tag.Get(val)
 		if tag == "" {
 			continue
@@ -64,6 +72,7 @@ func (context structContext) getFieldName() (bool, string) {
 		if len(tagCustomer) == 0 {
 			continue
 		}
+		// TODO: change this case by add for range case checking tag custom (if user setup node and path, it's should be return node.path way)
 		for _, tagCustom := range []string{tags.TagCustomerNode, tags.TagCustomerPath} {
 			if tagCustomer[0] == tagCustom {
 				if tagCustomer[1] != "" {
@@ -117,14 +126,14 @@ func getChainByIdentifier(
 		return &HoconConfig{fileName: fileName}, sourceFileInDisk, nil
 	case FunctionSetupJson:
 		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
-			"json configurator source. Not realized yet")
+			"json configurator source. Not implemented yet")
 	case FunctionSetupYaml:
 		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
-			"yaml configurator source. Not realized yet")
+			"yaml configurator source. Not implemented yet")
 	case FunctionSetupVault:
-		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "vault configurator source. Not realized yet")
+		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "vault configurator source. Not implemented yet")
 	case FunctionSetupConfigServer:
-		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not realized yet")
+		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not implemented yet")
 	default:
 		return nil, sourceFileNotUsed, errors.New(notSupportedTypeError +
 			"you should search in lib available type configurator source or you are welcome to contribute.")
@@ -194,6 +203,16 @@ func (pipeline *Pipeline) setFile(fileName string) error {
 	return nil
 }
 
+// func (pipeline *Pipeline) getStructName(contextPrefix structContext, value reflect.Value) (string, error) {
+
+// 	if contextPrefix.Prefix != "" {
+// 		contextPrefix.StructField.Tag.Get()
+// 	} else {
+// 		return value.Type().Name(), nil
+// 	}
+// 	return "", nil
+// }
+
 func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 	if err := pipeline.checkValueTypeIsPointer(context.Value); err != nil {
 		return err
@@ -201,11 +220,8 @@ func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 	valuePtr := reflect.Indirect(context.Value)
 	switch valuePtr.Kind() {
 	case reflect.Struct:
-		newPrefix := valuePtr.Type().Name()
 		if context.Prefix == "" {
-			context.Prefix += newPrefix
-		} else {
-			context.Prefix += "." + newPrefix
+			context.Prefix += valuePtr.Type().Name()
 		}
 		for i := 0; i < valuePtr.NumField(); i++ {
 			prefix := context.Prefix
