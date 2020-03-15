@@ -37,12 +37,15 @@ type (
 )
 
 const (
+<<<<<<< HEAD
 	/*SmartConfiguring - flag which inform library need for start analyzing all tags in derived structure for setting function types of configuring structure
 	 */
 	SmartConfiguring = true
 	/*DirtyConfiguring - flag*/
 	DirtyConfiguring = false
 
+=======
+>>>>>>> start writing
 	sourceFileInDisk   = 0
 	sourceFielInServer = 1
 	sourceFileNotUsed  = 2
@@ -125,10 +128,17 @@ func getChainByIdentifier(
 	case infra.FunctionSetupHocon:
 		return &HoconConfig{fileName: fileName}, sourceFileInDisk, nil
 	case infra.FunctionSetupJson:
+<<<<<<< HEAD
 		return &JSONConfig{}, sourceFileInDisk, errors.New(notSupportedTypeError +
 			"json configurator source. Not implemented yet")
 	case infra.FunctionSetupYaml:
 		return &YamlConfig{}, sourceFileInDisk, errors.New(notSupportedTypeError +
+=======
+		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
+			"json configurator source. Not implemented yet")
+	case infra.FunctionSetupYaml:
+		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
+>>>>>>> start writing
 			"yaml configurator source. Not implemented yet")
 	case infra.FunctionSetupVault:
 		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "vault configurator source. Not implemented yet")
