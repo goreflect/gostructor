@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	gohocon "github.com/goreflect/go_hocon"
 	"github.com/goreflect/gostructor/converters"
 	"github.com/goreflect/gostructor/infra"
 	"github.com/goreflect/gostructor/tags"
