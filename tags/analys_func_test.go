@@ -49,6 +49,7 @@ func TestGetFunctionTypes(t *testing.T) {
 				infra.FunctionSetupHocon,
 				infra.FunctionSetupDefault,
 				infra.FunctionSetupVault,
+				infra.FunctionSetupJson,
 			},
 		},
 	}
