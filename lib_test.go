@@ -90,6 +90,21 @@ func Test_parseHoconWithNodeNotation(t *testing.T) {
 
 func Test_parseHoconWithNodeNotation2(t *testing.T) {
 	myStruct, err := ConfigureSetup(&MyStruct4{}, "./test_configs/testmap.hocon", "", []infra.FuncType{infra.FunctionSetupHocon})
+<<<<<<< HEAD
+=======
+	if err != nil {
+		fmt.Println("error while configuring: ", err)
+	}
+	assert.Equal(t, &MyStruct4{
+		NestedStruct4: struct{ Field1 string }{
+			Field1: "testValueByTest",
+		},
+	}, myStruct.(*MyStruct4))
+}
+
+func Test_smartConfigure(t *testing.T) {
+	myStruct, err := ConfigureSmart(&MyStruct4{}, "./test_configs/testmap.hocon")
+>>>>>>> add logic for getting information about tags and fixture
 	if err != nil {
 		fmt.Println("error while configuring: ", err)
 	}

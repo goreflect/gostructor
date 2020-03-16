@@ -38,6 +38,7 @@ type (
 
 const (
 <<<<<<< HEAD
+<<<<<<< HEAD
 	/*SmartConfiguring - flag which inform library need for start analyzing all tags in derived structure for setting function types of configuring structure
 	 */
 	SmartConfiguring = true
@@ -46,6 +47,11 @@ const (
 
 =======
 >>>>>>> start writing
+=======
+	SmartConfiguring = true
+	DurtyConfiguring = false
+
+>>>>>>> add logic for getting information about tags and fixture
 	sourceFileInDisk   = 0
 	sourceFielInServer = 1
 	sourceFileNotUsed  = 2
