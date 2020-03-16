@@ -28,10 +28,10 @@ func TestGetFunctionTypes(t *testing.T) {
 				}{},
 			},
 			want: []infra.FuncType{
-				infra.FunctionSetupDefault,
 				infra.FunctionSetupHocon,
-				infra.FunctionSetupJson,
+				infra.FunctionSetupDefault,
 				infra.FunctionSetupVault,
+				infra.FunctionSetupJson,
 			},
 		},
 	}
