@@ -12,18 +12,25 @@ GetFunctionTypes - return slice of functions which should configuring sourceStru
 func GetFunctionTypes(sourceStruct interface{}) []infra.FuncType {
 	summirize := []infra.FuncType{}
 	value := reflect.Indirect(reflect.ValueOf(sourceStruct))
-	switch value.Kind() {
+	for i := 0; i < value.NumField(); i++ {
+		summirize = append(summirize, recurseStructField(value.Type().Field(i))...)
+	}
+	return summirize
+}
+
+func recurseStructField(structField reflect.StructField) []infra.FuncType {
+	summirize := []infra.FuncType{}
+	summirize = append(CheckFuncsByTags(structField))
+	switch structField.Type.Kind() {
 	case reflect.Struct:
-		for i := 0; i < value.NumField(); i++ {
-			summirize = GetFunctionTypes(value.Type().Field(i))
+		for i := 0; i < structField.Type.NumField(); i++ {
+			summirize = append(summirize, recurseStructField(structField.Type.Field(i))...)
 		}
-	default:
 	}
 	return summirize
 }
 
 func CheckFuncsByTags(structField reflect.StructField) []infra.FuncType {
-
 	summirize := []infra.FuncType{}
 	for _, value := range []string{
 		TagYaml,
@@ -38,7 +45,8 @@ func CheckFuncsByTags(structField reflect.StructField) []infra.FuncType {
 		if tagInField == "" {
 			continue
 		} else {
-			summirize = append(summirize, GetFuncTypeByTag(tagInField))
+			// TODO: add additional anaylys tag values for middlewares functions and others
+			summirize = append(summirize, GetFuncTypeByTag(value))
 		}
 	}
 	return summirize
@@ -61,6 +69,6 @@ func GetFuncTypeByTag(tagName string) infra.FuncType {
 	case TagJson:
 		return infra.FunctionSetupJson
 	default:
-		return infra.FuncType(-1)
+		return infra.FunctionNotExist
 	}
 }
