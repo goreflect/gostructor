@@ -33,6 +33,9 @@ type (
 )
 
 const (
+	SmartConfiguring = true
+	DurtyConfiguring = false
+
 	sourceFileInDisk   = 0
 	sourceFielInServer = 1
 	sourceFileNotUsed  = 2
@@ -137,7 +140,9 @@ func Configure(
 	// functions will be configure structure
 	pipelineChaines []infra.FuncType,
 	// prefix by getting data from source placed in entry
-	prefix string) (result interface{}, err error) {
+	prefix string,
+	// smartConfigure - analys structure by tags for find methods which should use for configuration
+	smartConfigure bool) (result interface{}, err error) {
 
 	defer func() {
 		if e := recover(); e != nil {
@@ -146,7 +151,15 @@ func Configure(
 		}
 	}()
 
-	pipeline := getFunctionChain(fileName, pipelineChaines)
+	var pipeline *Pipeline
+
+	if smartConfigure {
+		analysedChains := tags.GetFunctionTypes(structure)
+		pipeline = getFunctionChain(fileName, analysedChains)
+	} else {
+		pipeline = getFunctionChain(fileName, pipelineChaines)
+	}
+
 	// currentChain := pipeline.chains
 	if err := pipeline.setFile(fileName); err != nil {
 		if pipeline.checkSourcesConfigure() {

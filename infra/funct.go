@@ -4,6 +4,7 @@ package infra
 type FuncType int
 
 const (
+	FunctionNotExist = -1
 	// FunctionSetupEnvironment - identifier function configuration your structure
 	FunctionSetupEnvironment  = iota
 	FunctionSetupHocon        = iota
