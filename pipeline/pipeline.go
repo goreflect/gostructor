@@ -40,6 +40,10 @@ const (
 	sourceFielInServer = 1
 	sourceFileNotUsed  = 2
 
+	sourceFileInDisk   = 0
+	sourceFielInServer = 1
+	sourceFileNotUsed  = 2
+
 	notSupportedTypeError = "not supported type "
 
 	EmptyAdditionalPrefix = ""

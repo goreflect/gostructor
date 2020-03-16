@@ -3,8 +3,11 @@ package pipeline
 import (
 	"errors"
 	"fmt"
+<<<<<<< HEAD
 
 	"github.com/goreflect/gostructor/infra"
+=======
+>>>>>>> master
 )
 
 type JsonConfig struct {
