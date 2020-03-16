@@ -19,8 +19,7 @@ func GetFunctionTypes(sourceStruct interface{}) []infra.FuncType {
 }
 
 func recurseStructField(structField reflect.StructField) []infra.FuncType {
-	summirize := []infra.FuncType{}
-	summirize = append(CheckFuncsByTags(structField))
+	summirize := CheckFuncsByTags(structField)
 	switch structField.Type.Kind() {
 	case reflect.Struct:
 		for i := 0; i < structField.Type.NumField(); i++ {
