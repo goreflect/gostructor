@@ -19,7 +19,7 @@ func GetFunctionTypes(sourceStruct interface{}) []infra.FuncType {
 }
 
 func recurseStructField(structField reflect.StructField) []infra.FuncType {
-	summirize := CheckFuncsByTags(structField)
+	summirize := checkFuncsByTags(structField)
 	switch structField.Type.Kind() {
 	case reflect.Struct:
 		for i := 0; i < structField.Type.NumField(); i++ {
@@ -29,8 +29,8 @@ func recurseStructField(structField reflect.StructField) []infra.FuncType {
 	return summirize
 }
 
-func CheckFuncsByTags(structField reflect.StructField) []infra.FuncType {
-	summirize := []infra.FuncType{}
+func checkFuncsByTags(structField reflect.StructField) []infra.FuncType {
+	summirize := make([]int, AmountTags) // amount repeats tags
 	for _, value := range []string{
 		TagYaml,
 		TagJson,
@@ -45,13 +45,19 @@ func CheckFuncsByTags(structField reflect.StructField) []infra.FuncType {
 			continue
 		} else {
 			// TODO: add additional anaylys tag values for middlewares functions and others
-			summirize = append(summirize, GetFuncTypeByTag(value))
+			summirize[getFuncTypeByTag(value)]++
 		}
 	}
-	return summirize
+	result := []infra.FuncType{}
+	for funcType, value := range summirize {
+		if value > 0 {
+			result = append(result, infra.FuncType(funcType))
+		}
+	}
+	return result
 }
 
-func GetFuncTypeByTag(tagName string) infra.FuncType {
+func getFuncTypeByTag(tagName string) infra.FuncType {
 	switch tagName {
 	case TagYaml:
 		return infra.FunctionSetupYaml
