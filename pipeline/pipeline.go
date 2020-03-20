@@ -6,13 +6,11 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/goreflect/gostructor/infra"
 	"github.com/goreflect/gostructor/tags"
 )
 
 type (
-	// FuncType - identifier type for one of our configure functions
-	FuncType int
-
 	// Pipeline -
 	Pipeline struct {
 		chains       *Chain
@@ -23,7 +21,7 @@ type (
 	Chain struct {
 		stageFunction IConfigure
 		// middleWares   IMiddleware realize in #7 issue
-		notAValues []*NotAValue
+		notAValues []*infra.NotAValue
 		next       *Chain
 	}
 
@@ -35,14 +33,8 @@ type (
 )
 
 const (
-	// FunctionSetupEnvironment - identifier function configuration your structure
-	FunctionSetupEnvironment  = iota
-	FunctionSetupHocon        = iota
-	FunctionSetupJson         = iota
-	FunctionSetupYaml         = iota
-	FunctionSetupDefault      = iota
-	FunctionSetupVault        = iota
-	FunctionSetupConfigServer = iota
+	SmartConfiguring = true
+	DurtyConfiguring = false
 
 	sourceFileInDisk   = 0
 	sourceFielInServer = 1
@@ -53,9 +45,17 @@ const (
 	EmptyAdditionalPrefix = ""
 )
 
-// bool - skip preview prefix or not
+// bool - skip preview prefix or not (if user setup node it is return true, if user setup path that's return false)
+// TODO: add error interface while user setup not knowing type of tags. And maybe if user make a mistake (this case need for autocorrection or autofill)
 func (context structContext) getFieldName() (bool, string) {
-	for _, val := range []string{tags.TagHocon, tags.TagJson, tags.TagYaml, tags.TagDefault, tags.TagEnvironment, tags.TagConfigServer, tags.TagHashiCorpVault} {
+	for _, val := range []string{
+		tags.TagHocon,
+		tags.TagJson,
+		tags.TagYaml,
+		tags.TagDefault,
+		tags.TagEnvironment,
+		tags.TagConfigServer,
+		tags.TagHashiCorpVault} {
 		tag := context.StructField.Tag.Get(val)
 		if tag == "" {
 			continue
@@ -64,6 +64,7 @@ func (context structContext) getFieldName() (bool, string) {
 		if len(tagCustomer) == 0 {
 			continue
 		}
+		// TODO: change this case by add for range case checking tag custom (if user setup node and path, it's should be return node.path way)
 		for _, tagCustom := range []string{tags.TagCustomerNode, tags.TagCustomerPath} {
 			if tagCustomer[0] == tagCustom {
 				if tagCustomer[1] != "" {
@@ -77,7 +78,7 @@ func (context structContext) getFieldName() (bool, string) {
 }
 
 // get pipeline of functions in chain notation
-func getFunctionChain(fileName string, pipelineChanes []FuncType) *Pipeline {
+func getFunctionChain(fileName string, pipelineChanes []infra.FuncType) *Pipeline {
 	chain := &Chain{
 		stageFunction: nil,
 		next:          nil,
@@ -106,25 +107,25 @@ func getFunctionChain(fileName string, pipelineChanes []FuncType) *Pipeline {
 // doesntHaveSourceFile - if source is another source
 func getChainByIdentifier(
 	// idFunc - identifier of function configuration source
-	idFunc FuncType,
+	idFunc infra.FuncType,
 	fileName string) (IConfigure, int, error) {
 	switch idFunc {
-	case FunctionSetupDefault:
+	case infra.FunctionSetupDefault:
 		return &DefaultConfig{}, sourceFileNotUsed, nil
-	case FunctionSetupEnvironment:
+	case infra.FunctionSetupEnvironment:
 		return &EnvironmentConfig{}, sourceFileNotUsed, nil
-	case FunctionSetupHocon:
+	case infra.FunctionSetupHocon:
 		return &HoconConfig{fileName: fileName}, sourceFileInDisk, nil
-	case FunctionSetupJson:
+	case infra.FunctionSetupJson:
 		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
-			"json configurator source. Not realized yet")
-	case FunctionSetupYaml:
+			"json configurator source. Not implemented yet")
+	case infra.FunctionSetupYaml:
 		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
-			"yaml configurator source. Not realized yet")
-	case FunctionSetupVault:
-		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "vault configurator source. Not realized yet")
-	case FunctionSetupConfigServer:
-		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not realized yet")
+			"yaml configurator source. Not implemented yet")
+	case infra.FunctionSetupVault:
+		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "vault configurator source. Not implemented yet")
+	case infra.FunctionSetupConfigServer:
+		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not implemented yet")
 	default:
 		return nil, sourceFileNotUsed, errors.New(notSupportedTypeError +
 			"you should search in lib available type configurator source or you are welcome to contribute.")
@@ -138,18 +139,28 @@ func Configure(
 	// filename for file configuring
 	fileName string,
 	// functions will be configure structure
-	pipelineChaines []FuncType,
+	pipelineChaines []infra.FuncType,
 	// prefix by getting data from source placed in entry
-	prefix string) (err error) {
+	prefix string,
+	// smartConfigure - analys structure by tags for find methods which should use for configuration
+	smartConfigure bool) (result interface{}, err error) {
 
 	defer func() {
 		if e := recover(); e != nil {
-			fmt.Println(e)
+			fmt.Println("[Pipeline]: ERROR: ", e)
 			err = e.(error)
 		}
 	}()
 
-	pipeline := getFunctionChain(fileName, pipelineChaines)
+	var pipeline *Pipeline
+
+	if smartConfigure {
+		analysedChains := tags.GetFunctionTypes(structure)
+		pipeline = getFunctionChain(fileName, analysedChains)
+	} else {
+		pipeline = getFunctionChain(fileName, pipelineChaines)
+	}
+
 	// currentChain := pipeline.chains
 	if err := pipeline.setFile(fileName); err != nil {
 		if pipeline.checkSourcesConfigure() {
@@ -161,9 +172,9 @@ func Configure(
 		Value:  reflect.ValueOf(structure),
 		Prefix: prefix,
 	}); err != nil {
-		fmt.Println("[Pipeline]: level: error. error while configuring your structure. Errors: ", err.Error())
+		fmt.Println("Level: error. Message: [Pipeline]: error while configuring your structure. Errors: ", err.Error())
 	}
-	return nil
+	return structure, nil
 }
 
 // if the source is a file or server, a warning will be added if the resource is not available to receive data from it
@@ -176,6 +187,8 @@ func (pipeline *Pipeline) checkSourcesConfigure() bool {
 			}
 		case sourceFileNotUsed:
 			continue
+		default:
+			return false
 		}
 	}
 	return false
@@ -199,11 +212,8 @@ func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 	valuePtr := reflect.Indirect(context.Value)
 	switch valuePtr.Kind() {
 	case reflect.Struct:
-		newPrefix := valuePtr.Type().Name()
 		if context.Prefix == "" {
-			context.Prefix += newPrefix
-		} else {
-			context.Prefix += "." + newPrefix
+			context.Prefix += valuePtr.Type().Name()
 		}
 		for i := 0; i < valuePtr.NumField(); i++ {
 			prefix := context.Prefix
@@ -236,67 +246,45 @@ func (pipeline *Pipeline) addNewErrorWhileParsing(err string) {
 	pipeline.errors = append(pipeline.errors, err)
 }
 
-// // no-lint
-// func (pipeline *Pipeline) clearErrors() {
-// 	pipeline.errors = []string{}
-// }
-
 func (pipeline *Pipeline) getErrorAsOne() error {
 	if len(pipeline.errors) > 0 {
 		return errors.New("on stage recurisiveParseFields will have any of this errors: " + strings.Join(pipeline.errors, "\n"))
-	} else {
-		return nil
 	}
+	return nil
 }
 
-// //environment values sourcesing configuratino your structure field by functions pipeline
-// func (pipeline *Pipeline) startConfiguringByFunctions(context *structContext) error {
-// 	currentChain := pipeline.chains
-// 	for {
-// 		if err := currentChain.stageFunction.Configure(context); err != nil {
-// 			if currentChain.next != nil {
-// 				currentChain = currentChain.next
-// 			} else {
-// 				return errors.New("can not configure field: " + context.Prefix)
-// 			}
-// 		} else {
-// 			return nil
-// 		}
-// 	}
-// }
-
 func (pipeline *Pipeline) configuringValues(context *structContext) error {
-	// if config.configureFileParsed == nil {
-	// 	config.configureFileParsed = gohocon.LoadConfig(config.fileName)
-	// }
 	valueIndirect := reflect.Indirect(context.Value)
 	switch valueIndirect.Kind() {
 	case reflect.Slice, reflect.Map, reflect.Array:
-		// valueIndirect := reflect.Indirect(context.Value)
 		valueGet := pipeline.chains.stageFunction.GetComplexType(context)
+		fmt.Println("Loglevel: Debug Message: [Pipeline]:  value get from parsing slice: ", valueGet)
 		if valueGet.CheckIsValue() {
-			fmt.Println("[Pipeline]: Level: debug. value get from parsing slice: ", valueGet)
+
+			// add check for setuping valueGet in valueIndirect
 			if valueIndirect.CanSet() {
+				fmt.Println("Loglevel: Debug Message: [Pipeline]: setupe value in struct")
 				valueIndirect.Set(valueGet.Value)
 			} else {
 				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")
 			}
 		} else {
-			return errors.New("Level: debug. value get not setupable value: ")
+			return errors.New("Loglevel: Debug Message:  value get not implementedable value: ")
 		}
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		return errors.New("not supported types of unsigned integer")
 	case reflect.String, reflect.Float32, reflect.Float64, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		valueGet := pipeline.chains.stageFunction.GetBaseType(context)
 		if valueGet.CheckIsValue() {
-			fmt.Println("[Pipeline]: Level: debug. value get from parsing "+valueGet.Value.Kind().String()+": ", valueGet)
+			fmt.Println("Loglevel: Debug Message: [Pipeline]: value get from parsing "+valueGet.Value.Kind().String()+": ", valueGet)
 			if valueIndirect.CanSet() {
+				fmt.Println("[Pipeline]: setupe value")
 				valueIndirect.Set(valueGet.Value)
 			} else {
 				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")
 			}
 		} else {
-			return errors.New("Level: debug. value get not setupable value: ")
+			return errors.New("value get not implementedable value: ")
 		}
 	default:
 		return errors.New("not supported type for hocon parsing")
@@ -306,7 +294,7 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 
 func (pipeline *Pipeline) checkValueTypeIsPointer(value reflect.Value) error {
 	if value.Kind() != reflect.Ptr {
-		return errors.New("not working without pointer types")
+		return errors.New("does not work without pointer types")
 	}
 	return nil
 }

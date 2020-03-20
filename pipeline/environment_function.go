@@ -5,76 +5,59 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"strconv"
+	"strings"
 
+	"github.com/goreflect/gostructor/converters"
+	"github.com/goreflect/gostructor/infra"
 	"github.com/goreflect/gostructor/tags"
 )
 
+/*EnvironmentConfig - configuring structures from environment*/
 type EnvironmentConfig struct {
 }
 
-func (config EnvironmentConfig) GetComplexType(context *structContext) GoStructorValue {
+const (
+	separator = ","
+)
+
+/*
+GetComplexType - getting complex types like slices from environment variable
+*/
+func (config EnvironmentConfig) GetComplexType(context *structContext) infra.GoStructorValue {
 	valueIndirect := reflect.Indirect(context.Value)
 	switch valueIndirect.Kind() {
 	case reflect.Slice:
-		NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type slice not implement in environment parsing"))
-	case reflect.Map:
-		NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type map not implement in environment parsing"))
-	case reflect.Array:
-		NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type array not implement in environment parsing"))
+		valueTag := context.StructField.Tag.Get(tags.TagEnvironment)
+		if valueTag != "" {
+			value := os.Getenv(valueTag)
+			// add here additional logic for middlewares and other
+			array := config.convertStringIntoArray(value)
+			return converters.ConvertBetweenComplexTypes(reflect.ValueOf(array), valueIndirect)
+		}
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type "+valueIndirect.Kind().String()+" not implement in environment parsing function"))
 	default:
-		return config.GetBaseType(context)
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type "+valueIndirect.Kind().String()+" not implement in environment parsing function"))
 	}
-	return NewGoStructorNoValue(context.Value.Interface(), errors.New("getComplexType not implement for environment configuring"))
 }
 
-func (config EnvironmentConfig) GetBaseType(context *structContext) GoStructorValue {
-	fmt.Println("Level: Debug. nvironment values sources start")
+// TODO: Add variant for change separator. Currently it is comma
+func (config EnvironmentConfig) convertStringIntoArray(value string) []string {
+	return strings.Split(value, separator)
+}
+
+/*
+GetBaseType - getting base type values
+*/
+func (config EnvironmentConfig) GetBaseType(context *structContext) infra.GoStructorValue {
+	fmt.Println("Level: Debug. Environment values sources start")
 	valueIndirect := reflect.Indirect(context.Value)
 	valueTag := context.StructField.Tag.Get(tags.TagEnvironment)
+
 	if valueTag != "" {
-		switch valueIndirect.Kind() {
-		case reflect.String:
-			value := os.Getenv(valueTag)
-			if config.checksByMiddlewares(value) {
-				NewGoStructorNoValue(context.Value.Interface(), errors.New("getBaseType can not get empty value from environment by key: "+valueTag))
-			}
-			return NewGoStructorTrueValue(reflect.ValueOf(value))
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			value := os.Getenv(valueTag)
-			if config.checksByMiddlewares(value) {
-				NewGoStructorNoValue(context.Value.Interface(), errors.New("getBaseType can not get empty value from environment by key: "+valueTag))
-			}
-			parsing, errParsing := strconv.ParseInt(value, 10, 64)
-			if errParsing != nil {
-				NewGoStructorNoValue(context.Value.Interface(), errParsing)
-			}
-			return NewGoStructorTrueValue(reflect.ValueOf(parsing).Convert(valueIndirect.Type()))
-		case reflect.Float32, reflect.Float64:
-			value := os.Getenv(valueTag)
-			if config.checksByMiddlewares(value) {
-				NewGoStructorNoValue(context.Value.Interface(), errors.New("getBaseType can not get empty value from environment by key: "+valueTag))
-			}
-			parsing, errParsing := strconv.ParseFloat(value, 64)
-			if errParsing != nil {
-				NewGoStructorNoValue(context.Value.Interface(), errParsing)
-			}
-			return NewGoStructorTrueValue(reflect.ValueOf(parsing).Convert(valueIndirect.Type()))
-		case reflect.Bool:
-			value := os.Getenv(valueTag)
-			if config.checksByMiddlewares(value) {
-				NewGoStructorNoValue(context.Value.Interface(), errors.New("getBaseType can not get empty value from environment by key: "+valueTag))
-			}
-			parsing, errParsing := strconv.ParseBool(value)
-			if errParsing != nil {
-				NewGoStructorNoValue(context.Value.Interface(), errParsing)
-			}
-			return NewGoStructorTrueValue(reflect.ValueOf(parsing))
-		default:
-			return NewGoStructorNoValue(valueIndirect.Interface(), errors.New("can not recognized type of you variable"))
-		}
+		value := os.Getenv(valueTag)
+		return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(value), valueIndirect)
 	}
-	return NewGoStructorNoValue(context.Value.Interface(), errors.New("getBaseType can not getting field by empty tag value of tag: "+tags.TagEnvironment))
+	return infra.NewGoStructorNoValue(context.Value, errors.New("getBaseType can not getting field by empty tag value of tag: "+tags.TagEnvironment))
 }
 
 func (config EnvironmentConfig) checksByMiddlewares(tagvalue string) bool {

@@ -1,25 +1,40 @@
 package gostructor
 
 import (
+	"github.com/goreflect/gostructor/infra"
 	"github.com/goreflect/gostructor/pipeline"
 )
 
-// ConfigureEasy - default pipeline setup for configure your structure
+/*
+ConfigureEasy - default pipeline setup for configure your structure
+*/
 func ConfigureEasy(
 	structure interface{},
-	fileName string) error {
-	return pipeline.Configure(structure, fileName, []pipeline.FuncType{
-		pipeline.FunctionSetupEnvironment,
-		pipeline.FunctionSetupHocon,
-		pipeline.FunctionSetupDefault,
-	}, pipeline.EmptyAdditionalPrefix)
+	fileName string) (interface{}, error) {
+	return pipeline.Configure(structure, fileName, []infra.FuncType{
+		infra.FunctionSetupEnvironment,
+		infra.FunctionSetupHocon,
+		infra.FunctionSetupDefault,
+	}, pipeline.EmptyAdditionalPrefix, pipeline.DurtyConfiguring)
 }
 
-// ConfigureSetup - pipeline with your settings stages for your structure
+/*
+ConfigureSetup - pipeline with your settings stages for your structure
+*/
 func ConfigureSetup(
 	structure interface{},
 	fileName string,
 	prefix string,
-	functions []pipeline.FuncType) error {
-	return pipeline.Configure(structure, fileName, functions, prefix)
+	functions []infra.FuncType) (interface{}, error) {
+	return pipeline.Configure(structure, fileName, functions, prefix, pipeline.DurtyConfiguring)
+}
+
+/*
+ConfigureSmart - configuring by analys tags for add prefer strategy for configuring
+*/
+func ConfigureSmart(
+	structure interface{},
+	fileName string,
+) (interface{}, error) {
+	return pipeline.Configure(structure, fileName, nil, pipeline.EmptyAdditionalPrefix, pipeline.SmartConfiguring)
 }

@@ -1,0 +1,101 @@
+package tags
+
+import (
+	"reflect"
+
+	"github.com/goreflect/gostructor/infra"
+)
+
+/*
+GetFunctionTypes - return slice of functions which should configuring sourceStruct structure
+*/
+func GetFunctionTypes(sourceStruct interface{}) []infra.FuncType {
+	summirize := []int{}
+	value := reflect.Indirect(reflect.ValueOf(sourceStruct))
+	for i := 0; i < value.NumField(); i++ {
+		summirizeLevel := recurseStructField(value.Type().Field(i))
+		summirize = combineFields(summirize, summirizeLevel)
+	}
+	result := []infra.FuncType{}
+	for funcType, value := range summirize {
+		if value > 0 {
+			result = append(result, infra.FuncType(funcType))
+		}
+	}
+	return result
+}
+
+func recurseStructField(structField reflect.StructField) []int {
+	summirize := checkFuncsByTags(structField)
+
+	switch structField.Type.Kind() {
+	case reflect.Struct:
+		for i := 0; i < structField.Type.NumField(); i++ {
+			summirizeLevel := recurseStructField(structField.Type.Field(i))
+			summirize = combineFields(summirize, summirizeLevel)
+		}
+	}
+	return summirize
+}
+
+//TODO: decomposition
+func combineFields(summCurrent []int, newSumm []int) []int {
+	maxCount := 0
+	if len(summCurrent) > len(newSumm) {
+		maxCount = len(summCurrent)
+	} else {
+		maxCount = len(newSumm)
+	}
+	newResult := make([]int, maxCount)
+	for index, value := range newSumm {
+		newResult[index] += value
+	}
+	for index, value := range summCurrent {
+		newResult[index] += value
+	}
+	return newResult
+}
+
+func checkFuncsByTags(structField reflect.StructField) []int {
+	summirize := make([]int, AmountTags) // amount repeats tags
+	for _, value := range []string{
+		TagYaml,
+		TagJson,
+		TagHocon,
+		TagHashiCorpVault,
+		TagEnvironment,
+		TagDefault,
+		TagConfigServer,
+	} {
+		tagInField := structField.Tag.Get(value)
+		if tagInField == "" {
+			continue
+		} else {
+			// TODO: add additional anaylys tag values for middlewares functions and others
+			summirize[getFuncTypeByTag(value)]++
+		}
+	}
+
+	return summirize
+}
+
+func getFuncTypeByTag(tagName string) infra.FuncType {
+	switch tagName {
+	case TagYaml:
+		return infra.FunctionSetupYaml
+	case TagConfigServer:
+		return infra.FunctionSetupConfigServer
+	case TagDefault:
+		return infra.FunctionSetupDefault
+	case TagEnvironment:
+		return infra.FunctionSetupEnvironment
+	case TagHashiCorpVault:
+		return infra.FunctionSetupVault
+	case TagHocon:
+		return infra.FunctionSetupHocon
+	case TagJson:
+		return infra.FunctionSetupJson
+	default:
+		return infra.FunctionNotExist
+	}
+}

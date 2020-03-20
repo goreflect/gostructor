@@ -1,6 +1,6 @@
 MyStruct = {
     Field1 = ["test1", "test2", "test3"]
-    Field2 = [1123123123123,2,123123123123231233,4]
+    field2 = [112312323,2,123123123,4]
     Field3 = [1.2, 1.5, 1.7, 11.2]
-    Field4 = [true, false, no, on]
+    field4 = [true, false, no, on]
 }
