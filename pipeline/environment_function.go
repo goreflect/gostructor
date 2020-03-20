@@ -77,7 +77,8 @@ func (config EnvironmentConfig) GetBaseType(context *structContext) GoStructorVa
 	return NewGoStructorNoValue(context.Value.Interface(), errors.New("getBaseType can not getting field by empty tag value of tag: "+tags.TagEnvironment))
 }
 
-func (config EnvironmentConfig) checksByMiddlewares(tagvalue string) bool {
-	// in the future in this case will be added a call middlewares functions
-	return tagvalue == ""
-}
+// TODO: using in future for run middlewares
+// func (config EnvironmentConfig) checksByMiddlewares(tagvalue string) bool {
+// 	// in the future in this case will be added a call middlewares functions
+// 	return tagvalue == ""
+// }
