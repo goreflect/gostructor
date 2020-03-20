@@ -10,26 +10,53 @@ import (
 GetFunctionTypes - return slice of functions which should configuring sourceStruct structure
 */
 func GetFunctionTypes(sourceStruct interface{}) []infra.FuncType {
-	summirize := []infra.FuncType{}
+	summirize := []int{}
 	value := reflect.Indirect(reflect.ValueOf(sourceStruct))
 	for i := 0; i < value.NumField(); i++ {
-		summirize = append(summirize, recurseStructField(value.Type().Field(i))...)
+		summirizeLevel := recurseStructField(value.Type().Field(i))
+		summirize = combineFields(summirize, summirizeLevel)
 	}
-	return summirize
+	result := []infra.FuncType{}
+	for funcType, value := range summirize {
+		if value > 0 {
+			result = append(result, infra.FuncType(funcType))
+		}
+	}
+	return result
 }
 
-func recurseStructField(structField reflect.StructField) []infra.FuncType {
+func recurseStructField(structField reflect.StructField) []int {
 	summirize := checkFuncsByTags(structField)
+
 	switch structField.Type.Kind() {
 	case reflect.Struct:
 		for i := 0; i < structField.Type.NumField(); i++ {
-			summirize = append(summirize, recurseStructField(structField.Type.Field(i))...)
+			summirizeLevel := recurseStructField(structField.Type.Field(i))
+			summirize = combineFields(summirize, summirizeLevel)
 		}
 	}
 	return summirize
 }
 
-func checkFuncsByTags(structField reflect.StructField) []infra.FuncType {
+//TODO: decomposition
+func combineFields(summCurrent []int, newSumm []int) []int {
+	maxCount := 0
+	if len(summCurrent) > len(newSumm) {
+		maxCount = len(summCurrent)
+	} else {
+		maxCount = len(newSumm)
+	}
+	newResult := make([]int, maxCount)
+	for index, value := range newSumm {
+		newResult[index] += value
+	}
+	for index, value := range summCurrent {
+		newResult[index] += value
+	}
+	return newResult
+}
+
+func checkFuncsByTags(structField reflect.StructField) []int {
 	summirize := make([]int, AmountTags) // amount repeats tags
 	for _, value := range []string{
 		TagYaml,
@@ -48,13 +75,8 @@ func checkFuncsByTags(structField reflect.StructField) []infra.FuncType {
 			summirize[getFuncTypeByTag(value)]++
 		}
 	}
-	result := []infra.FuncType{}
-	for funcType, value := range summirize {
-		if value > 0 {
-			result = append(result, infra.FuncType(funcType))
-		}
-	}
-	return result
+
+	return summirize
 }
 
 func getFuncTypeByTag(tagName string) infra.FuncType {

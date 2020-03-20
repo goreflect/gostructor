@@ -29,9 +29,26 @@ func TestGetFunctionTypes(t *testing.T) {
 			},
 			want: []infra.FuncType{
 				infra.FunctionSetupHocon,
+				infra.FunctionSetupJson,
 				infra.FunctionSetupDefault,
 				infra.FunctionSetupVault,
-				infra.FunctionSetupJson,
+			},
+		},
+		{
+			name: "check repeated tags",
+			args: args{
+				sourceStruct: struct {
+					field1 string `cf_hocon:"test1" cf_default:"test2"`
+					field2 int    `cf_hocon:"test3" cf_default:"test4"`
+					field3 struct {
+						field string `cf_vault:"token=1234,value=password"`
+					}
+				}{},
+			},
+			want: []infra.FuncType{
+				infra.FunctionSetupHocon,
+				infra.FunctionSetupDefault,
+				infra.FunctionSetupVault,
 			},
 		},
 	}
