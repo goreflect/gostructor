@@ -17,7 +17,10 @@ import (
 type EnvironmentConfig struct {
 }
 
-func (config EnvironmentConfig) GetComplexType(context *structContext) GoStructorValue {
+/*
+GetComplexType - getting complex types like slices from environment variable
+*/
+func (config EnvironmentConfig) GetComplexType(context *structContext) infra.GoStructorValue {
 	valueIndirect := reflect.Indirect(context.Value)
 	valueTag := context.StructField.Tag.Get(tags.TagEnvironment)
 	if config.checkTagValue(valueTag) {
