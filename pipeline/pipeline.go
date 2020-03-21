@@ -123,7 +123,7 @@ func getChainByIdentifier(
 	case infra.FunctionSetupHocon:
 		return &HoconConfig{fileName: fileName}, sourceFileInDisk, nil
 	case infra.FunctionSetupJson:
-		return &JsonConfig{}, sourceFileInDisk, errors.New(notSupportedTypeError +
+		return &JSONConfig{}, sourceFileInDisk, errors.New(notSupportedTypeError +
 			"json configurator source. Not implemented yet")
 	case infra.FunctionSetupYaml:
 		return &YamlConfig{}, sourceFileInDisk, errors.New(notSupportedTypeError +
