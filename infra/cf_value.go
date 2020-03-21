@@ -26,7 +26,7 @@ func NewNotAValue(field interface{}, err error) *NotAValue {
 	}
 }
 
-/*infra.NewGoStructorTrueValue - generate new GoStructorValue with completed preparing field
+/*NewGoStructorTrueValue - generate new GoStructorValue with completed preparing field
  */
 func NewGoStructorTrueValue(value reflect.Value) GoStructorValue {
 	return GoStructorValue{
@@ -34,7 +34,7 @@ func NewGoStructorTrueValue(value reflect.Value) GoStructorValue {
 	}
 }
 
-/*infra.NewGoStructorNoValue - generate new GoStructorValue with error handling value
+/*NewGoStructorNoValue - generate new GoStructorValue with error handling value
  */
 func NewGoStructorNoValue(value interface{}, err error) GoStructorValue {
 	return GoStructorValue{
