@@ -40,7 +40,8 @@ const (
 	/*SmartConfiguring - flag which inform library need for start analyzing all tags in derived structure for setting function types of configuring structure
 	 */
 	SmartConfiguring = true
-	DurtyConfiguring = false
+	/*DirtyConfiguring - flag*/
+	DirtyConfiguring = false
 
 	sourceFileInDisk   = 0
 	sourceFielInServer = 1
@@ -48,6 +49,7 @@ const (
 
 	notSupportedTypeError = "not supported type "
 
+	/*EmptyAdditionalPrefix - prefix for setup before all values can be empty*/
 	EmptyAdditionalPrefix = ""
 )
 
@@ -254,9 +256,8 @@ func (pipeline *Pipeline) addNewErrorWhileParsing(err string) {
 func (pipeline *Pipeline) getErrorAsOne() error {
 	if len(pipeline.errors) > 0 {
 		return errors.New("on stage recurisiveParseFields will have any of this errors: " + strings.Join(pipeline.errors, "\n"))
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func (pipeline *Pipeline) configuringValues(context *structContext) error {
