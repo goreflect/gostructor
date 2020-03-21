@@ -49,7 +49,8 @@ const (
 >>>>>>> start writing
 =======
 	SmartConfiguring = true
-	DurtyConfiguring = false
+	/*DirtyConfiguring - flag*/
+	DirtyConfiguring = false
 
 >>>>>>> add logic for getting information about tags and fixture
 	sourceFileInDisk   = 0
