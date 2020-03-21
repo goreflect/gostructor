@@ -40,7 +40,8 @@ const (
 	/*SmartConfiguring - flag which inform library need for start analyzing all tags in derived structure for setting function types of configuring structure
 	 */
 	SmartConfiguring = true
-	DurtyConfiguring = false
+	/*DirtyConfiguring - flag*/
+	DirtyConfiguring = false
 
 	sourceFileInDisk   = 0
 	sourceFielInServer = 1
@@ -48,6 +49,7 @@ const (
 
 	notSupportedTypeError = "not supported type "
 
+	/*EmptyAdditionalPrefix - prefix for setup before all values can be empty*/
 	EmptyAdditionalPrefix = ""
 )
 
@@ -123,7 +125,7 @@ func getChainByIdentifier(
 	case infra.FunctionSetupHocon:
 		return &HoconConfig{fileName: fileName}, sourceFileInDisk, nil
 	case infra.FunctionSetupJson:
-		return &JsonConfig{}, sourceFileInDisk, errors.New(notSupportedTypeError +
+		return &JSONConfig{}, sourceFileInDisk, errors.New(notSupportedTypeError +
 			"json configurator source. Not implemented yet")
 	case infra.FunctionSetupYaml:
 		return &YamlConfig{}, sourceFileInDisk, errors.New(notSupportedTypeError +

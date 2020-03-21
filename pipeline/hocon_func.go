@@ -67,6 +67,9 @@ func (config *HoconConfig) typeSafeLoadConfigFile() error {
 	return nil
 }
 
+/*
+GetBaseType - get base types like string, int, float32
+*/
 func (config *HoconConfig) GetBaseType(context *structContext) infra.GoStructorValue {
 	if errLoading := config.typeSafeLoadConfigFile(); errLoading != nil {
 		return infra.NewGoStructorNoValue(context.Value, errLoading)
@@ -78,9 +81,6 @@ func (config *HoconConfig) GetBaseType(context *structContext) infra.GoStructorV
 		return infra.NewGoStructorNoValue(context.Value.Interface(), errLoading)
 	}
 	return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(loadValue), reflect.Indirect(context.Value))
-
-	return infra.NewGoStructorNoValue(context.Value.Interface(),
-		errors.New("can not parsed inserted type in GetBaseType of configuration by hocon"))
 }
 
 func (config *HoconConfig) getSliceFromHocon(context *structContext) infra.GoStructorValue {
