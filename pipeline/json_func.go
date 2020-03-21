@@ -10,17 +10,18 @@ import (
 	"github.com/goreflect/gostructor/tools"
 )
 
-type JsonConfig struct {
-	configureFileParsed lzjson.Node
-	FileName            string
+/*JSONConfig - source json configuring*/
+type JSONConfig struct {
 }
 
-func (config JsonConfig) GetComplexType(context *structContext) infra.GoStructorValue {
+/*GetComplexType - get complex types like arrays, slices, maps from json source*/
+func (config JSONConfig) GetComplexType(context *structContext) infra.GoStructorValue {
 	fmt.Println("Level: Debug. Json configurator source start.")
 	return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("getcomplext type from json not implemented"))
 }
 
-func (config JsonConfig) GetBaseType(context *structContext) infra.GoStructorValue {
+/*GetBaseType - gettin base type like string, int, float32...*/
+func (config JSONConfig) GetBaseType(context *structContext) infra.GoStructorValue {
 	fmt.Println("Level: Debug. Json configurator source start.")
 	parsed, notAValue := config.typeSafeLoadConfigFile(context)
 	if !parsed {
@@ -38,12 +39,12 @@ func (config JsonConfig) GetBaseType(context *structContext) infra.GoStructorVal
 }
 
 // validation - true if everting ok
-func (config JsonConfig) validation(value string) bool {
+func (config JSONConfig) validation(value string) bool {
 	return value == ""
 }
 
 // return true - if loaded config or successfully load config by filename
-func (config *JsonConfig) typeSafeLoadConfigFile(context *structContext) (bool, *infra.GoStructorValue) {
+func (config *JSONConfig) typeSafeLoadConfigFile(context *structContext) (bool, *infra.GoStructorValue) {
 	if config.configureFileParsed == nil {
 		fileBuffer, err := tools.ReadFromFile(config.FileName)
 		if err != nil {

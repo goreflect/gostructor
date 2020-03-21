@@ -105,7 +105,7 @@ func Test_getChainByIdentifier(t *testing.T) {
 			args: args{
 				idFunc: infra.FunctionSetupJson,
 			},
-			want:    &JsonConfig{},
+			want:    &JSONConfig{},
 			want1:   sourceFileInDisk,
 			wantErr: true,
 		},
