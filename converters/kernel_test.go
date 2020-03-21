@@ -25,7 +25,7 @@ func TestConvertBetweenPrimitiveTypes(t *testing.T) {
 				destination: reflect.ValueOf(struct{ name string }{name: "test"}),
 			},
 			want: infra.NewGoStructorNoValue(reflect.ValueOf(struct{ name string }{name: "test"}),
-				errors.New("can not converted to this type"+reflect.Struct.String()+" beacuse this type not supported"),
+				errors.New("can not be converted to this type"+reflect.Struct.String()+" beacuse this type not supported"),
 			),
 		},
 	}
@@ -262,7 +262,7 @@ func TestConvertBetweenPrimitiveTypesToIntFromIntFailed(t *testing.T) {
 				source:      reflect.ValueOf(0000.1),
 				destination: reflect.ValueOf(int(0)),
 			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(int(0)), errors.New("can not converted from this type: "+reflect.Float32.String()+" beacuse this type not supported")),
+			want: infra.NewGoStructorNoValue(reflect.ValueOf(int(0)), errors.New("can not be converted from this type: "+reflect.Float32.String()+" beacuse this type not supported")),
 		},
 	}
 	for _, tt := range tests {
@@ -355,7 +355,7 @@ func TestConvertBetweenPrimitiveTypesToIntFromStringFailed(t *testing.T) {
 				source:      reflect.ValueOf("12f3"),
 				destination: reflect.ValueOf(0),
 			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(0), errors.New("can not converted to this type: "+reflect.Int.String())),
+			want: infra.NewGoStructorNoValue(reflect.ValueOf(0), errors.New("can not be converted to this type: "+reflect.Int.String())),
 		},
 	}
 	for _, tt := range tests {
@@ -396,7 +396,7 @@ func Test_convertToInt8FromStringSuccess(t *testing.T) {
 				destination: reflect.ValueOf(int8(0)),
 			},
 			want: infra.NewGoStructorNoValue(reflect.ValueOf(int8(0)),
-				errors.New("can not converted to this type: "+reflect.Int8.String())),
+				errors.New("can not be converted to this type: "+reflect.Int8.String())),
 		},
 		{
 			name: "convert from struct to int8 failed",
@@ -404,7 +404,7 @@ func Test_convertToInt8FromStringSuccess(t *testing.T) {
 				source:      reflect.ValueOf(struct{ fieldTest string }{fieldTest: "test"}),
 				destination: destination,
 			},
-			want: infra.NewGoStructorNoValue(destination, errors.New("can not converted from this type: "+
+			want: infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+
 				reflect.Struct.String()+" beacuse this type not supported")),
 		},
 	}
@@ -466,9 +466,6 @@ func Test_convertToInt16FromInt(t *testing.T) {
 			},
 			want: infra.NewGoStructorTrueValue(reflect.ValueOf(int16(1234))),
 		},
-		// {
-		// 	name: "convert from",
-		// }
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -496,11 +493,8 @@ func Test_convertToInt16FromStruct(t *testing.T) {
 				destination: reflect.ValueOf(int16(0)),
 			},
 			want: infra.NewGoStructorNoValue(reflect.ValueOf(int16(0)),
-				errors.New("can not converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+				errors.New("can not be converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
 		},
-		// {
-		// 	name: "convert from",
-		// }
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -530,11 +524,8 @@ func Test_convertToInt16FromStringFailed(t *testing.T) {
 				destination: reflect.ValueOf(int16(0)),
 			},
 			want: infra.NewGoStructorNoValue(reflect.ValueOf(int16(0)),
-				errors.New("can not converted to this type: "+reflect.Int16.String())),
+				errors.New("can not be converted to this type: "+reflect.Int16.String())),
 		},
-		// {
-		// 	name: "convert from",
-		// }
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -647,7 +638,7 @@ func Test_convertToInt32FromStruct(t *testing.T) {
 				source:      reflect.ValueOf(struct{ field string }{field: "test"}),
 				destination: reflect.ValueOf(int32(0)),
 			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(int32(0)), errors.New("can not converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+			want: infra.NewGoStructorNoValue(reflect.ValueOf(int32(0)), errors.New("can not be converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
 		},
 	}
 	for _, tt := range tests {
@@ -676,7 +667,7 @@ func Test_convertToInt32FromStringFailed(t *testing.T) {
 				destination: reflect.ValueOf(int32(0)),
 			},
 			want: infra.NewGoStructorNoValue(reflect.ValueOf(int32(0)),
-				errors.New("can not converted to this type: "+reflect.Int32.String()),
+				errors.New("can not be converted to this type: "+reflect.Int32.String()),
 			),
 		},
 	}
@@ -761,7 +752,7 @@ func Test_convertToInt64FromStruct(t *testing.T) {
 				source:      reflect.ValueOf(struct{ field string }{field: "test"}),
 				destination: reflect.ValueOf(int64(0)),
 			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(int64(0)), errors.New("can not converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+			want: infra.NewGoStructorNoValue(reflect.ValueOf(int64(0)), errors.New("can not be converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
 		},
 	}
 	for _, tt := range tests {
@@ -790,7 +781,7 @@ func Test_convertToInt64FromStringFailed(t *testing.T) {
 				destination: reflect.ValueOf(int64(0)),
 			},
 			want: infra.NewGoStructorNoValue(reflect.ValueOf(int64(0)),
-				errors.New("can not converted to this type: "+reflect.Int64.String()),
+				errors.New("can not be converted to this type: "+reflect.Int64.String()),
 			),
 		},
 	}
@@ -844,7 +835,7 @@ func Test_convertToBool(t *testing.T) {
 				source:      reflect.ValueOf(struct{ field string }{field: "test"}),
 				destination: reflect.ValueOf(false),
 			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(false), errors.New("can not converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+			want: infra.NewGoStructorNoValue(reflect.ValueOf(false), errors.New("can not be converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
 		},
 	}
 	for _, tt := range tests {
@@ -932,7 +923,7 @@ func Test_convertToString(t *testing.T) {
 				destination: reflect.ValueOf(""),
 			},
 			want: infra.NewGoStructorNoValue(reflect.ValueOf(""),
-				errors.New("can not converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+				errors.New("can not be converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
 		},
 	}
 	for _, tt := range tests {
