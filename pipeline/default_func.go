@@ -32,10 +32,7 @@ func (config DefaultConfig) GetComplexType(context *structContext) infra.GoStruc
 
 // this is main entrypoint for checking value in tag
 func (config DefaultConfig) checkNotRightValue(value string) bool {
-	if value != "" {
-		return false
-	}
-	return true
+	return value == ""
 }
 
 /*
