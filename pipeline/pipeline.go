@@ -11,9 +11,6 @@ import (
 )
 
 type (
-	// FuncType - identifier type for one of our configure functions
-	FuncType int
-
 	// Pipeline -
 	Pipeline struct {
 		chains       *Chain
@@ -36,14 +33,8 @@ type (
 )
 
 const (
-	// FunctionSetupEnvironment - identifier function configuration your structure
-	FunctionSetupEnvironment  = iota
-	FunctionSetupHocon        = iota
-	FunctionSetupJson         = iota
-	FunctionSetupYaml         = iota
-	FunctionSetupDefault      = iota
-	FunctionSetupVault        = iota
-	FunctionSetupConfigServer = iota
+	SmartConfiguring = true
+	DurtyConfiguring = false
 
 	sourceFileInDisk   = 0
 	sourceFielInServer = 1
@@ -87,7 +78,7 @@ func (context structContext) getFieldName() (bool, string) {
 }
 
 // get pipeline of functions in chain notation
-func getFunctionChain(fileName string, pipelineChanes []FuncType) *Pipeline {
+func getFunctionChain(fileName string, pipelineChanes []infra.FuncType) *Pipeline {
 	chain := &Chain{
 		stageFunction: nil,
 		next:          nil,
@@ -116,24 +107,24 @@ func getFunctionChain(fileName string, pipelineChanes []FuncType) *Pipeline {
 // doesntHaveSourceFile - if source is another source
 func getChainByIdentifier(
 	// idFunc - identifier of function configuration source
-	idFunc FuncType,
+	idFunc infra.FuncType,
 	fileName string) (IConfigure, int, error) {
 	switch idFunc {
-	case FunctionSetupDefault:
+	case infra.FunctionSetupDefault:
 		return &DefaultConfig{}, sourceFileNotUsed, nil
-	case FunctionSetupEnvironment:
+	case infra.FunctionSetupEnvironment:
 		return &EnvironmentConfig{}, sourceFileNotUsed, nil
-	case FunctionSetupHocon:
+	case infra.FunctionSetupHocon:
 		return &HoconConfig{fileName: fileName}, sourceFileInDisk, nil
-	case FunctionSetupJson:
+	case infra.FunctionSetupJson:
 		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
 			"json configurator source. Not implemented yet")
-	case FunctionSetupYaml:
+	case infra.FunctionSetupYaml:
 		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
 			"yaml configurator source. Not implemented yet")
-	case FunctionSetupVault:
+	case infra.FunctionSetupVault:
 		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "vault configurator source. Not implemented yet")
-	case FunctionSetupConfigServer:
+	case infra.FunctionSetupConfigServer:
 		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not implemented yet")
 	default:
 		return nil, sourceFileNotUsed, errors.New(notSupportedTypeError +
@@ -148,9 +139,11 @@ func Configure(
 	// filename for file configuring
 	fileName string,
 	// functions will be configure structure
-	pipelineChaines []FuncType,
+	pipelineChaines []infra.FuncType,
 	// prefix by getting data from source placed in entry
-	prefix string) (result interface{}, err error) {
+	prefix string,
+	// smartConfigure - analys structure by tags for find methods which should use for configuration
+	smartConfigure bool) (result interface{}, err error) {
 
 	defer func() {
 		if e := recover(); e != nil {
@@ -159,7 +152,15 @@ func Configure(
 		}
 	}()
 
-	pipeline := getFunctionChain(fileName, pipelineChaines)
+	var pipeline *Pipeline
+
+	if smartConfigure {
+		analysedChains := tags.GetFunctionTypes(structure)
+		pipeline = getFunctionChain(fileName, analysedChains)
+	} else {
+		pipeline = getFunctionChain(fileName, pipelineChaines)
+	}
+
 	// currentChain := pipeline.chains
 	if err := pipeline.setFile(fileName); err != nil {
 		if pipeline.checkSourcesConfigure() {
@@ -203,16 +204,6 @@ func (pipeline *Pipeline) setFile(fileName string) error {
 	}
 	return nil
 }
-
-// func (pipeline *Pipeline) getStructName(contextPrefix structContext, value reflect.Value) (string, error) {
-
-// 	if contextPrefix.Prefix != "" {
-// 		contextPrefix.StructField.Tag.Get()
-// 	} else {
-// 		return value.Type().Name(), nil
-// 	}
-// 	return "", nil
-// }
 
 func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 	if err := pipeline.checkValueTypeIsPointer(context.Value); err != nil {

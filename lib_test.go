@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/goreflect/gostructor/pipeline"
+	"github.com/goreflect/gostructor/infra"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,7 +37,7 @@ type (
 )
 
 func Test_parseHocon1(t *testing.T) {
-	myStruct, err := ConfigureSetup(&MyStruct{}, "./test_configs/test1.hocon", "", []pipeline.FuncType{pipeline.FunctionSetupHocon})
+	myStruct, err := ConfigureSetup(&MyStruct{}, "./test_configs/test1.hocon", "", []infra.FuncType{infra.FunctionSetupHocon})
 	if err != nil {
 		t.Error("error while configuring: ", err)
 	}
@@ -50,7 +50,7 @@ func Test_parseHocon1(t *testing.T) {
 }
 
 func Test_parseHocon(t *testing.T) {
-	myStruct, err := ConfigureSetup(&MyStruct2{}, "./test_configs/testmap.hocon", "", []pipeline.FuncType{pipeline.FunctionSetupHocon})
+	myStruct, err := ConfigureSetup(&MyStruct2{}, "./test_configs/testmap.hocon", "", []infra.FuncType{infra.FunctionSetupHocon})
 	if err != nil {
 		t.Error("error while configuring: ", err)
 	}
@@ -67,7 +67,7 @@ func Test_parseHocon(t *testing.T) {
 }
 
 func Test_parseHoconWithNodeNotation(t *testing.T) {
-	mystruct, err := ConfigureSetup(&MyStruct3{}, "./test_configs/testmap.hocon", "", []pipeline.FuncType{pipeline.FunctionSetupHocon})
+	mystruct, err := ConfigureSetup(&MyStruct3{}, "./test_configs/testmap.hocon", "", []infra.FuncType{infra.FunctionSetupHocon})
 	if err != nil {
 		fmt.Println("error while configuring: ", err)
 	}
@@ -81,7 +81,19 @@ func Test_parseHoconWithNodeNotation(t *testing.T) {
 }
 
 func Test_parseHoconWithNodeNotation2(t *testing.T) {
-	myStruct, err := ConfigureSetup(&MyStruct4{}, "./test_configs/testmap.hocon", "", []pipeline.FuncType{pipeline.FunctionSetupHocon})
+	myStruct, err := ConfigureSetup(&MyStruct4{}, "./test_configs/testmap.hocon", "", []infra.FuncType{infra.FunctionSetupHocon})
+	if err != nil {
+		fmt.Println("error while configuring: ", err)
+	}
+	assert.Equal(t, &MyStruct4{
+		NestedStruct4: struct{ Field1 string }{
+			Field1: "testValueByTest",
+		},
+	}, myStruct.(*MyStruct4))
+}
+
+func Test_smartConfigure(t *testing.T) {
+	myStruct, err := ConfigureSmart(&MyStruct4{}, "./test_configs/testmap.hocon")
 	if err != nil {
 		fmt.Println("error while configuring: ", err)
 	}

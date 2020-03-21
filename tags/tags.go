@@ -11,6 +11,8 @@ const (
 	TagConfigServer   = prefixLibTag + "server"
 	TagHashiCorpVault = prefixLibTag + "vault"
 
+	AmountTags = 7
+
 	TagCustomerNode = "node"
 	TagCustomerPath = "path"
 )

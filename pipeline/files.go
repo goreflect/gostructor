@@ -5,7 +5,6 @@ import (
 	"os"
 )
 
-// author: artemkaxboy
 func checkFileAccessibility(filename string) error {
 	info, err := os.Stat(filename)
 	if err != nil {
