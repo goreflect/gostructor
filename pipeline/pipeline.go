@@ -18,6 +18,8 @@ type (
 		sourcesTypes []int
 	}
 
+	/*Chain - this is structure contain information for executing function by ordering
+	 */
 	Chain struct {
 		stageFunction IConfigure
 		// middleWares   IMiddleware realize in #7 issue
@@ -25,6 +27,8 @@ type (
 		next       *Chain
 	}
 
+	/*structContext - context which using by library functions for configuring and preparing operations
+	 */
 	structContext struct {
 		Value       reflect.Value
 		StructField reflect.StructField
@@ -33,6 +37,8 @@ type (
 )
 
 const (
+	/*SmartConfiguring - flag which inform library need for start analyzing all tags in derived structure for setting function types of configuring structure
+	 */
 	SmartConfiguring = true
 	DurtyConfiguring = false
 
@@ -90,7 +96,7 @@ func getFunctionChain(fileName string, pipelineChanes []infra.FuncType) *Pipelin
 	for _, pipelineChain := range pipelineChanes {
 		stageFunction, sourceType, err := getChainByIdentifier(pipelineChain, fileName)
 		if err != nil {
-			fmt.Println("[Pipeline]: level: debuf. error while getting chain stage function. Error: " + err.Error())
+			fmt.Println("[Pipeline]: level: debug. error while getting chain stage function. Error: " + err.Error())
 			continue
 		}
 		sourcesTypes[sourceType]++
@@ -117,10 +123,10 @@ func getChainByIdentifier(
 	case infra.FunctionSetupHocon:
 		return &HoconConfig{fileName: fileName}, sourceFileInDisk, nil
 	case infra.FunctionSetupJson:
-		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
+		return &JsonConfig{}, sourceFileInDisk, errors.New(notSupportedTypeError +
 			"json configurator source. Not implemented yet")
 	case infra.FunctionSetupYaml:
-		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
+		return &YamlConfig{}, sourceFileInDisk, errors.New(notSupportedTypeError +
 			"yaml configurator source. Not implemented yet")
 	case infra.FunctionSetupVault:
 		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "vault configurator source. Not implemented yet")

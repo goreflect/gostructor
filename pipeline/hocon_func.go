@@ -12,6 +12,9 @@ import (
 	"github.com/goreflect/gostructor/tags"
 )
 
+/*
+HoconConfig - configuring source from hocon
+*/
 type HoconConfig struct {
 	fileName            string
 	configureFileParsed *gohocon.Config
@@ -33,16 +36,16 @@ func (config HoconConfig) getElementName(context *structContext) string {
 	return returnName
 }
 
+/*
+GetComplexType - get complex types like slices, maps, arrays,
+*/
 func (config HoconConfig) GetComplexType(context *structContext) infra.GoStructorValue {
-	loaded, structValue := config.typeSafeLoadConfigFile(context)
-	if !loaded {
-		return *structValue
+	if errLoading := config.typeSafeLoadConfigFile(); errLoading != nil {
+		return infra.NewGoStructorNoValue(context.Value, errLoading)
 	}
 	valueIndirect := reflect.Indirect(context.Value)
 	switch valueIndirect.Kind() {
-	case reflect.Array:
-		return config.getSliceFromHocon(context)
-	case reflect.Slice:
+	case reflect.Slice, reflect.Array:
 		return config.getSliceFromHocon(context)
 	case reflect.Map:
 		return config.getMapFromHocon(context)
@@ -52,43 +55,37 @@ func (config HoconConfig) GetComplexType(context *structContext) infra.GoStructo
 }
 
 // return true - if loaded config or successfully load config by filename
-func (config *HoconConfig) typeSafeLoadConfigFile(context *structContext) (bool, *infra.GoStructorValue) {
+func (config *HoconConfig) typeSafeLoadConfigFile() error {
 	if config.configureFileParsed == nil {
 		configParsed, err := gohocon.LoadConfig(config.fileName)
 		if err != nil {
-			notValue := infra.NewGoStructorNoValue(context.Value, err)
-			return false, &notValue
+			return err
 		}
 		config.configureFileParsed = configParsed
-		return true, nil
+		return nil
 	}
-	return true, nil
+	return nil
 }
 
 func (config *HoconConfig) GetBaseType(context *structContext) infra.GoStructorValue {
-	configLoad, structValue := config.typeSafeLoadConfigFile(context)
-	if !configLoad {
-		return *structValue
+	if errLoading := config.typeSafeLoadConfigFile(); errLoading != nil {
+		return infra.NewGoStructorNoValue(context.Value, errLoading)
 	}
-	valueIndirect := reflect.Indirect(context.Value)
 	path := config.getElementName(context)
-	switch valueIndirect.Kind() {
-	case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float32, reflect.Float64, reflect.Bool, reflect.String:
-		loadValue, errLoading := config.configureFileParsed.GetString(path)
-		if errLoading != nil {
-			return infra.NewGoStructorNoValue(context.Value.Interface(), errLoading)
-		}
-		return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(loadValue), reflect.Indirect(context.Value))
-	default:
-		return infra.NewGoStructorNoValue(context.Value.Interface(),
-			errors.New("can not parsed inserted type in GetBaseType of configuration by hocon"))
+
+	loadValue, errLoading := config.configureFileParsed.GetString(path)
+	if errLoading != nil {
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errLoading)
 	}
+	return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(loadValue), reflect.Indirect(context.Value))
+
+	return infra.NewGoStructorNoValue(context.Value.Interface(),
+		errors.New("can not parsed inserted type in GetBaseType of configuration by hocon"))
 }
 
 func (config *HoconConfig) getSliceFromHocon(context *structContext) infra.GoStructorValue {
-	configLoad, structValue := config.typeSafeLoadConfigFile(context)
-	if !configLoad {
-		return *structValue
+	if errLoading := config.typeSafeLoadConfigFile(); errLoading != nil {
+		return infra.NewGoStructorNoValue(context.Value, errLoading)
 	}
 	path := config.getElementName(context)
 	fmt.Println("[HOCON]: level: debug. get path from hocon: ", path)
@@ -112,9 +109,8 @@ func (config *HoconConfig) getSliceFromHocon(context *structContext) infra.GoStr
 }
 
 func (config *HoconConfig) getMapFromHocon(context *structContext) infra.GoStructorValue {
-	configLoad, structValue := config.typeSafeLoadConfigFile(context)
-	if !configLoad {
-		return *structValue
+	if errLoading := config.typeSafeLoadConfigFile(); errLoading != nil {
+		return infra.NewGoStructorNoValue(context.Value, errLoading)
 	}
 	valueIndirect := reflect.Indirect(context.Value)
 	path := config.getElementName(context)
