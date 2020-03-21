@@ -249,9 +249,8 @@ func (pipeline *Pipeline) addNewErrorWhileParsing(err string) {
 func (pipeline *Pipeline) getErrorAsOne() error {
 	if len(pipeline.errors) > 0 {
 		return errors.New("on stage recurisiveParseFields will have any of this errors: " + strings.Join(pipeline.errors, "\n"))
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func (pipeline *Pipeline) configuringValues(context *structContext) error {
