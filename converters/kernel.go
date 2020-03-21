@@ -42,7 +42,7 @@ ConvertBetweenComplexTypes - converting between complex types like slice to slic
 */
 func ConvertBetweenComplexTypes(source reflect.Value, destination reflect.Value) infra.GoStructorValue {
 	switch destination.Kind() {
-	case reflect.Slice:
+	case reflect.Slice, reflect.Array:
 		return convertSlice(source, destination)
 	default:
 		return infra.NewGoStructorNoValue(destination, errors.New("not implemented"))
