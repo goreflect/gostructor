@@ -17,10 +17,6 @@ import (
 type EnvironmentConfig struct {
 }
 
-const (
-	separator = ","
-)
-
 /*
 GetComplexType - getting complex types like slices from environment variable
 */
