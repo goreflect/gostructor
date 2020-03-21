@@ -7,7 +7,11 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/goreflect/gostructor/converters"
+	"github.com/goreflect/gostructor/infra"
+	"github.com/goreflect/gostructor/middlewares"
 	"github.com/goreflect/gostructor/tags"
+	"github.com/goreflect/gostructor/tools"
 )
 
 type EnvironmentConfig struct {
@@ -15,21 +19,27 @@ type EnvironmentConfig struct {
 
 func (config EnvironmentConfig) GetComplexType(context *structContext) GoStructorValue {
 	valueIndirect := reflect.Indirect(context.Value)
-	switch valueIndirect.Kind() {
-	case reflect.Slice:
-		NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type slice not implement in environment parsing"))
-	case reflect.Map:
-		NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type map not implement in environment parsing"))
-	case reflect.Array:
-		NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type array not implement in environment parsing"))
-	default:
-		return config.GetBaseType(context)
+	valueTag := context.StructField.Tag.Get(tags.TagEnvironment)
+	if config.checkTagValue(valueTag) {
+		// TODO: increase message by information about what wrong in future issues
+		return infra.NewGoStructorNoValue(context.Value, errors.New("can not be empty. "))
 	}
-	return NewGoStructorNoValue(context.Value.Interface(), errors.New("getComplexType not implement for environment configuring"))
+	value := os.Getenv(valueTag)
+	if err := middlewares.ExecutorMiddlewaresByTagValue(value, tags.TagEnvironment); err != nil {
+		return infra.NewGoStructorNoValue(context.Value, errors.New("can not checks by middlewares. err: "+err.Error()))
+	}
+	array, err := tools.ConvertStringIntoArray(value, tools.ConfigureConverts{Separator: tools.COMMA})
+	if err != nil {
+		return infra.NewGoStructorNoValue(context.Value.Interface(), err)
+	}
+	return converters.ConvertBetweenComplexTypes(reflect.ValueOf(array), valueIndirect)
 }
 
-func (config EnvironmentConfig) GetBaseType(context *structContext) GoStructorValue {
-	fmt.Println("Level: Debug. nvironment values sources start")
+/*
+GetBaseType - getting base type values
+*/
+func (config EnvironmentConfig) GetBaseType(context *structContext) infra.GoStructorValue {
+	fmt.Println("Level: Debug. Environment values sources start")
 	valueIndirect := reflect.Indirect(context.Value)
 	valueTag := context.StructField.Tag.Get(tags.TagEnvironment)
 	if valueTag != "" {
@@ -77,8 +87,8 @@ func (config EnvironmentConfig) GetBaseType(context *structContext) GoStructorVa
 	return NewGoStructorNoValue(context.Value.Interface(), errors.New("getBaseType can not getting field by empty tag value of tag: "+tags.TagEnvironment))
 }
 
-// TODO: using in future for run middlewares
-// func (config EnvironmentConfig) checksByMiddlewares(tagvalue string) bool {
-// 	// in the future in this case will be added a call middlewares functions
-// 	return tagvalue == ""
-// }
+// TODO: change signature by error interface
+func (config EnvironmentConfig) checkTagValue(tagvalue string) bool {
+	// in the future in this case will be added a call middlewares functions
+	return tagvalue == ""
+}
