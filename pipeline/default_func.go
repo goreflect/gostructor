@@ -3,6 +3,8 @@ package pipeline
 import (
 	"errors"
 	"fmt"
+
+	"github.com/goreflect/gostructor/infra"
 )
 
 /*
@@ -14,15 +16,15 @@ type DefaultConfig struct {
 /*
 GetComplexType - get slices, maps, arrays or anything else hard types
 */
-func (config DefaultConfig) GetComplexType(context *structContext) GoStructorValue {
+func (config DefaultConfig) GetComplexType(context *structContext) infra.GoStructorValue {
 	fmt.Println("Level: Debug. Message: default values sources start")
-	return NewGoStructorNoValue(context.Value.Interface(), errors.New("getComplexType not implemented for default configuring"))
+	return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("getComplexType not implemented for default configuring"))
 }
 
 /*
 GetBaseType - get base type from default values.
 */
-func (config DefaultConfig) GetBaseType(context *structContext) GoStructorValue {
+func (config DefaultConfig) GetBaseType(context *structContext) infra.GoStructorValue {
 	fmt.Println("Level: Debug. Message: default values sources start")
-	return NewGoStructorNoValue(context.Value.Interface(), errors.New("getBaseType not implemented for default configuring"))
+	return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("getBaseType not implemented for default configuring"))
 }

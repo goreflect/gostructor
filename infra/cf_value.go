@@ -1,4 +1,4 @@
-package pipeline
+package infra
 
 import "reflect"
 
@@ -47,4 +47,8 @@ func NewGoStructorNoValue(value interface{}, err error) GoStructorValue {
 */
 func (gostructvalue GoStructorValue) CheckIsValue() bool {
 	return gostructvalue.Value.Kind() != reflect.Invalid
+}
+
+func (goStructorValue GoStructorValue) GetNotAValue() *NotAValue {
+	return goStructorValue.notAValue
 }
