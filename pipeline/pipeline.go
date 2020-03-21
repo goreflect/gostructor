@@ -34,7 +34,8 @@ type (
 
 const (
 	SmartConfiguring = true
-	DurtyConfiguring = false
+	/*DirtyConfiguring - flag*/
+	DirtyConfiguring = false
 
 	sourceFileInDisk   = 0
 	sourceFielInServer = 1
@@ -42,6 +43,7 @@ const (
 
 	notSupportedTypeError = "not supported type "
 
+	/*EmptyAdditionalPrefix - prefix for setup before all values can be empty*/
 	EmptyAdditionalPrefix = ""
 )
 
