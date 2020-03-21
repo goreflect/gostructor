@@ -1,13 +1,14 @@
 package pipeline
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 
 	"github.com/goreflect/gostructor/converters"
 	"github.com/goreflect/gostructor/infra"
+	"github.com/goreflect/gostructor/middlewares"
 	"github.com/goreflect/gostructor/tags"
+	"github.com/goreflect/gostructor/tools"
 )
 
 /*
@@ -23,16 +24,14 @@ func (config DefaultConfig) GetComplexType(context *structContext) infra.GoStruc
 	fmt.Println("Level: Debug. Message: default values sources start")
 	valueIndirect := reflect.Indirect(context.Value)
 	value := context.StructField.Tag.Get(tags.TagDefault)
-	if config.checkNotRightValue(value) {
-		// TODO: increase message by information about what wrong in future issues
-		return infra.NewGoStructorNoValue(context.Value, errors.New("wrong format inside the tag"))
+	if err := middlewares.ExecutorMiddlewaresByTagValue(value, tags.TagDefault); err != nil {
+		return infra.NewGoStructorNoValue(context.Value, err)
 	}
-	return converters.ConvertBetweenComplexTypes(reflect.ValueOf(value), valueIndirect)
-}
-
-// this is main entrypoint for checking value in tag
-func (config DefaultConfig) checkNotRightValue(value string) bool {
-	return value == ""
+	array, err := tools.ConvertStringIntoArray(value, tools.ConfigureConverts{Separator: tools.COMMA})
+	if err != nil {
+		return infra.NewGoStructorNoValue(context.Value, err)
+	}
+	return converters.ConvertBetweenComplexTypes(reflect.ValueOf(array), valueIndirect)
 }
 
 /*
@@ -42,9 +41,8 @@ func (config DefaultConfig) GetBaseType(context *structContext) infra.GoStructor
 	fmt.Println("Level: Debug. Message: default values sources start")
 	valueIndirect := reflect.Indirect(context.Value)
 	value := context.StructField.Tag.Get(tags.TagDefault)
-	if config.checkNotRightValue(value) {
-		// TODO: increase message by information about what wrong in future issues
-		return infra.NewGoStructorNoValue(context.Value, errors.New("wrong format inside the tag"))
+	if err := middlewares.ExecutorMiddlewaresByTagValue(value, tags.TagDefault); err != nil {
+		return infra.NewGoStructorNoValue(context.Value, err)
 	}
 	return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(value), valueIndirect)
 }

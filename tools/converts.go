@@ -1,6 +1,9 @@
 package tools
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
 
 type (
 	// ConfigureConverts - configuration structure for converters tools
@@ -18,6 +21,16 @@ const (
 )
 
 // ConvertStringIntoArray - converting from string into array of string
-func ConvertStringIntoArray(value string, configuration ConfigureConverts) []string {
-	return strings.Split(value, string(configuration.Separator))
+func ConvertStringIntoArray(value string, configuration ConfigureConverts) ([]string, error) {
+	if err := configuration.validation(); err != nil {
+		return nil, err
+	}
+	return strings.Split(value, string(configuration.Separator)), nil
+}
+
+func (configure ConfigureConverts) validation() error {
+	if configure.Separator == "" {
+		return errors.New("separator can not be empty! ")
+	}
+	return nil
 }
