@@ -1,7 +1,6 @@
 package gostructor
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -35,14 +34,6 @@ type (
 	// 		Field1 string
 	// 	} `cf_hocon:"node=planC.tururu.tratatat.planZ"`
 	// }
-
-	EnvStruct struct {
-		Field1 int16   `cf_env:"myField1"`
-		Field2 string  `cf_env:"myField2"`
-		Field3 bool    `cf_env:"myField3"`
-		Field4 float32 `cf_env:"myField4"`
-		Field5 []bool  `cf_env:"myField5"`
-	}
 
 	EnvStruct struct {
 		Field1 int16   `cf_env:"myField1"`
