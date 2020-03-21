@@ -49,6 +49,7 @@ const (
 
 	notSupportedTypeError = "not supported type "
 
+	/*EmptyAdditionalPrefix - prefix for setup before all values can be empty*/
 	EmptyAdditionalPrefix = ""
 )
 
