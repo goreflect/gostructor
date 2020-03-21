@@ -25,7 +25,30 @@ func Test_getFunctionChain(t *testing.T) {
 					infra.FunctionNotExist,
 				},
 			},
-			want: &Pipeline{chains: &Chain{stageFunction: nil, next: nil, notAValues: []*infra.NotAValue{&infra.NewNotAValue(reflect.ValueOf())}}},
+			want: &Pipeline{chains: &Chain{stageFunction: nil, next: nil, notAValues: nil}, sourcesTypes: []int{0, 0, 0}},
+		},
+		{
+			name: "check with implement source",
+			args: args{
+				fileName: "",
+				pipelineChanes: []infra.FuncType{
+					infra.FunctionSetupEnvironment,
+					infra.FunctionSetupHocon,
+				},
+			},
+			want: &Pipeline{chains: &Chain{
+				stageFunction: &EnvironmentConfig{},
+				next: &Chain{
+					stageFunction: &HoconConfig{},
+					next: &Chain{
+						stageFunction: nil,
+						next:          nil,
+						notAValues:    nil,
+					},
+					notAValues: nil,
+				},
+				notAValues: nil,
+			}, sourcesTypes: []int{1, 0, 1}},
 		},
 	}
 	for _, tt := range tests {
@@ -135,6 +158,96 @@ func Test_getChainByIdentifier(t *testing.T) {
 			}
 			if got1 != tt.want1 {
 				t.Errorf("getChainByIdentifier() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}
+
+func TestPipeline_checkSourcesConfigure(t *testing.T) {
+	type fields struct {
+		chains       *Chain
+		errors       []string
+		sourcesTypes []int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{
+			name: "check source in disk and in server",
+			fields: fields{
+				sourcesTypes: []int{1, 1, 0},
+			},
+			want: true,
+		},
+		{
+			name: "check source not used",
+			fields: fields{
+				sourcesTypes: []int{0, 0, 1},
+			},
+			want: false,
+		},
+		{
+			name: "check not know source",
+			fields: fields{
+				sourcesTypes: []int{0, 0, 0, 1},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pipeline := &Pipeline{
+				chains:       tt.fields.chains,
+				errors:       tt.fields.errors,
+				sourcesTypes: tt.fields.sourcesTypes,
+			}
+			if got := pipeline.checkSourcesConfigure(); got != tt.want {
+				t.Errorf("Pipeline.checkSourcesConfigure() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_structContext_getFieldName(t *testing.T) {
+	strctTest := testStructWithSimpleTypes{}
+	fieldStructType1 := reflect.ValueOf(strctTest).Type().Field(0)
+	fieldStructValue1 := reflect.ValueOf(strctTest).Field(0)
+	type fields struct {
+		Value       reflect.Value
+		StructField reflect.StructField
+		Prefix      string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+		want1  string
+	}{
+		{
+			name: "check tag hocon in struct",
+			fields: fields{
+				Value:       fieldStructValue1,
+				StructField: fieldStructType1,
+			},
+			want:  false,
+			want1: "field1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			context := structContext{
+				Value:       tt.fields.Value,
+				StructField: tt.fields.StructField,
+				Prefix:      tt.fields.Prefix,
+			}
+			got, got1 := context.getFieldName()
+			if got != tt.want {
+				t.Errorf("structContext.getFieldName() got = %v, want %v", got, tt.want)
+			}
+			if got1 != tt.want1 {
+				t.Errorf("structContext.getFieldName() got1 = %v, want %v", got1, tt.want1)
 			}
 		})
 	}
