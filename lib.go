@@ -15,7 +15,7 @@ func ConfigureEasy(
 		infra.FunctionSetupEnvironment,
 		infra.FunctionSetupHocon,
 		infra.FunctionSetupDefault,
-	}, pipeline.EmptyAdditionalPrefix, pipeline.DurtyConfiguring)
+	}, pipeline.EmptyAdditionalPrefix, pipeline.DirtyConfiguring)
 }
 
 /*
@@ -26,7 +26,7 @@ func ConfigureSetup(
 	fileName string,
 	prefix string,
 	functions []infra.FuncType) (interface{}, error) {
-	return pipeline.Configure(structure, fileName, functions, prefix, pipeline.DurtyConfiguring)
+	return pipeline.Configure(structure, fileName, functions, prefix, pipeline.DirtyConfiguring)
 }
 
 /*
