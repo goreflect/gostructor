@@ -3,7 +3,7 @@ package pipeline
 // this structures needs for writing unit tests in other's issues
 type (
 	testStructWithSimpleTypes struct {
-		Field1 string  `cf_hocon:"field1"`
+		Field1 string  `cf_hocon:"node=test|path123 = path| functions = validRegexp(pattern='there is pattern for regexp for example')"`
 		Field2 int     `cf_hocon:"field2"`
 		Field3 int8    `cf_hocon:"field3"`
 		Field4 int16   `cf_hocon:"field4"`
