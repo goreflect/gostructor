@@ -11,4 +11,5 @@ const (
 
 	// MISC characters
 	comma
+	equal
 )

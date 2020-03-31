@@ -1,16 +1,18 @@
 # Gostructor [![Actions Status](https://github.com/goreflect/gostructor/workflows/CI_dev/badge.svg)](https://github.com/goreflect/gostructor/actions?query=workflow%3ACI_dev) [![Go Report Card](https://goreportcard.com/badge/github.com/goreflect/gostructor)](https://goreportcard.com/report/github.com/goreflect/gostructor) [![codecov](https://codecov.io/gh/goreflect/gostructor/branch/master/graph/badge.svg)](https://codecov.io/gh/goreflect/gostructor)
-____
-### Version: 0.1.2
+
+## Version: 0.4
 
 hocon current configuration configuration library
 
 ## Current supporting input formats
 
-- hocon
+- hocon file
+- default values by tag
+- environment values by os.Env
 
 ## Current supporting types
 
-- int32, int64
+- int, int8, int16, int32, int64
 - float32, float64
 - string
 - bool
@@ -24,14 +26,16 @@ In current library using any of this tags:
 1. cf_hocon - setup value for this field from hocon
 2. cf_default - setup default value for this field
 3. cf_env - setup value from env variable by name in this tag
-4. cf_yaml - setup value for this field from yaml (version > 0.2)
-5. cf_json - setup value for this field from json (version > 0.3)
-6. cf_server - setup value from configuration server like spring cloud config server or others (version>0.4)
-7.  cf_vault - setup secret for this field from hashi corp vault (version>0.5)
+4. cf_yaml - setup value for this field from yaml (version > 0.5)
+5. cf_json - setup value for this field from json (version > 0.6)
+6. cf_server - setup value from configuration server like spring cloud config server or others (version>0.7)
+7. cf_vault - setup secret for this field from hashi corp vault (version>0.8)
+8. cf_txt - setup value from text file (by self parsing library version > 1.0)
 
 ## Validation(optional version > 0.6)
 
-If you have validate your data you should write in source tag validate after comma and after : you can choose validation type: 
+If you have validate your data you should write in source tag validate after comma and after : you can choose validation type:
+
 - email
 - phoneNumber8
 
@@ -46,8 +50,8 @@ For easy way you can chose gostructor.ConfigureEasy(). And if you have use one o
 
 ## Running configuring by setup way
 
-For this way you should set up chain functions will used in configuring pipeline. For example: 
-`test.hocon`
+For this way you should set up chain functions will used in configuring pipeline. For example: `test.hocon`
+
 ```hocon
 Examples = {
     FieldExample = test1
@@ -72,10 +76,10 @@ value, err := gostructor.ConfigureSetup(&ExampleType{}, "test.hocon", []pipeline
 ```
 
 Where Value is Interface therefore you should cast to your type with Pointer like this:
+
 ```golang
 value.(*ExampleType)
 ```
-
 
 ## Many examples
 
