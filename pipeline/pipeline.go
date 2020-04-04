@@ -54,7 +54,8 @@ const (
 
 // bool - skip preview prefix or not (if user setup node it is return true, if user setup path that's return false)
 // TODO: add error interface while user setup not knowing type of tags. And maybe if user make a mistake (this case need for autocorrection or autofill)
-func (context structContext) getFieldName() (bool, string) {
+// Deprecated.
+func (context structContext) getFieldName() string {
 	for _, val := range []string{
 		tags.TagHocon,
 		tags.TagJson,
@@ -67,21 +68,22 @@ func (context structContext) getFieldName() (bool, string) {
 		if tag == "" {
 			continue
 		}
-		tagCustomer := strings.Split(tag, "=")
+		// Not actual to any of available tags
+		tagCustomer := strings.Split(tag, ",")
 		if len(tagCustomer) == 0 {
 			continue
 		}
 		// TODO: change this case by add for range case checking tag custom (if user setup node and path, it's should be return node.path way)
-		for _, tagCustom := range []string{tags.TagCustomerNode, tags.TagCustomerPath} {
-			if tagCustomer[0] == tagCustom {
-				if tagCustomer[1] != "" {
-					return true, tagCustomer[1]
-				}
-			}
-		}
-		return false, tag
+		// for _, tagCustom := range []string{tags.TagCustomerNode, tags.TagCustomerPath} {
+		// 	if tagCustomer[0] == tagCustom {
+		// 		if tagCustomer[1] != "" {
+		// 			return true, tagCustomer[1]
+		// 		}
+		// 	}
+		// }
+		return tag
 	}
-	return false, context.StructField.Name
+	return context.StructField.Name
 }
 
 // get pipeline of functions in chain notation
@@ -179,6 +181,7 @@ func Configure(
 		Prefix: prefix,
 	}); err != nil {
 		fmt.Println("Level: error. Message: [Pipeline]: error while configuring your structure. Errors: ", err.Error())
+		return nil, err
 	}
 	return structure, nil
 }
@@ -218,34 +221,39 @@ func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 	valuePtr := reflect.Indirect(context.Value)
 	switch valuePtr.Kind() {
 	case reflect.Struct:
-		if context.Prefix == "" {
-			context.Prefix += valuePtr.Type().Name()
-		}
-		for i := 0; i < valuePtr.NumField(); i++ {
-			prefix := context.Prefix
-			if err := pipeline.checkValuePrefix(context.Prefix); err == nil {
-				prefix += "."
-			}
-			ok, getPrefix := (structContext{StructField: valuePtr.Type().Field(i)}.getFieldName())
-			if ok {
-				prefix = getPrefix
-			} else {
-				prefix += getPrefix
-			}
-			if err := pipeline.recursiveParseFields(&structContext{
-				Value:       valuePtr.Field(i).Addr(),
-				StructField: valuePtr.Type().Field(i),
-				Prefix:      prefix,
-			}); err != nil {
-				pipeline.addNewErrorWhileParsing(err.Error())
-			}
-		}
+		return pipeline.preparedInlineStructFields(valuePtr, context)
 	default:
 		if err := pipeline.configuringValues(context); err != nil {
 			pipeline.addNewErrorWhileParsing(err.Error())
 		}
+		return pipeline.getErrorAsOne()
 	}
-	return pipeline.getErrorAsOne()
+}
+
+func (pipeline *Pipeline) preparedInlineStructFields(value reflect.Value, context *structContext) error {
+	if context.Prefix == "" {
+		context.Prefix += value.Type().Name()
+	}
+	for i := 0; i < value.NumField(); i++ {
+		if err := pipeline.recursiveParseFields(&structContext{
+			Value:       value.Field(i).Addr(),
+			StructField: value.Type().Field(i),
+			Prefix:      pipeline.preparePrefix(context.Prefix, value.Type().Field(i)),
+		}); err != nil {
+			pipeline.addNewErrorWhileParsing(err.Error())
+			return pipeline.getErrorAsOne()
+		}
+	}
+	return nil
+}
+
+func (pipeline *Pipeline) preparePrefix(contextPrefix string, value reflect.StructField) string {
+	prefix := contextPrefix
+	if err := pipeline.checkValuePrefix(contextPrefix); err == nil {
+		prefix += "."
+	}
+	getPrefix := (structContext{StructField: value}.getFieldName())
+	return prefix + getPrefix
 }
 
 func (pipeline *Pipeline) addNewErrorWhileParsing(err string) {
@@ -265,37 +273,31 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 	case reflect.Slice, reflect.Map, reflect.Array:
 		valueGet := pipeline.chains.stageFunction.GetComplexType(context)
 		fmt.Println("Loglevel: Debug Message: [Pipeline]:  value get from parsing slice: ", valueGet)
-		if valueGet.CheckIsValue() {
-
-			// add check for setuping valueGet in valueIndirect
-			if valueIndirect.CanSet() {
-				fmt.Println("Loglevel: Debug Message: [Pipeline]: setupe value in struct")
-				valueIndirect.Set(valueGet.Value)
-			} else {
-				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")
-			}
-		} else {
-			return errors.New("Loglevel: Debug Message:  value get not implemented value: ")
-		}
+		return pipeline.setupValue(context, &valueGet)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return errors.New("not supported types of unsigned integer")
+		return errors.New("not implemented types of unsigned integer")
 	case reflect.String, reflect.Float32, reflect.Float64, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		valueGet := pipeline.chains.stageFunction.GetBaseType(context)
-		if valueGet.CheckIsValue() {
-			fmt.Println("Loglevel: Debug Message: [Pipeline]: value get from parsing "+valueGet.Value.Kind().String()+": ", valueGet)
-			if valueIndirect.CanSet() {
-				fmt.Println("[Pipeline]: setupe value")
-				valueIndirect.Set(valueGet.Value)
-			} else {
-				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")
-			}
-		} else {
-			return errors.New("value get not implemented value: ")
-		}
+		return pipeline.setupValue(context, &valueGet)
 	default:
 		return errors.New("not supported type for hocon parsing")
 	}
-	return nil
+}
+
+func (pipeline *Pipeline) setupValue(context *structContext, value *infra.GoStructorValue) error {
+	valueIndirect := reflect.Indirect(context.Value)
+	if value.CheckIsValue() {
+		// add check for setuping valueGet in valueIndirect
+		if valueIndirect.CanSet() {
+			fmt.Println("Loglevel: Debug Message: [Pipeline]: setupe value in struct")
+			valueIndirect.Set(value.Value)
+			return nil
+		} else {
+			return errors.New("can not set " + value.Value.Kind().String() + " into struct field.")
+		}
+	} else {
+		return errors.New("Loglevel: Debug Message:  value get not implementedable value: ")
+	}
 }
 
 func (pipeline *Pipeline) checkValueTypeIsPointer(value reflect.Value) error {
