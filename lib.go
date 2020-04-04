@@ -15,11 +15,7 @@ func ConfigureEasy(
 		infra.FunctionSetupEnvironment,
 		infra.FunctionSetupHocon,
 		infra.FunctionSetupDefault,
-<<<<<<< HEAD
 	}, pipeline.EmptyAdditionalPrefix, pipeline.DirtyConfiguring)
-=======
-	}, pipeline.EmptyAdditionalPrefix, pipeline.DurtyConfiguring)
->>>>>>> add logic for getting information about tags and fixture
 }
 
 /*
@@ -30,11 +26,7 @@ func ConfigureSetup(
 	fileName string,
 	prefix string,
 	functions []infra.FuncType) (interface{}, error) {
-<<<<<<< HEAD
 	return pipeline.Configure(structure, fileName, functions, prefix, pipeline.DirtyConfiguring)
-=======
-	return pipeline.Configure(structure, fileName, functions, prefix, pipeline.DurtyConfiguring)
->>>>>>> add logic for getting information about tags and fixture
 }
 
 /*
