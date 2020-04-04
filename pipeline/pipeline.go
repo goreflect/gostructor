@@ -35,7 +35,8 @@ type (
 const (
 	SmartConfiguring = true
 	/*DirtyConfiguring - flag*/
-	DirtyConfiguring   = false
+	DirtyConfiguring = false
+
 	sourceFileInDisk   = 0
 	sourceFielInServer = 1
 	sourceFileNotUsed  = 2
