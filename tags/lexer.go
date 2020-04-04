@@ -80,10 +80,6 @@ func isLetter(char rune) bool {
 	return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || (char >= '0' && char <= '9')
 }
 
-func isDigit(char rune) bool {
-	return char >= '0' && char <= '9'
-}
-
 /*
 Scan - start lexer scanner anbd tokenize all sequences
 */
