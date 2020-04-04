@@ -25,7 +25,7 @@ func TestConvertBetweenPrimitiveTypes(t *testing.T) {
 				destination: reflect.ValueOf(struct{ name string }{name: "test"}),
 			},
 			want: infra.NewGoStructorNoValue(reflect.ValueOf(struct{ name string }{name: "test"}),
-				errors.New("can not be converted to this type"+reflect.Struct.String()+" beacuse this type not supported"),
+				errors.New("can not be converted to this type"+reflect.Struct.String()+" because this type not supported"),
 			),
 		},
 	}
@@ -262,7 +262,7 @@ func TestConvertBetweenPrimitiveTypesToIntFromIntFailed(t *testing.T) {
 				source:      reflect.ValueOf(0000.1),
 				destination: reflect.ValueOf(int(0)),
 			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(int(0)), errors.New("can not be converted from this type: "+reflect.Float32.String()+" beacuse this type not supported")),
+			want: infra.NewGoStructorNoValue(reflect.ValueOf(int(0)), errors.New("can not be converted from this type: "+reflect.Float32.String()+" because this type not supported")),
 		},
 	}
 	for _, tt := range tests {
@@ -405,7 +405,7 @@ func Test_convertToInt8FromStringSuccess(t *testing.T) {
 				destination: destination,
 			},
 			want: infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+
-				reflect.Struct.String()+" beacuse this type not supported")),
+				reflect.Struct.String()+" because this type not supported")),
 		},
 	}
 	for _, tt := range tests {
@@ -493,7 +493,7 @@ func Test_convertToInt16FromStruct(t *testing.T) {
 				destination: reflect.ValueOf(int16(0)),
 			},
 			want: infra.NewGoStructorNoValue(reflect.ValueOf(int16(0)),
-				errors.New("can not be converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+				errors.New("can not be converted from this type: "+reflect.Struct.String()+" because this type not supported")),
 		},
 	}
 	for _, tt := range tests {
@@ -638,7 +638,7 @@ func Test_convertToInt32FromStruct(t *testing.T) {
 				source:      reflect.ValueOf(struct{ field string }{field: "test"}),
 				destination: reflect.ValueOf(int32(0)),
 			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(int32(0)), errors.New("can not be converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+			want: infra.NewGoStructorNoValue(reflect.ValueOf(int32(0)), errors.New("can not be converted from this type: "+reflect.Struct.String()+" because this type not supported")),
 		},
 	}
 	for _, tt := range tests {
@@ -752,7 +752,7 @@ func Test_convertToInt64FromStruct(t *testing.T) {
 				source:      reflect.ValueOf(struct{ field string }{field: "test"}),
 				destination: reflect.ValueOf(int64(0)),
 			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(int64(0)), errors.New("can not be converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+			want: infra.NewGoStructorNoValue(reflect.ValueOf(int64(0)), errors.New("can not be converted from this type: "+reflect.Struct.String()+" because this type not supported")),
 		},
 	}
 	for _, tt := range tests {
@@ -835,7 +835,7 @@ func Test_convertToBool(t *testing.T) {
 				source:      reflect.ValueOf(struct{ field string }{field: "test"}),
 				destination: reflect.ValueOf(false),
 			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(false), errors.New("can not be converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+			want: infra.NewGoStructorNoValue(reflect.ValueOf(false), errors.New("can not be converted from this type: "+reflect.Struct.String()+" because this type not supported")),
 		},
 	}
 	for _, tt := range tests {
@@ -923,7 +923,7 @@ func Test_convertToString(t *testing.T) {
 				destination: reflect.ValueOf(""),
 			},
 			want: infra.NewGoStructorNoValue(reflect.ValueOf(""),
-				errors.New("can not be converted from this type: "+reflect.Struct.String()+" beacuse this type not supported")),
+				errors.New("can not be converted from this type: "+reflect.Struct.String()+" because this type not supported")),
 		},
 	}
 	for _, tt := range tests {
