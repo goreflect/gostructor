@@ -286,7 +286,7 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")
 			}
 		} else {
-			return errors.New("Loglevel: Debug Message:  value get not implementedable value: ")
+			return errors.New("Loglevel: Debug Message:  value get not implemented value: ")
 		}
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		return errors.New("not supported types of unsigned integer")
@@ -301,7 +301,7 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")
 			}
 		} else {
-			return errors.New("value get not implementedable value: ")
+			return errors.New("value get not implemented value: ")
 		}
 	default:
 		return errors.New("not supported type for hocon parsing")

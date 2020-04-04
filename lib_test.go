@@ -90,21 +90,6 @@ func Test_parseHoconWithNodeNotation(t *testing.T) {
 
 func Test_parseHoconWithNodeNotation2(t *testing.T) {
 	myStruct, err := ConfigureSetup(&MyStruct4{}, "./test_configs/testmap.hocon", "", []infra.FuncType{infra.FunctionSetupHocon})
-<<<<<<< HEAD
-=======
-	if err != nil {
-		fmt.Println("error while configuring: ", err)
-	}
-	assert.Equal(t, &MyStruct4{
-		NestedStruct4: struct{ Field1 string }{
-			Field1: "testValueByTest",
-		},
-	}, myStruct.(*MyStruct4))
-}
-
-func Test_smartConfigure(t *testing.T) {
-	myStruct, err := ConfigureSmart(&MyStruct4{}, "./test_configs/testmap.hocon")
->>>>>>> add logic for getting information about tags and fixture
 	if err != nil {
 		fmt.Println("error while configuring: ", err)
 	}
@@ -127,11 +112,35 @@ func Test_smartConfigure(t *testing.T) {
 	}, myStruct.(*MyStruct4))
 }
 
-func Test_parseJson(t *testing.T) {
-	myStruct, err := ConfigureSetup(&MyStruct5{}, "./test_configs/config1.json", "", []pipeline.FuncType{pipeline.FunctionSetupJson})
+func Test_getValueFromEnvironment(t *testing.T) {
+	os.Setenv("myField1", "12")
+	os.Setenv("myField2", "test")
+	os.Setenv("myField3", "true")
+	os.Setenv("myField4", "12.2")
+	os.Setenv("myField5", "true,false,true")
+	defer func() {
+		os.Remove("myField1")
+		os.Remove("myField2")
+		os.Remove("myField3")
+		os.Remove("myField4")
+		os.Remove("myField5")
+	}()
+	myStruct, err := ConfigureSmart(&EnvStruct{}, "")
 	if err != nil {
 		fmt.Println("error while configuring: ", err)
 	}
-	fmt.Println(myStruct.(*MyStruct5))
-	t.Error()
+	assert.Equal(t, &MyStruct4{
+		NestedStruct4: struct{ Field1 string }{
+			Field1: "testValueByTest",
+		},
+	}, myStruct.(*MyStruct4))
+}
+
+	assert.Equal(t, &EnvStruct{
+		Field1: 12,
+		Field2: "test",
+		Field3: true,
+		Field4: 12.2,
+		Field5: []bool{true, false, true},
+	}, myStruct.(*EnvStruct))
 }

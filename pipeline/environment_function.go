@@ -22,10 +22,18 @@ GetComplexType - getting complex types like slices from environment variable
 */
 func (config EnvironmentConfig) GetComplexType(context *structContext) infra.GoStructorValue {
 	valueIndirect := reflect.Indirect(context.Value)
-	valueTag := context.StructField.Tag.Get(tags.TagEnvironment)
-	if config.checkTagValue(valueTag) {
-		// TODO: increase message by information about what wrong in future issues
-		return infra.NewGoStructorNoValue(context.Value, errors.New("can not be empty. "))
+	switch valueIndirect.Kind() {
+	case reflect.Slice:
+		valueTag := context.StructField.Tag.Get(tags.TagEnvironment)
+		if valueTag != "" {
+			value := os.Getenv(valueTag)
+			// add here additional logic for middlewares and other
+			array := config.convertStringIntoArray(value)
+			return converters.ConvertBetweenComplexTypes(reflect.ValueOf(array), valueIndirect)
+		}
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type "+valueIndirect.Kind().String()+" not implemented in environment parsing function"))
+	default:
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type "+valueIndirect.Kind().String()+" not implemented in environment parsing function"))
 	}
 	value := os.Getenv(valueTag)
 	if err := middlewares.ExecutorMiddlewaresByTagValue(value, tags.TagEnvironment); err != nil {
@@ -87,7 +95,7 @@ func (config EnvironmentConfig) GetBaseType(context *structContext) infra.GoStru
 			return NewGoStructorNoValue(valueIndirect.Interface(), errors.New("can not recognized type of you variable"))
 		}
 	}
-	return NewGoStructorNoValue(context.Value.Interface(), errors.New("getBaseType can not getting field by empty tag value of tag: "+tags.TagEnvironment))
+	return infra.NewGoStructorNoValue(context.Value, errors.New("getBaseType can not get field by empty tag value of tag: "+tags.TagEnvironment))
 }
 
 // TODO: change signature by error interface
