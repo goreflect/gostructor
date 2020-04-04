@@ -32,7 +32,7 @@ func recurseStructField(structField reflect.StructField) []int {
 	case reflect.Struct:
 		for i := 0; i < structField.Type.NumField(); i++ {
 			summarizeLevel := recurseStructField(structField.Type.Field(i))
-			summarize = combineFields(summarize, summirizeLevel)
+			summarize = combineFields(summarize, summarizeLevel)
 		}
 	}
 	return summarize
