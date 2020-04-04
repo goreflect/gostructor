@@ -30,7 +30,7 @@ func ConfigureSetup(
 }
 
 /*
-ConfigureSmart - configuring by analys tags for add prefer strategy for configuring
+ConfigureSmart - configuring by analysing tags for add prefer strategy for configuring
 */
 func ConfigureSmart(
 	structure interface{},

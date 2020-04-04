@@ -50,7 +50,7 @@ func (config EnvironmentConfig) GetBaseType(context *structContext) infra.GoStru
 		value := os.Getenv(valueTag)
 		return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(value), valueIndirect)
 	}
-	return infra.NewGoStructorNoValue(context.Value, errors.New("getBaseType can not getting field by empty tag value of tag: "+tags.TagEnvironment))
+	return infra.NewGoStructorNoValue(context.Value, errors.New("getBaseType can not get field by empty tag value of tag: "+tags.TagEnvironment))
 }
 
 // TODO: change signature by error interface
