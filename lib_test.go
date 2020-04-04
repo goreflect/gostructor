@@ -24,17 +24,17 @@ type (
 		MyMap         map[int]string `cf_hocon:"MyMap"`
 	}
 
-	MyStruct3 struct {
-		NestedStruct2 struct {
-			Field1 string `cf_hocon:"test1"`
-		} `cf_hocon:"node=planB"`
-	}
+	// MyStruct3 struct {
+	// 	NestedStruct2 struct {
+	// 		Field1 string `cf_hocon:"test1"`
+	// 	} `cf_hocon:"node=planB"`
+	// }
 
-	MyStruct4 struct {
-		NestedStruct4 struct {
-			Field1 string
-		} `cf_hocon:"node=planC.tururu.tratatat.planZ"`
-	}
+	// MyStruct4 struct {
+	// 	NestedStruct4 struct {
+	// 		Field1 string
+	// 	} `cf_hocon:"node=planC.tururu.tratatat.planZ"`
+	// }
 
 	MyStruct5 struct {
 		Field1 string  `cf_json:"field1"`
