@@ -34,9 +34,9 @@ func (config EnvironmentConfig) GetComplexType(context *structContext) infra.GoS
 			array := config.convertStringIntoArray(value)
 			return converters.ConvertBetweenComplexTypes(reflect.ValueOf(array), valueIndirect)
 		}
-		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type "+valueIndirect.Kind().String()+" not implement in environment parsing function"))
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type "+valueIndirect.Kind().String()+" not implemented in environment parsing function"))
 	default:
-		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type "+valueIndirect.Kind().String()+" not implement in environment parsing function"))
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("complex type "+valueIndirect.Kind().String()+" not implemented in environment parsing function"))
 	}
 }
 
@@ -57,7 +57,7 @@ func (config EnvironmentConfig) GetBaseType(context *structContext) infra.GoStru
 		value := os.Getenv(valueTag)
 		return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(value), valueIndirect)
 	}
-	return infra.NewGoStructorNoValue(context.Value, errors.New("getBaseType can not getting field by empty tag value of tag: "+tags.TagEnvironment))
+	return infra.NewGoStructorNoValue(context.Value, errors.New("getBaseType can not get field by empty tag value of tag: "+tags.TagEnvironment))
 }
 
 // TODO: using in future for run middlewares
