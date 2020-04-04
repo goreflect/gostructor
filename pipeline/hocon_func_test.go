@@ -237,3 +237,91 @@ func TestHoconConfig_GetComplexTypeValueSlice(t *testing.T) {
 		})
 	}
 }
+
+func TestHoconConfig_GetBaseType(t *testing.T) {
+	type fields struct {
+		fileName            string
+		configureFileParsed *gohocon.Config
+	}
+	type args struct {
+		context *structContext
+	}
+	value := reflect.ValueOf(int8(0))
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   infra.GoStructorValue
+	}{
+		{
+			name: "error loading file",
+			fields: fields{
+				fileName: "test",
+			},
+			args: args{
+				context: &structContext{
+					Value: value,
+				},
+			},
+			want: infra.NewGoStructorNoValue(value, errors.New("open test: no such file or directory")),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &HoconConfig{
+				fileName:            tt.fields.fileName,
+				configureFileParsed: tt.fields.configureFileParsed,
+			}
+			if got := config.GetBaseType(tt.args.context); !reflect.DeepEqual(got.GetNotAValue().Error.Error(), tt.want.GetNotAValue().Error.Error()) {
+				t.Errorf("HoconConfig.GetBaseType() = %v, want %v", got.GetNotAValue().Error, tt.want.GetNotAValue().Error)
+			}
+		})
+	}
+}
+
+func TestHoconConfig_getSliceFromHocon(t *testing.T) {
+	type fields struct {
+		fileName            string
+		configureFileParsed *gohocon.Config
+	}
+	type args struct {
+		context *structContext
+	}
+	testStructure := struct {
+		Field1 []bool `cf_hocon:"myBools"`
+	}{}
+	fieldTypeStructure := reflect.ValueOf(testStructure).Type().Field(0)
+	fieldValueStructure := reflect.ValueOf(testStructure).Field(0)
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   infra.GoStructorValue
+	}{
+		{
+			name: "get boolean list from hocon",
+			fields: fields{
+				fileName: "../test_configs/testmap.hocon",
+			},
+			args: args{
+				context: &structContext{
+					Prefix:      "TestHocon",
+					Value:       fieldValueStructure,
+					StructField: fieldTypeStructure,
+				},
+			},
+			want: infra.NewGoStructorTrueValue(reflect.ValueOf([]bool{true, false, true})),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &HoconConfig{
+				fileName:            tt.fields.fileName,
+				configureFileParsed: tt.fields.configureFileParsed,
+			}
+			if got := config.getSliceFromHocon(tt.args.context); !reflect.DeepEqual(got.Value.Interface(), tt.want.Value.Interface()) {
+				t.Errorf("HoconConfig.getSliceFromHocon() = %v, want %v", got.Value, tt.want.Value)
+			}
+		})
+	}
+}
