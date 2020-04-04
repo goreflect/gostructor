@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"os"
 	"reflect"
 	"testing"
 
@@ -242,12 +243,449 @@ func Test_structContext_getFieldName(t *testing.T) {
 				StructField: tt.fields.StructField,
 				Prefix:      tt.fields.Prefix,
 			}
-			got, got1 := context.getFieldName()
-			if got != tt.want {
-				t.Errorf("structContext.getFieldName() got = %v, want %v", got, tt.want)
-			}
+			got1 := context.getFieldName()
 			if got1 != tt.want1 {
 				t.Errorf("structContext.getFieldName() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}
+
+func TestPipeline_configuringValues(t *testing.T) {
+	structureFoTest := struct {
+		field1 uint8
+		field2 []string `cf_env:"test"`
+		field3 string
+		field4 complex64
+	}{
+		field1: 7,
+		field2: []string{"test1"},
+		field3: "test2",
+	}
+
+	os.Setenv("test", "test,test2")
+	fieldStructureType1 := reflect.ValueOf(structureFoTest).Type().Field(0)
+	fieldStructureValue1 := reflect.ValueOf(structureFoTest).Field(0)
+	fieldStructureType2 := reflect.ValueOf(structureFoTest).Type().Field(1)
+	fieldStructureValue2 := reflect.ValueOf(structureFoTest).Field(1)
+	fieldStructureType3 := reflect.ValueOf(structureFoTest).Type().Field(2)
+	fieldStructureValue3 := reflect.ValueOf(structureFoTest).Field(2)
+	fieldStructureType4 := reflect.ValueOf(structureFoTest).Type().Field(3)
+	fieldStructureValue4 := reflect.ValueOf(structureFoTest).Field(3)
+	chains := &Chain{
+		stageFunction: EnvironmentConfig{},
+	}
+	type fields struct {
+		chains       *Chain
+		errors       []string
+		sourcesTypes []int
+	}
+	type args struct {
+		context *structContext
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name:   "check error while configuring uint types",
+			fields: fields{},
+			args: args{
+				context: &structContext{
+					StructField: fieldStructureType1,
+					Value:       fieldStructureValue1,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "check when getting complex type from chains",
+			fields: fields{
+				chains: chains,
+			},
+			args: args{
+				context: &structContext{
+					StructField: fieldStructureType2,
+					Value:       fieldStructureValue2,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "check when getting base type from chains",
+			fields: fields{
+				chains: chains,
+			},
+			args: args{
+				context: &structContext{
+					StructField: fieldStructureType3,
+					Value:       fieldStructureValue3,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "check when undefined type",
+			fields: fields{
+				chains: chains,
+			},
+			args: args{
+				context: &structContext{
+					StructField: fieldStructureType4,
+					Value:       fieldStructureValue4,
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pipeline := &Pipeline{
+				chains:       tt.fields.chains,
+				errors:       tt.fields.errors,
+				sourcesTypes: tt.fields.sourcesTypes,
+			}
+			if err := pipeline.configuringValues(tt.args.context); (err != nil) != tt.wantErr {
+				t.Errorf("Pipeline.configuringValues() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestPipeline_checkValuePrefix(t *testing.T) {
+	type fields struct {
+		chains       *Chain
+		errors       []string
+		sourcesTypes []int
+	}
+	type args struct {
+		prefix string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name:   "prefix is empty or prefix contain .",
+			fields: fields{},
+			args: args{
+				prefix: ".",
+			},
+			wantErr: true,
+		},
+		{
+			name:   "prefix not empty and not contain last sym as point",
+			fields: fields{},
+			args: args{
+				prefix: "mysuper.prefix",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pipeline := &Pipeline{
+				chains:       tt.fields.chains,
+				errors:       tt.fields.errors,
+				sourcesTypes: tt.fields.sourcesTypes,
+			}
+			if err := pipeline.checkValuePrefix(tt.args.prefix); (err != nil) != tt.wantErr {
+				t.Errorf("Pipeline.checkValuePrefix() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestPipeline_checkValueTypeIsPointer(t *testing.T) {
+	type fields struct {
+		chains       *Chain
+		errors       []string
+		sourcesTypes []int
+	}
+	type args struct {
+		value reflect.Value
+	}
+	arg := int(4)
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name:   "value is not ptr",
+			fields: fields{},
+			args: args{
+				value: reflect.ValueOf(int8(4)),
+			},
+			wantErr: true,
+		},
+		{
+			name:   "value is ptr",
+			fields: fields{},
+			args: args{
+				value: reflect.ValueOf(&arg),
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pipeline := &Pipeline{
+				chains:       tt.fields.chains,
+				errors:       tt.fields.errors,
+				sourcesTypes: tt.fields.sourcesTypes,
+			}
+			if err := pipeline.checkValueTypeIsPointer(tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("Pipeline.checkValueTypeIsPointer() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestPipeline_setupValue(t *testing.T) {
+	type fields struct {
+		chains       *Chain
+		errors       []string
+		sourcesTypes []int
+	}
+	type args struct {
+		context *structContext
+		value   *infra.GoStructorValue
+	}
+	set := infra.NewGoStructorTrueValue(reflect.ValueOf(int8(4)))
+	source := int8(0)
+	testStruct := struct {
+		Field1 *int8
+	}{
+		Field1: &source,
+	}
+	valueStructField1 := reflect.ValueOf(testStruct).Field(0)
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name:   "check value can set into struct field",
+			fields: fields{},
+			args: args{
+				context: &structContext{
+					Value: valueStructField1,
+				},
+				value: &set,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pipeline := &Pipeline{
+				chains:       tt.fields.chains,
+				errors:       tt.fields.errors,
+				sourcesTypes: tt.fields.sourcesTypes,
+			}
+			if err := pipeline.setupValue(tt.args.context, tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("Pipeline.setupValue() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestPipeline_getErrorAsOne(t *testing.T) {
+	type fields struct {
+		chains       *Chain
+		errors       []string
+		sourcesTypes []int
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "return errors as one",
+			fields: fields{
+				errors: []string{"error1", "error2"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "return nil",
+			fields: fields{
+				errors: nil,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pipeline := &Pipeline{
+				chains:       tt.fields.chains,
+				errors:       tt.fields.errors,
+				sourcesTypes: tt.fields.sourcesTypes,
+			}
+			if err := pipeline.getErrorAsOne(); (err != nil) != tt.wantErr {
+				t.Errorf("Pipeline.getErrorAsOne() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestPipeline_preparePrefix(t *testing.T) {
+	type fields struct {
+		chains       *Chain
+		errors       []string
+		sourcesTypes []int
+	}
+	type args struct {
+		contextPrefix string
+		value         reflect.StructField
+	}
+
+	testStructure := struct {
+		Field1 string `cf_hocon:"context"`
+	}{
+		Field1: "",
+	}
+	fieldStruct := reflect.ValueOf(testStructure).Type().Field(0)
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   string
+	}{
+		{
+			name:   "get prefix with point",
+			fields: fields{},
+			args: args{
+				contextPrefix: "",
+				value:         fieldStruct,
+			},
+			want: "context",
+		},
+		{
+			name:   "get prefix with point",
+			fields: fields{},
+			args: args{
+				contextPrefix: "prefix",
+				value:         fieldStruct,
+			},
+			want: "prefix.context",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pipeline := &Pipeline{
+				chains:       tt.fields.chains,
+				errors:       tt.fields.errors,
+				sourcesTypes: tt.fields.sourcesTypes,
+			}
+			if got := pipeline.preparePrefix(tt.args.contextPrefix, tt.args.value); got != tt.want {
+				t.Errorf("Pipeline.preparePrefix() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConfigure(t *testing.T) {
+	type args struct {
+		structure       interface{}
+		fileName        string
+		pipelineChaines []infra.FuncType
+		prefix          string
+		smartConfigure  bool
+	}
+
+	myTestStruct := struct{ field1 string }{}
+
+	tests := []struct {
+		name       string
+		args       args
+		wantResult interface{}
+		wantErr    bool
+	}{
+		{
+			name: "smart configuring",
+			args: args{
+				structure:       &myTestStruct,
+				fileName:        "",
+				pipelineChaines: []infra.FuncType{infra.FunctionSetupDefault},
+				prefix:          "",
+				smartConfigure:  true,
+			},
+			wantResult: nil,
+			wantErr:    true,
+		},
+		{
+			name: "smart configuring",
+			args: args{
+				structure:       &myTestStruct,
+				fileName:        "test",
+				pipelineChaines: []infra.FuncType{infra.FunctionSetupJson},
+				prefix:          "",
+				smartConfigure:  true,
+			},
+			wantResult: nil,
+			wantErr:    true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotResult, err := Configure(tt.args.structure, tt.args.fileName, tt.args.pipelineChaines, tt.args.prefix, tt.args.smartConfigure)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Configure() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotResult, tt.wantResult) {
+				t.Errorf("Configure() = %v, want %v", gotResult, tt.wantResult)
+			}
+		})
+	}
+}
+
+func TestPipeline_recursiveParseFields(t *testing.T) {
+	type fields struct {
+		chains       *Chain
+		errors       []string
+		sourcesTypes []int
+	}
+	type args struct {
+		context *structContext
+	}
+	structureTest := struct{ Field1 int8 }{}
+	value := reflect.ValueOf(structureTest).Field(0)
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name:   "should return error",
+			fields: fields{},
+			args: args{
+				context: &structContext{
+					Value: value,
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pipeline := &Pipeline{
+				chains:       tt.fields.chains,
+				errors:       tt.fields.errors,
+				sourcesTypes: tt.fields.sourcesTypes,
+			}
+			if err := pipeline.recursiveParseFields(tt.args.context); (err != nil) != tt.wantErr {
+				t.Errorf("Pipeline.recursiveParseFields() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
