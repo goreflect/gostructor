@@ -126,8 +126,7 @@ func getChainByIdentifier(
 	case FunctionSetupHocon:
 		return &HoconConfig{fileName: fileName}, sourceFileInDisk, nil
 	case FunctionSetupJson:
-		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
-			"json configurator source. Not implemented yet")
+		return &JsonConfig{FileName: fileName}, sourceFileInDisk, nil
 	case FunctionSetupYaml:
 		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
 			"yaml configurator source. Not implemented yet")

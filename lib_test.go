@@ -34,6 +34,14 @@ type (
 			Field1 string
 		} `cf_hocon:"node=planC.tururu.tratatat.planZ"`
 	}
+
+	MyStruct5 struct {
+		Field1 string  `cf_json:"field1"`
+		Field2 int16   `cf_json:"myTestField2"`
+		Field3 bool    `cf_json:"field3"`
+		Field4 float32 `cf_json:"field4"`
+		Field5 []int16 `cf_json:"field5"`
+	}
 )
 
 func Test_parseHocon1(t *testing.T) {
@@ -90,4 +98,13 @@ func Test_parseHoconWithNodeNotation2(t *testing.T) {
 			Field1: "testValueByTest",
 		},
 	}, myStruct.(*MyStruct4))
+}
+
+func Test_parseJson(t *testing.T) {
+	myStruct, err := ConfigureSetup(&MyStruct5{}, "./test_configs/config1.json", "", []pipeline.FuncType{pipeline.FunctionSetupJson})
+	if err != nil {
+		fmt.Println("error while configuring: ", err)
+	}
+	fmt.Println(myStruct.(*MyStruct5))
+	t.Error()
 }
