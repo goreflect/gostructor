@@ -16,7 +16,7 @@ func Test_checkFileAccessibility(t *testing.T) {
 			args: args{
 				filename: "../test_configs/testFile",
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "check derivet string is dir",
