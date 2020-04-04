@@ -8,13 +8,17 @@ type (
 		Buffer struct {
 			Tok           Token
 			Literal       string
+			StartPosition int
+			EndPosition   int
 			AmountLetters int
 		}
 	}
 
 	ReturnSlice struct {
-		Tok     Token
-		Literal string
+		Tok            Token
+		Literal        string
+		StartPositioin int
+		EndPosition    int
 	}
 )
 
@@ -24,26 +28,32 @@ func NewParser(r io.Reader) *Parser {
 	}
 }
 
-func (parser *Parser) Scan() (Token, string) {
+func (parser *Parser) Scan() (Token, string, int, int) {
 	if parser.Buffer.AmountLetters != 0 {
 		parser.Buffer.AmountLetters = 0
-		return parser.Buffer.Tok, parser.Buffer.Literal
+		return parser.Buffer.Tok, parser.Buffer.Literal, 0, 0
 	}
-	parser.Buffer.Tok, parser.Buffer.Literal = parser.Lexer.Scan()
-	return parser.Buffer.Tok, parser.Buffer.Literal
+	token, literal, startPos, endPos := parser.Lexer.Scan()
+	parser.Buffer.Tok = token
+	parser.Buffer.Literal = literal
+	parser.Buffer.StartPosition = startPos
+	parser.Buffer.EndPosition = endPos
+	return parser.Buffer.Tok, parser.Buffer.Literal, parser.Buffer.StartPosition, parser.Buffer.EndPosition
 }
 
 func (parser *Parser) Parse() []ReturnSlice {
 	result := []ReturnSlice{}
 
 	for {
-		token, literal := parser.Scan()
+		token, literal, start, end := parser.Scan()
 		if token == EOF {
 			break
 		}
 		result = append(result, ReturnSlice{
-			Tok:     token,
-			Literal: literal,
+			Tok:            token,
+			Literal:        literal,
+			StartPositioin: start,
+			EndPosition:    end,
 		})
 	}
 	return result
