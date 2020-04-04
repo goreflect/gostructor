@@ -115,32 +115,6 @@ func Test_parseHocon(t *testing.T) {
 // 	}, myStruct.(*MyStruct4))
 // }
 
-func Test_getValueFromEnvironment(t *testing.T) {
-	os.Setenv("myField1", "12")
-	os.Setenv("myField2", "test")
-	os.Setenv("myField3", "true")
-	os.Setenv("myField4", "12.2")
-	os.Setenv("myField5", "true,false,true")
-
-	myStruct, err := ConfigureSmart(&EnvStruct{}, "")
-	if err != nil {
-		t.Error(err)
-	}
-
-	assert.Equal(t, &EnvStruct{
-		Field1: 12,
-		Field2: "test",
-		Field3: true,
-		Field4: 12.2,
-		Field5: []bool{true, false, true},
-	}, myStruct.(*EnvStruct))
-	os.Remove("myField1")
-	os.Remove("myField2")
-	os.Remove("myField3")
-	os.Remove("myField4")
-	os.Remove("myField5")
-}
-
 func Test_configureEasy(t *testing.T) {
 	os.Setenv("myField1", "12")
 	os.Setenv("myField2", "test")
@@ -148,6 +122,7 @@ func Test_configureEasy(t *testing.T) {
 	os.Setenv("myField4", "12.2")
 	os.Setenv("myField5", "true,false,true")
 	myStruct, err := ConfigureEasy(&EnvStruct{}, "")
+
 	if err != nil {
 		t.Error(err)
 	}
