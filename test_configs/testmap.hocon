@@ -30,4 +30,5 @@ TestHocon = {
         "test2": 2
     }
     myBaseType = 1
+    myBools = [on, off, on]
 }
