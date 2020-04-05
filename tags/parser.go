@@ -77,12 +77,18 @@ func (parser *Parser) Scan() {
 		parser.Buffer.AmountLetters = 0
 		return
 	}
-	token, literal, startPos, endPos := parser.Lexer.Scan()
-	parser.Term = TerminalSymbol{
-		Tok:            token,
-		Literal:        literal,
-		StartPositioin: startPos,
-		EndPosition:    endPos,
+	for {
+		token, literal, startPos, endPos := parser.Lexer.Scan()
+		if token == WHITESPACE {
+			continue
+		}
+		parser.Term = TerminalSymbol{
+			Tok:            token,
+			Literal:        literal,
+			StartPositioin: startPos,
+			EndPosition:    endPos,
+		}
+		break
 	}
 }
 
@@ -97,9 +103,6 @@ func (parser *Parser) Parse() (*AST, error) {
 	for {
 
 		switch parser.Term.Tok {
-		case WHITESPACE:
-			parser.Scan()
-			continue
 		case EOF:
 			return &result, nil
 		case CUSTOMPARAMNODE, CUSTOMPARAMPATH, CUSTOMPARAMTYPE, VALUE:
@@ -137,9 +140,6 @@ func (parser *Parser) parseValueNode() (result Key, err error) {
 	parsedType := false
 	for {
 		switch parser.Term.Tok {
-		case WHITESPACE:
-			parser.Scan()
-			continue
 		case CUSTOMPARAMNODE:
 			if parsedNode {
 				err = errors.New("have more that 1 node token")
@@ -213,15 +213,12 @@ func (parser *Parser) parseValueNode() (result Key, err error) {
 func (parser *Parser) parseNode() (node Node, err error) {
 	node = Node{}
 	node.Literal = parser.Term.Literal
-	node.Tok = parser.Term.Tok
+	node.Tok = NODE
 	node.StartPositioin = parser.Term.StartPositioin
 	node.EndPosition = parser.Term.EndPosition
 	parser.Scan()
 	for {
 		switch parser.Term.Tok {
-		case WHITESPACE:
-			parser.Scan()
-			continue
 		case EQUAL:
 			parser.Scan()
 			if parser.Term.Tok == VALUE {
@@ -240,20 +237,14 @@ func (parser *Parser) parseNode() (node Node, err error) {
 func (parser *Parser) parsePath() (path Path, err error) {
 	path = Path{}
 	path.Literal = parser.Term.Literal
-	path.Tok = parser.Term.Tok
+	path.Tok = PATH
 	path.StartPositioin = parser.Term.StartPositioin
 	path.EndPosition = parser.Term.EndPosition
 	parser.Scan()
 	for {
 		switch parser.Term.Tok {
-		case WHITESPACE:
-			parser.Scan()
-			continue
 		case EQUAL:
 			parser.Scan()
-			if parser.Term.Tok == WHITESPACE {
-				parser.Scan()
-			}
 			if parser.Term.Tok == VALUE {
 				path.PathName = parser.Term
 				return
@@ -272,13 +263,10 @@ func (parser *Parser) parseType() (typ Type, err error) {
 	typ.Literal = parser.Term.Literal
 	typ.StartPositioin = parser.Term.StartPositioin
 	typ.EndPosition = parser.Term.EndPosition
-	typ.Tok = parser.Term.Tok
+	typ.Tok = TYPE
 	parser.Scan()
 	for {
 		switch parser.Term.Tok {
-		case WHITESPACE:
-			parser.Scan()
-			continue
 		case EQUAL:
 			parser.Scan()
 			if parser.Term.Tok == VALUE {
@@ -297,7 +285,7 @@ func (parser *Parser) parseType() (typ Type, err error) {
 func (parser *Parser) parsePathAsSingleValue() (path Path, err error) {
 	path = Path{}
 	path.PathName = parser.Term
-	path.Tok = parser.Term.Tok
+	path.Tok = PATH
 	path.Literal = parser.Term.Literal
 	path.StartPositioin = parser.Term.StartPositioin
 	path.EndPosition = parser.Term.EndPosition
@@ -315,9 +303,6 @@ func (parser *Parser) parseMiddlewareNode() (middle MiddleWareNode, err error) {
 	parser.Scan()
 	for {
 		switch parser.Term.Tok {
-		case WHITESPACE:
-			parser.Scan()
-			continue
 		case EQUAL:
 			useEqual = true
 			parser.Scan()
@@ -352,9 +337,6 @@ func (parser *Parser) parseMiddlewareNode() (middle MiddleWareNode, err error) {
 
 func (parser *Parser) parseFunction() (function Function, err error) {
 	function = Function{}
-	if parser.Term.Tok == WHITESPACE {
-		parser.Scan()
-	}
 	if parser.Term.Tok == VALUE {
 		function.FunctionName = parser.Term
 		parser.Scan()
@@ -364,6 +346,7 @@ func (parser *Parser) parseFunction() (function Function, err error) {
 			return
 		}
 		function.Params = funcParams
+		function.FunctionName.Tok = FUNCTION
 		return
 	}
 	err = errors.New("after comma or equal should by value name of function")
@@ -375,9 +358,6 @@ func (parser *Parser) parseFunctionParams() (funcParams []FunctionParam, err err
 	useLeftBracket := false
 	for {
 		switch parser.Term.Tok {
-		case WHITESPACE:
-			parser.Scan()
-			continue
 		case LEFTBRACKET:
 			useLeftBracket = true
 			parser.Scan()
@@ -412,11 +392,8 @@ func (parser *Parser) parseFunctionParams() (funcParams []FunctionParam, err err
 
 func (parser *Parser) parseFunctionParam() (funcParam FunctionParam, err error) {
 	funcParam = FunctionParam{}
-	if parser.Term.Tok == WHITESPACE {
-		parser.Scan()
-	}
 	if parser.Term.Tok == VALUE {
-		funcParam.Tok = parser.Term.Tok
+		funcParam.Tok = PARAMFUNCTION
 		funcParam.Literal = parser.Term.Literal
 		funcParam.StartPositioin = parser.Term.StartPositioin
 		funcParam.EndPosition = parser.Term.EndPosition

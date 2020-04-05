@@ -24,7 +24,13 @@ const (
 	EOF
 	WHITESPACE
 
-	VALUE           // value which recognized by name field in environment or any other sources
+	VALUE // value which recognized by name field in environment or any other sources
+	FUNCTION
+	PARAMFUNCTION
+	PATH
+	NODE
+	TYPE
+
 	CUSTOMPARAMNODE // node, path, functions
 	CUSTOMPARAMPATH
 	CUSTOMPARAMFUNCTIONS
