@@ -148,11 +148,7 @@ func Test_getValueFromEnvironment(t *testing.T) {
 	os.Setenv("myField4", "12.2")
 	os.Setenv("myField5", "true,false,true")
 	defer func() {
-		os.Remove("myField1")
-		os.Remove("myField2")
-		os.Remove("myField3")
-		os.Remove("myField4")
-		os.Remove("myField5")
+		os.RemoveAll("myField")
 	}()
 	myStruct, err := ConfigureSmart(&EnvStruct{}, "")
 	if err != nil {

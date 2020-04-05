@@ -22,7 +22,7 @@ type (
 	/*ASTChild - children for current node
 	 */
 	ASTChild struct {
-		OneEntity tags.ReturnSlice
+		OneEntity tags.TerminalSymbol
 		Childs    []ASTChild
 	}
 )
@@ -46,6 +46,6 @@ func (syntax *SyntaxAnalys) Analys(str string) []error {
 /*
 BuildASTTree - building ast tree for analysing
 */
-func (syntax *SyntaxAnalys) BuildASTTree(entries []tags.ReturnSlice) AST {
+func (syntax *SyntaxAnalys) BuildASTTree(entries []tags.TerminalSymbol) AST {
 	return AST{}
 }
