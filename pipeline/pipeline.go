@@ -43,7 +43,6 @@ const (
 
 	notSupportedTypeError = "not supported type "
 
-	/*EmptyAdditionalPrefix - prefix for setup before all values can be empty*/
 	EmptyAdditionalPrefix = ""
 )
 
@@ -141,7 +140,7 @@ func Configure(
 	// filename for file configuring
 	fileName string,
 	// functions will be configure structure
-	pipelineChaines []infra.FuncType,
+	pipelineChains []infra.FuncType,
 	// prefix by getting data from source placed in entry
 	prefix string,
 	// smartConfigure - analys structure by tags for find methods which should use for configuration
@@ -160,7 +159,7 @@ func Configure(
 		analysedChains := tags.GetFunctionTypes(structure)
 		pipeline = getFunctionChain(fileName, analysedChains)
 	} else {
-		pipeline = getFunctionChain(fileName, pipelineChaines)
+		pipeline = getFunctionChain(fileName, pipelineChains)
 	}
 
 	// currentChain := pipeline.chains
@@ -271,7 +270,7 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")
 			}
 		} else {
-			return errors.New("Loglevel: Debug Message:  value get not implementedable value: ")
+			return errors.New("Loglevel: Debug Message:  value get not implemented value: ")
 		}
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		return errors.New("not supported types of unsigned integer")
@@ -286,7 +285,7 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 				return errors.New("can not set " + valueIndirect.Kind().String() + " into struct field.")
 			}
 		} else {
-			return errors.New("value get not implementedable value: ")
+			return errors.New("value get not implemented value: ")
 		}
 	default:
 		return errors.New("not supported type for hocon parsing")

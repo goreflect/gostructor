@@ -2,6 +2,7 @@ package gostructor
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/goreflect/gostructor/infra"
@@ -33,6 +34,14 @@ type (
 		NestedStruct4 struct {
 			Field1 string
 		} `cf_hocon:"node=planC.tururu.tratatat.planZ"`
+	}
+
+	EnvStruct struct {
+		Field1 int16   `cf_env:"myField1"`
+		Field2 string  `cf_env:"myField2"`
+		Field3 bool    `cf_env:"myField3"`
+		Field4 float32 `cf_env:"myField4"`
+		Field5 []bool  `cf_env:"myField5"`
 	}
 )
 
@@ -102,4 +111,31 @@ func Test_smartConfigure(t *testing.T) {
 			Field1: "testValueByTest",
 		},
 	}, myStruct.(*MyStruct4))
+}
+
+func Test_getValueFromEnvironment(t *testing.T) {
+	os.Setenv("myField1", "12")
+	os.Setenv("myField2", "test")
+	os.Setenv("myField3", "true")
+	os.Setenv("myField4", "12.2")
+	os.Setenv("myField5", "true,false,true")
+	defer func() {
+		os.Remove("myField1")
+		os.Remove("myField2")
+		os.Remove("myField3")
+		os.Remove("myField4")
+		os.Remove("myField5")
+	}()
+	myStruct, err := ConfigureSmart(&EnvStruct{}, "")
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, &EnvStruct{
+		Field1: 12,
+		Field2: "test",
+		Field3: true,
+		Field4: 12.2,
+		Field5: []bool{true, false, true},
+	}, myStruct.(*EnvStruct))
 }
