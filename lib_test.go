@@ -59,7 +59,7 @@ func Test_parseHocon1(t *testing.T) {
 
 func Test_parseHocon(t *testing.T) {
 	myStruct, err := ConfigureSetup(&MyStruct2{}, "./test_configs/testmap.hocon", "", []infra.FuncType{infra.FunctionSetupHocon})
-	if err != nil {
+	if true {
 		t.Error("error while configuring: ", err)
 	}
 	assert.Equal(t, &MyStruct2{
