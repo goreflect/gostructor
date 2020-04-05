@@ -77,7 +77,7 @@ func TestEnvironmentConfig_GetBaseTypeFaield(t *testing.T) {
 					Value:       myStruct1.Field(0),
 				},
 			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(myStruct1.Field(0)), errors.New("getBaseType can not getting field by empty tag value of tag: "+tags.TagEnvironment)),
+			want: infra.NewGoStructorNoValue(reflect.ValueOf(myStruct1.Field(0)), errors.New("getBaseType can not get field by empty tag value of tag: "+tags.TagEnvironment)),
 		},
 	}
 	for _, tt := range tests {

@@ -22,6 +22,7 @@ GetComplexType - getting complex types like slices from environment variable
 */
 func (config EnvironmentConfig) GetComplexType(context *structContext) infra.GoStructorValue {
 	valueIndirect := reflect.Indirect(context.Value)
+
 	valueTag := context.StructField.Tag.Get(tags.TagEnvironment)
 	if config.checkTagValue(valueTag) {
 		// TODO: increase message by information about what wrong in future issues
@@ -58,3 +59,9 @@ func (config EnvironmentConfig) checkTagValue(tagvalue string) bool {
 	// in the future in this case will be added a call middlewares functions
 	return tagvalue == ""
 }
+
+// TODO: using in future for run middlewares
+// func (config EnvironmentConfig) checksByMiddlewares(tagvalue string) bool {
+// 	// in the future in this case will be added a call middlewares functions
+// 	return tagvalue == ""
+// }
