@@ -12,7 +12,7 @@ func TestParser_Scan(t *testing.T) {
 		t.Error(errParsing)
 	}
 	t.Log(ast)
-	t.Error()
+	// t.Error()
 	// assert.Equal(t,
 	// 	[]TerminalSymbol{
 	// 		TerminalSymbol{
