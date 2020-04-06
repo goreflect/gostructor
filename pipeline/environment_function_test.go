@@ -98,6 +98,7 @@ func TestEnvironmentConfig_GetComplexType(t *testing.T) {
 	}{}
 	os.Setenv("mySlice", "1.12,1.24,1.67")
 	defer os.Remove("mySlice")
+
 	myStruct1 := reflect.Indirect(reflect.ValueOf(myStruct))
 	field1 := myStruct1.Type().Field(0)
 	t.Log("type of field: ", field1.Name+", "+field1.Type.Name())
@@ -126,7 +127,6 @@ func TestEnvironmentConfig_GetComplexType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config := EnvironmentConfig{}
 			got := config.GetComplexType(tt.args.context)
-
 			if !reflect.DeepEqual(got.Value.Interface(), tt.want.Value.Interface()) {
 				t.Errorf("EnvironmentConfig.GetComplexType() = %v, want %v", got, tt.want)
 			}
