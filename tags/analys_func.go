@@ -7,17 +7,17 @@ import (
 )
 
 /*
-GetFunctionTypes - return slice of functions which should configuring sourceStruct structure
+GetFunctionTypes - return slice of functions which should configure sourceStruct structure
 */
 func GetFunctionTypes(sourceStruct interface{}) []infra.FuncType {
-	summirize := []int{}
+	summarize := []int{}
 	value := reflect.Indirect(reflect.ValueOf(sourceStruct))
 	for i := 0; i < value.NumField(); i++ {
 		summirizeLevel := recurseStructField(value.Type().Field(i))
-		summirize = combineFields(summirize, summirizeLevel)
+		summarize = combineFields(summarize, summirizeLevel)
 	}
 	result := []infra.FuncType{}
-	for funcType, value := range summirize {
+	for funcType, value := range summarize {
 		if value > 0 {
 			result = append(result, infra.FuncType(funcType))
 		}
@@ -26,16 +26,16 @@ func GetFunctionTypes(sourceStruct interface{}) []infra.FuncType {
 }
 
 func recurseStructField(structField reflect.StructField) []int {
-	summirize := checkFuncsByTags(structField)
+	summarize := checkFuncsByTags(structField)
 
 	switch structField.Type.Kind() {
 	case reflect.Struct:
 		for i := 0; i < structField.Type.NumField(); i++ {
 			summirizeLevel := recurseStructField(structField.Type.Field(i))
-			summirize = combineFields(summirize, summirizeLevel)
+			summarize = combineFields(summarize, summirizeLevel)
 		}
 	}
-	return summirize
+	return summarize
 }
 
 //TODO: decomposition
@@ -57,7 +57,7 @@ func combineFields(summCurrent []int, newSumm []int) []int {
 }
 
 func checkFuncsByTags(structField reflect.StructField) []int {
-	summirize := make([]int, AmountTags) // amount repeats tags
+	summarize := make([]int, AmountTags) // amount repeats tags
 	for _, value := range []string{
 		TagYaml,
 		TagJson,
@@ -72,11 +72,11 @@ func checkFuncsByTags(structField reflect.StructField) []int {
 			continue
 		} else {
 			// TODO: add additional anaylys tag values for middlewares functions and others
-			summirize[getFuncTypeByTag(value)]++
+			summarize[getFuncTypeByTag(value)]++
 		}
 	}
 
-	return summirize
+	return summarize
 }
 
 func getFuncTypeByTag(tagName string) infra.FuncType {
