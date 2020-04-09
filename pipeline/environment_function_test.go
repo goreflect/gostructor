@@ -15,7 +15,7 @@ func TestEnvironmentConfig_GetBaseType(t *testing.T) {
 		field1 string `cf_env:"testBaseType"`
 	}{}
 	os.Setenv("testBaseType", "tururu")
-	defer os.Remove("testBaseType")
+	defer os.Unsetenv("testBaseType")
 	myStruct1 := reflect.Indirect(reflect.ValueOf(myStruct))
 	field1 := myStruct1.Type().Field(0)
 	t.Log("type of field: ", field1.Name+", "+field1.Type.Name())
@@ -44,7 +44,6 @@ func TestEnvironmentConfig_GetBaseType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config := EnvironmentConfig{}
 			got := config.GetBaseType(tt.args.context)
-			os.Remove("testBaseType")
 
 			if got.Value.String() != tt.want.Value.String() {
 				t.Errorf("EnvironmentConfig.GetComplexType() = %v, want %v", got, tt.want)
@@ -97,7 +96,7 @@ func TestEnvironmentConfig_GetComplexType(t *testing.T) {
 		fieldhard []float32 `cf_env:"mySlice"`
 	}{}
 	os.Setenv("mySlice", "1.12,1.24,1.67")
-	defer os.Remove("mySlice")
+	defer os.Unsetenv("mySlice")
 
 	myStruct1 := reflect.Indirect(reflect.ValueOf(myStruct))
 	field1 := myStruct1.Type().Field(0)
