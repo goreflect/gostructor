@@ -47,7 +47,8 @@ type (
 func Test_parseHocon1(t *testing.T) {
 	myStruct, err := ConfigureSetup(&MyStruct{}, "./test_configs/test1.hocon", "", []infra.FuncType{infra.FunctionSetupHocon})
 	if err != nil {
-		t.Error("error while configuring: ", err)
+		t.Error("error while configurig: ", err)
+		return
 	}
 	assert.Equal(t, &MyStruct{
 		Field1: []string{"test1", "test2", "test3"},
@@ -61,6 +62,7 @@ func Test_parseHocon(t *testing.T) {
 	myStruct, err := ConfigureSetup(&MyStruct2{}, "./test_configs/testmap.hocon", "", []infra.FuncType{infra.FunctionSetupHocon})
 	if err != nil {
 		t.Error("error while configuring: ", err)
+		return
 	}
 	assert.Equal(t, &MyStruct2{
 		NestedStruct1: NestedStruct1{
@@ -115,32 +117,6 @@ func Test_parseHocon(t *testing.T) {
 // 	}, myStruct.(*MyStruct4))
 // }
 
-func Test_configureEasy(t *testing.T) {
-	os.Setenv("myField1", "12")
-	os.Setenv("myField2", "test")
-	os.Setenv("myField3", "true")
-	os.Setenv("myField4", "12.2")
-	os.Setenv("myField5", "true,false,true")
-	myStruct, err := ConfigureEasy(&EnvStruct{}, "")
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	assert.Equal(t, &EnvStruct{
-		Field1: 12,
-		Field2: "test",
-		Field3: true,
-		Field4: 12.2,
-		Field5: []bool{true, false, true},
-	}, myStruct.(*EnvStruct))
-	os.Remove("myField1")
-	os.Remove("myField2")
-	os.Remove("myField3")
-	os.Remove("myField4")
-	os.Remove("myField5")
-}
-
 func Test_getValueFromEnvironment(t *testing.T) {
 	os.Setenv("myField1", "12")
 	os.Setenv("myField2", "test")
@@ -148,11 +124,16 @@ func Test_getValueFromEnvironment(t *testing.T) {
 	os.Setenv("myField4", "12.2")
 	os.Setenv("myField5", "true,false,true")
 	defer func() {
-		os.RemoveAll("myField")
+		os.Unsetenv("myField1")
+		os.Unsetenv("myField2")
+		os.Unsetenv("myField3")
+		os.Unsetenv("myField4")
+		os.Unsetenv("myField5")
 	}()
 	myStruct, err := ConfigureSmart(&EnvStruct{}, "")
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	assert.Equal(t, &EnvStruct{
@@ -162,4 +143,33 @@ func Test_getValueFromEnvironment(t *testing.T) {
 		Field4: 12.2,
 		Field5: []bool{true, false, true},
 	}, myStruct.(*EnvStruct))
+}
+
+func Test_configureEasy(t *testing.T) {
+	os.Setenv("myField1", "12")
+	os.Setenv("myField2", "test")
+	os.Setenv("myField3", "true")
+	os.Setenv("myField4", "12.2")
+	os.Setenv("myField5", "true,false,true")
+	defer func() {
+		os.Unsetenv("myField1")
+		os.Unsetenv("myField2")
+		os.Unsetenv("myField3")
+		os.Unsetenv("myField4")
+		os.Unsetenv("myField5")
+	}()
+	myStruct, err := ConfigureEasy(&EnvStruct{}, "")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	assert.Equal(t, &EnvStruct{
+		Field1: 12,
+		Field2: "test",
+		Field3: true,
+		Field4: 12.2,
+		Field5: []bool{true, false, true},
+	}, myStruct.(*EnvStruct))
+
 }

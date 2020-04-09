@@ -1,14 +1,14 @@
 # Gostructor [![Actions Status](https://github.com/goreflect/gostructor/workflows/CI_dev/badge.svg)](https://github.com/goreflect/gostructor/actions?query=workflow%3ACI_dev) [![Go Report Card](https://goreportcard.com/badge/github.com/goreflect/gostructor)](https://goreportcard.com/report/github.com/goreflect/gostructor) [![codecov](https://codecov.io/gh/goreflect/gostructor/branch/master/graph/badge.svg)](https://codecov.io/gh/goreflect/gostructor)
+____
+### Version: 0.4.1
 
-## Version: 0.4
-
-hocon current configuration configuration library
+Universal configuration library by tags
 
 ## Current supporting input formats
 
-- hocon file
-- default values by tag
-- environment values by os.Env
+- hocon values
+- default values
+- environment variables
 
 ## Current supporting types
 
@@ -19,74 +19,68 @@ hocon current configuration configuration library
 - map[string\int]string\int\float32\float64
 - slices of any types from (int32, int64, int, string, bool, float32, float64)
 
-## Tags
+### Tags
 
-In current library using any of this tags:
+- [x] cf_hocon - setup value for this field from hocon
+- [x] cf_default - setup default value for this field
+- [x] cf_env - setup value from env variable by name in this tag
+- [ ] cf_yaml - setup value for this field from yaml (version > 0.6)
+- [ ] cf_json - setup value for this field from json (version > 0.5)
+- [ ] cf_server - setup value from configuration server like spring cloud config server or others (version>0.7)
+- [ ] cf_vault - setup secret for this field from hashi corp vault (version>0.8)
 
-1. cf_hocon - setup value for this field from hocon
-2. cf_default - setup default value for this field
-3. cf_env - setup value from env variable by name in this tag
-4. cf_yaml - setup value for this field from yaml (version > 0.5)
-5. cf_json - setup value for this field from json (version > 0.6)
-6. cf_server - setup value from configuration server like spring cloud config server or others (version>0.7)
-7. cf_vault - setup secret for this field from hashi corp vault (version>0.8)
-8. cf_txt - setup value from text file (by self parsing library version > 1.0)
+## Running configuring by smart variant
 
-## Validation(optional version > 0.6)
+For Run configuration by smart variant autostart analysing of using tags. library will start configuring  your structure by pipeline with all founded tags.
 
-If you have validate your data you should write in source tag validate after comma and after : you can choose validation type:
+```go
+type Test struct {
+    MyValue1 string `cf_default:"turur" cf_hocon:"mySourceValue1"`
+    MySlice1 []bool `cf_default:"true,false,false,true" cf_env:"MY_SIGNALS"`
+}
 
-- email
-- phoneNumber8
+// in this example do use 3 tags: cf_default (using default values which setup inline tag)
+// cf_env - using environment variable
+// cf_hocon - using hocon source file 
 
-## Menu
+//....
 
-- [Reserved Tags](https://github.com/goreflect/gostructor/blob/master/tags)
-- [Specifications](https://github.com/goreflect/gostructor/blob/master/specifications)
-
-## Running configuring by easy way
-
-For easy way you can chose gostructor.ConfigureEasy(). And if you have use one of file sources like: json, hocon, yaml, txt your files should ended by type (if your file not ended of type, this source will be ignored by function chainer)
-
-## Running configuring by setup way
-
-For this way you should set up chain functions will used in configuring pipeline. For example: `test.hocon`
-
-```hocon
-Examples = {
-    FieldExample = test1
-
-    ExampleType = {
-        Field1 = test2
+func myConfigurator() {
+    myStruct, errConfiguring := gostructir.ConfigureSmart(&Test{}, "testhocon.hocon")
+    // check errConfiguring for any errors
+    if errConfiguring != nil {
+        /// action for error
     }
+
+    // cast interface{} into Test structure
+    myValues := myStruct.(*Test)
+    // now, u structure already filled
+} 
+
+```
+
+## Running configuring by setup
+
+You can also setting configuring pipeline like this:
+
+```go
+type Test struct {
+    MyValue1 string `cf_default:"turur" cf_hocon:"mySourceValue1"`
+    MySlice1 []bool `cf_default:"true,false,false,true" cf_env:"MY_SIGNALS"`
 }
+
+func myConfigurator() {
+    myStruct, errConfiguring := gostructir.ConfigureSetup(&Test{}, "testhocon.hocon", []infra.FuncType{
+        infra.FunctionSetupEnvironment,
+    })// you should setup only by order configure
+    // check errConfiguring for any errors
+    if errConfiguring != nil {
+        /// action for error
+    }
+
+    // cast interface{} into Test structure
+    myValues := myStruct.(*Test)
+    // now, u structure already filled
+} 
+
 ```
-
-```golang
-type ExampleType struct {
-    fieldTest1  string `cf_hocon:"Examples.FieldExample"`
-    Field1      string `cf_default:"tururutest"`
-}
-...
-value, err := gostructor.ConfigureSetup(&ExampleType{}, "test.hocon", []pipeline.FuncType{
-    pipeline.FunctionSetupHocon,
-    pipeline.FunctionSetupDefault,
-})
-
-```
-
-Where Value is Interface therefore you should cast to your type with Pointer like this:
-
-```golang
-value.(*ExampleType)
-```
-
-## Many examples
-
-In this section will added any examples of using this library
-
-## TODO
-
-1. Implement self converters for all sources
-2. Write unit tests for any cases
-3. Move getFieldName methods for any source func parsers because in any of source have available any naming sources
