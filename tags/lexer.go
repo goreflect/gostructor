@@ -45,7 +45,6 @@ const (
 	RIGHTBRACKET // )
 
 	DefineNameFunctions = "functions"
-	DefineNameFunction  = "function"
 	DefineNameNode      = "node"
 	DefineNamePath      = "path"
 	DefineNameType      = "type"
@@ -171,8 +170,6 @@ func (scanner *Scanner) scanID() (Token, string, int, int) {
 		return CUSTOMPARAMPATH, buf.String(), startPosition, scanner.CurrentPosition
 	case DefineNameFunctions:
 		return CUSTOMPARAMFUNCTIONS, buf.String(), startPosition, scanner.CurrentPosition
-	case DefineNameFunction:
-		return CUSTOMPARAMFUNCTION, buf.String(), startPosition, scanner.CurrentPosition
 	case DefineNameType:
 		return CUSTOMPARAMTYPE, buf.String(), startPosition, scanner.CurrentPosition
 	default:

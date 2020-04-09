@@ -6,7 +6,7 @@ import (
 )
 
 func TestParser_Scan(t *testing.T) {
-	reader := strings.NewReader(`node=context1   ;   path = test1;  functions=function1(0,1),  function2(sda)`)
+	reader := strings.NewReader(`node=context1   ;   path = test1; type = hocon;  functions=function1(0,1),  function2(sda)`)
 	ast, errParsing := NewParser(reader).Parse()
 	if errParsing != nil {
 		t.Error(errParsing)
