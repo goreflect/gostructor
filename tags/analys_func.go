@@ -31,8 +31,8 @@ func recurseStructField(structField reflect.StructField) []int {
 	switch structField.Type.Kind() {
 	case reflect.Struct:
 		for i := 0; i < structField.Type.NumField(); i++ {
-			summarizeLevel := recurseStructField(structField.Type.Field(i))
-			summarize = combineFields(summarize, summarizeLevel)
+			summirizeLevel := recurseStructField(structField.Type.Field(i))
+			summarize = combineFields(summarize, summirizeLevel)
 		}
 	}
 	return summarize
@@ -72,7 +72,6 @@ func checkFuncsByTags(structField reflect.StructField) []int {
 			continue
 		} else {
 			// TODO: add additional anaylys tag values for middlewares functions and others
-
 			summarize[getFuncTypeByTag(value)]++
 		}
 	}
