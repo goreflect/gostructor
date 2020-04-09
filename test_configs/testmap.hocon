@@ -22,3 +22,13 @@ planC = {
         }
     }
 }
+
+TestHocon = {
+    myField1 = ["test1","test2"]
+    myMap = {
+        "test1": 1,
+        "test2": 2
+    }
+    myBaseType = 1
+    myBools = [on, off, on]
+}
