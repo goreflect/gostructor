@@ -1,9 +1,28 @@
 package gostructor
 
 import (
+	"os"
+
 	"github.com/goreflect/gostructor/infra"
 	"github.com/goreflect/gostructor/pipeline"
+	logrus "github.com/sirupsen/logrus"
 )
+
+func init() {
+	logrus.SetFormatter(&logrus.TextFormatter{})
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(logrus.ErrorLevel)
+}
+
+/*ChangeLogLevel - changing current loggin level*/
+func ChangeLogLevel(logLevel logrus.Level) {
+	logrus.SetLevel(logLevel)
+}
+
+/*ChangeLogFormatter - changing current formatter*/
+func ChangeLogFormatter(formatter logrus.Formatter) {
+	logrus.SetFormatter(formatter)
+}
 
 /*
 ConfigureEasy - default pipeline setup for configure your structure

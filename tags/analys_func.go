@@ -94,7 +94,7 @@ func getFuncTypeByTag(tagName string) infra.FuncType {
 	case TagHocon:
 		return infra.FunctionSetupHocon
 	case TagJson:
-		return infra.FunctionSetupJson
+		return infra.FunctionSetupJSON
 	default:
 		return infra.FunctionNotExist
 	}

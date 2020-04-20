@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"reflect"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/goreflect/gostructor/middlewares"
 	"github.com/goreflect/gostructor/tags"
 	"github.com/goreflect/gostructor/tools"
+	"github.com/sirupsen/logrus"
 )
 
 /*EnvironmentConfig - configuring structures from environment*/
@@ -21,6 +21,7 @@ type EnvironmentConfig struct {
 GetComplexType - getting complex types like slices from environment variable
 */
 func (config EnvironmentConfig) GetComplexType(context *structContext) infra.GoStructorValue {
+	logrus.Debug("get values from environment start")
 	valueIndirect := reflect.Indirect(context.Value)
 	valueTag := context.StructField.Tag.Get(tags.TagEnvironment)
 	if config.checkTagValue(valueTag) {
@@ -42,7 +43,7 @@ func (config EnvironmentConfig) GetComplexType(context *structContext) infra.GoS
 GetBaseType - getting base type values
 */
 func (config EnvironmentConfig) GetBaseType(context *structContext) infra.GoStructorValue {
-	fmt.Println("Level: Debug. Environment values sources start")
+	logrus.Debug("get values from environment start")
 	valueIndirect := reflect.Indirect(context.Value)
 	valueTag := context.StructField.Tag.Get(tags.TagEnvironment)
 
