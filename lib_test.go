@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/goreflect/gostructor/infra"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -172,4 +173,9 @@ func Test_configureEasy(t *testing.T) {
 		Field5: []bool{true, false, true},
 	}, myStruct.(*EnvStruct))
 
+}
+
+func TestChangeLogsParams(t *testing.T) {
+	ChangeLogLevel(logrus.DebugLevel)
+	ChangeLogFormatter(&logrus.JSONFormatter{})
 }
