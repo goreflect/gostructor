@@ -60,7 +60,7 @@ func checkFuncsByTags(structField reflect.StructField) []int {
 	summarize := make([]int, AmountTags) // amount repeats tags
 	for _, value := range []string{
 		TagYaml,
-		TagJson,
+		TagJSON,
 		TagHocon,
 		TagHashiCorpVault,
 		TagEnvironment,
@@ -93,7 +93,7 @@ func getFuncTypeByTag(tagName string) infra.FuncType {
 		return infra.FunctionSetupVault
 	case TagHocon:
 		return infra.FunctionSetupHocon
-	case TagJson:
+	case TagJSON:
 		return infra.FunctionSetupJSON
 	default:
 		return infra.FunctionNotExist

@@ -58,7 +58,7 @@ const (
 func (context structContext) getFieldName() string {
 	for _, val := range []string{
 		tags.TagHocon,
-		tags.TagJson,
+		tags.TagJSON,
 		tags.TagYaml,
 		tags.TagDefault,
 		tags.TagEnvironment,
