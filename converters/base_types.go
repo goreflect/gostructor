@@ -2,9 +2,10 @@ package converters
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strconv"
+
+	logrus "github.com/sirupsen/logrus"
 
 	"github.com/goreflect/gostructor/infra"
 )
@@ -12,14 +13,14 @@ import (
 func convertToInt(source reflect.Value, destination reflect.Value) infra.GoStructorValue {
 	switch source.Kind() {
 	case reflect.String:
-		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int type")
+		logrus.Debug("start convert value ", source.String(), " into int type")
 		convertedValue, errorConvert := strconv.ParseInt(source.String(), 10, 64)
 		if errorConvert != nil {
 			return infra.NewGoStructorNoValue(destination, errors.New("can not be converted to this type: "+destination.Kind().String()))
 		}
 		return infra.NewGoStructorTrueValue(reflect.ValueOf(int(convertedValue)))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int type")
+		logrus.Debug("start convert value ", source.String(), " into int type")
 		if source.Type().ConvertibleTo(destination.Type()) {
 			return infra.NewGoStructorTrueValue(source.Convert(destination.Type()))
 		}
@@ -32,14 +33,14 @@ func convertToInt(source reflect.Value, destination reflect.Value) infra.GoStruc
 func convertToInt8(source reflect.Value, destination reflect.Value) infra.GoStructorValue {
 	switch source.Kind() {
 	case reflect.String:
-		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int8 type")
+		logrus.Debug("start convert value ", source.String(), " into int8 type")
 		convertedValue, errorConvert := strconv.ParseInt(source.String(), 10, 8)
 		if errorConvert != nil {
 			return infra.NewGoStructorNoValue(destination, errors.New("can not be converted to this type: "+destination.Kind().String()))
 		}
 		return infra.NewGoStructorTrueValue(reflect.ValueOf(int8(convertedValue)))
 	case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64:
-		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int8 type")
+		logrus.Debug("start convert value ", source.String(), " into int8 type")
 		if source.Type().ConvertibleTo(destination.Type()) {
 			return infra.NewGoStructorTrueValue(source.Convert(destination.Type()))
 		}
@@ -52,14 +53,14 @@ func convertToInt8(source reflect.Value, destination reflect.Value) infra.GoStru
 func convertToInt16(source reflect.Value, destination reflect.Value) infra.GoStructorValue {
 	switch source.Kind() {
 	case reflect.String:
-		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int16 type")
+		logrus.Debug("start convert value ", source.String(), " into int16 type")
 		convertedValue, errorConvert := strconv.ParseInt(source.String(), 10, 16)
 		if errorConvert != nil {
 			return infra.NewGoStructorNoValue(destination, errors.New("can not be converted to this type: "+destination.Kind().String()))
 		}
 		return infra.NewGoStructorTrueValue(reflect.ValueOf(int16(convertedValue)))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int16 type")
+		logrus.Debug("start convert value ", source.String(), " into int16 type")
 		if source.Type().ConvertibleTo(destination.Type()) {
 			return infra.NewGoStructorTrueValue(source.Convert(destination.Type()))
 		}
@@ -72,14 +73,14 @@ func convertToInt16(source reflect.Value, destination reflect.Value) infra.GoStr
 func convertToInt32(source reflect.Value, destination reflect.Value) infra.GoStructorValue {
 	switch source.Kind() {
 	case reflect.String:
-		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int32 type")
+		logrus.Debug("start convert value ", source.String(), " into int32 type")
 		convertedValue, errorConvert := strconv.ParseInt(source.String(), 10, 32)
 		if errorConvert != nil {
 			return infra.NewGoStructorNoValue(destination, errors.New("can not be converted to this type: "+destination.Kind().String()))
 		}
 		return infra.NewGoStructorTrueValue(reflect.ValueOf(int32(convertedValue)))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int32 type")
+		logrus.Debug("start convert value ", source.String(), " into int32 type")
 		if source.Type().ConvertibleTo(destination.Type()) {
 			return infra.NewGoStructorTrueValue(source.Convert(destination.Type()))
 		}
@@ -92,14 +93,14 @@ func convertToInt32(source reflect.Value, destination reflect.Value) infra.GoStr
 func convertToInt64(source reflect.Value, destination reflect.Value) infra.GoStructorValue {
 	switch source.Kind() {
 	case reflect.String:
-		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int64 type")
+		logrus.Debug("start convert value ", source.String(), " into int64 type")
 		convertedValue, errorConvert := strconv.ParseInt(source.String(), 10, 64)
 		if errorConvert != nil {
 			return infra.NewGoStructorNoValue(destination, errors.New("can not be converted to this type: "+destination.Kind().String()))
 		}
 		return infra.NewGoStructorTrueValue(reflect.ValueOf(int64(convertedValue)))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		fmt.Println("Level: Debug. Message: start convert value ", source.String(), " into int64 type")
+		logrus.Debug("start convert value ", source.String(), " into int64 type")
 		if source.Type().ConvertibleTo(destination.Type()) {
 			return infra.NewGoStructorTrueValue(source.Convert(destination.Type()))
 		}

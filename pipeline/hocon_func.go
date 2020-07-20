@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/goreflect/gostructor/converters"
 	"github.com/goreflect/gostructor/infra"
 	"github.com/goreflect/gostructor/tags"
+	"github.com/sirupsen/logrus"
 )
 
 /*
@@ -23,7 +23,7 @@ type HoconConfig struct {
 func (config HoconConfig) getElementName(context *structContext) string {
 	currentTagHoconValue := context.StructField.Tag.Get(tags.TagHocon)
 	if strings.Contains(context.Prefix, currentTagHoconValue) {
-		fmt.Println("[HOCON]: Level: debug. Current field name: ", context.Prefix)
+		logrus.Debug("Current field name: ", context.Prefix)
 		return context.Prefix
 	}
 	returnName := context.Prefix + "."
@@ -32,7 +32,7 @@ func (config HoconConfig) getElementName(context *structContext) string {
 	}
 
 	returnName += currentTagHoconValue
-	fmt.Println("[HOCON]: Level: debug. Current field name: ", returnName)
+	logrus.Debug("Current field name: ", returnName)
 	return returnName
 }
 
@@ -88,10 +88,10 @@ func (config *HoconConfig) getSliceFromHocon(context *structContext) infra.GoStr
 		return infra.NewGoStructorNoValue(context.Value, errLoading)
 	}
 	path := config.getElementName(context)
-	fmt.Println("[HOCON]: level: debug. get path from hocon: ", path)
+	logrus.Debug("get path from hocon: ", path)
 	valueIndirect := reflect.Indirect(context.Value)
 	setupSlice := reflect.MakeSlice(valueIndirect.Type(), 1, 1)
-	fmt.Println("[HOCON]: level: debug. type of first element at slice: ", setupSlice.Index(0).Kind())
+	logrus.Debug("type of first element at slice: ", setupSlice.Index(0).Kind())
 	// get string list
 	valuesFromHocon, errGetting := config.configureFileParsed.GetStringList(path)
 	if errGetting != nil {
@@ -115,9 +115,9 @@ func (config *HoconConfig) getMapFromHocon(context *structContext) infra.GoStruc
 	}
 	valueIndirect := reflect.Indirect(context.Value)
 	path := config.getElementName(context)
-	fmt.Println("[HOCON]: level: debuf. current type: ", valueIndirect.Kind().String())
-	fmt.Println("[HOCON]: level: debuf.key of map: ", valueIndirect.Type().Key().Kind())
-	fmt.Println("[HOCON]: level: debuf.value of map: ", valueIndirect.Type().Elem().Kind())
+	logrus.Debug("current type: ", valueIndirect.Kind().String())
+	logrus.Debug("key of map: ", valueIndirect.Type().Key().Kind())
+	logrus.Debug("value of map: ", valueIndirect.Type().Elem().Kind())
 	getValue, errLoading := config.configureFileParsed.GetValue(path)
 	if errLoading != nil {
 		return infra.NewGoStructorNoValue(context.Value.Interface(), errLoading)

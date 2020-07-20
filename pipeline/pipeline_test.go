@@ -104,7 +104,7 @@ func Test_getChainByIdentifier(t *testing.T) {
 		{
 			name: "check function setup json",
 			args: args{
-				idFunc: infra.FunctionSetupJson,
+				idFunc: infra.FunctionSetupJSON,
 			},
 			want:    &JSONConfig{},
 			want1:   sourceFileInDisk,
@@ -627,7 +627,7 @@ func TestConfigure(t *testing.T) {
 			args: args{
 				structure:       &myTestStruct,
 				fileName:        "test",
-				pipelineChaines: []infra.FuncType{infra.FunctionSetupJson},
+				pipelineChaines: []infra.FuncType{infra.FunctionSetupJSON},
 				prefix:          "",
 				smartConfigure:  true,
 			},
