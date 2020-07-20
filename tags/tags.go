@@ -4,7 +4,7 @@ package tags
 const (
 	prefixLibTag      = "cf_"
 	TagHocon          = prefixLibTag + "hocon"
-	TagJson           = prefixLibTag + "json"
+	TagJSON           = prefixLibTag + "json"
 	TagYaml           = prefixLibTag + "yaml"
 	TagDefault        = prefixLibTag + "default"
 	TagEnvironment    = prefixLibTag + "env"
