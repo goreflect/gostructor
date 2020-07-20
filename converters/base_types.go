@@ -26,7 +26,7 @@ func convertToInt(source reflect.Value, destination reflect.Value) infra.GoStruc
 		}
 		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from "+source.Kind().String()+" into int"))
 	default:
-		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" because this type not supported"))
 	}
 }
 
@@ -46,7 +46,7 @@ func convertToInt8(source reflect.Value, destination reflect.Value) infra.GoStru
 		}
 		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from "+source.Kind().String()+" into int8"))
 	default:
-		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" because this type not supported"))
 	}
 }
 
@@ -66,7 +66,7 @@ func convertToInt16(source reflect.Value, destination reflect.Value) infra.GoStr
 		}
 		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from "+source.Kind().String()+" into int16"))
 	default:
-		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" because this type not supported"))
 	}
 }
 
@@ -86,7 +86,7 @@ func convertToInt32(source reflect.Value, destination reflect.Value) infra.GoStr
 		}
 		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from "+source.Kind().String()+" into int32"))
 	default:
-		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" because this type not supported"))
 	}
 }
 
@@ -106,7 +106,7 @@ func convertToInt64(source reflect.Value, destination reflect.Value) infra.GoStr
 		}
 		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from "+source.Kind().String()+" into int64"))
 	default:
-		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" because this type not supported"))
 	}
 }
 
@@ -121,7 +121,7 @@ func convertToBool(source reflect.Value, destination reflect.Value) infra.GoStru
 	case reflect.Bool:
 		return infra.NewGoStructorTrueValue(source)
 	default:
-		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" because this type not supported"))
 	}
 }
 
@@ -146,7 +146,7 @@ func convertToString(source reflect.Value, destination reflect.Value) infra.GoSt
 			strconv.FormatBool(source.Bool()),
 		))
 	default:
-		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" because this type not supported"))
 	}
 }
 
@@ -165,7 +165,7 @@ func convertToFloat32(source reflect.Value, destination reflect.Value) infra.GoS
 	case reflect.Float64:
 		return infra.NewGoStructorNoValue(destination, errors.New("can not convert from float64 into float32"))
 	default:
-		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" because this type not supported"))
 	}
 }
 
@@ -182,6 +182,6 @@ func convertToFloat64(source reflect.Value, destination reflect.Value) infra.GoS
 	case reflect.Float32, reflect.Float64:
 		return infra.NewGoStructorTrueValue(reflect.ValueOf(source.Float()))
 	default:
-		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" beacuse this type not supported"))
+		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" because this type not supported"))
 	}
 }

@@ -85,7 +85,7 @@ func TestEnvironmentConfig_GetBaseTypeFaield(t *testing.T) {
 			config := EnvironmentConfig{}
 			got := config.GetBaseType(tt.args.context)
 			if got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
-				t.Errorf("EnvironmentConfig.GetComplexType() = %v, want %v", got, tt.want)
+				t.Errorf("EnvironmentConfig.GetComplexType() = %v, want %v", got.GetNotAValue().Error, tt.want.GetNotAValue().Error)
 			}
 		})
 	}

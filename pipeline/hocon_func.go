@@ -108,6 +108,7 @@ func (config *HoconConfig) getSliceFromHocon(context *structContext) infra.GoStr
 	return convertedSlice
 }
 
+// TODO: deprecated while completed issue #23
 func (config *HoconConfig) getMapFromHocon(context *structContext) infra.GoStructorValue {
 	if errLoading := config.typeSafeLoadConfigFile(); errLoading != nil {
 		return infra.NewGoStructorNoValue(context.Value, errLoading)

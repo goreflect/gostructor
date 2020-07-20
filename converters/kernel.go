@@ -33,7 +33,7 @@ func ConvertBetweenPrimitiveTypes(source reflect.Value, destination reflect.Valu
 	case reflect.Bool:
 		return convertToBool(source, destination)
 	default:
-		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted to this type "+destination.Kind().String()+" beacuse this type not supported"))
+		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted to this type "+destination.Kind().String()+" because this type not supported"))
 	}
 }
 
