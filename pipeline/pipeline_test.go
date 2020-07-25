@@ -104,11 +104,14 @@ func Test_getChainByIdentifier(t *testing.T) {
 		{
 			name: "check function setup json",
 			args: args{
-				idFunc: infra.FunctionSetupJson,
+				idFunc:   infra.FunctionSetupJson,
+				fileName: "test",
 			},
-			want:    &JSONConfig{},
+			want: &JSONConfig{
+				FileName: "test",
+			},
 			want1:   sourceFileInDisk,
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "check function setup yaml",
