@@ -2,17 +2,17 @@ package converters
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 
 	"github.com/goreflect/gostructor/infra"
+	logrus "github.com/sirupsen/logrus"
 )
 
 /*ConvertBetweenPrimitiveTypes - method for converting from any of base types into any of base types,
 like string, bool, int, int8, int16. int32, int64
 */
 func ConvertBetweenPrimitiveTypes(source reflect.Value, destination reflect.Value) infra.GoStructorValue {
-	fmt.Println("Level: Debug. Message: start converting source: ", source.Kind().String(), " destination: ", destination.Kind().String())
+	logrus.Debug("start converting source: ", source.Kind().String(), " destination: ", destination.Kind().String())
 	switch destination.Kind() {
 	case reflect.Int:
 		return convertToInt(source, destination)
@@ -33,7 +33,7 @@ func ConvertBetweenPrimitiveTypes(source reflect.Value, destination reflect.Valu
 	case reflect.Bool:
 		return convertToBool(source, destination)
 	default:
-		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted to this type "+destination.Kind().String()+" beacuse this type not supported"))
+		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted to this type "+destination.Kind().String()+" because this type not supported"))
 	}
 }
 

@@ -31,8 +31,8 @@ func recurseStructField(structField reflect.StructField) []int {
 	switch structField.Type.Kind() {
 	case reflect.Struct:
 		for i := 0; i < structField.Type.NumField(); i++ {
-			summarizeLevel := recurseStructField(structField.Type.Field(i))
-			summarize = combineFields(summarize, summarizeLevel)
+			summirizeLevel := recurseStructField(structField.Type.Field(i))
+			summarize = combineFields(summarize, summirizeLevel)
 		}
 	}
 	return summarize
@@ -60,7 +60,7 @@ func checkFuncsByTags(structField reflect.StructField) []int {
 	summarize := make([]int, AmountTags) // amount repeats tags
 	for _, value := range []string{
 		TagYaml,
-		TagJson,
+		TagJSON,
 		TagHocon,
 		TagHashiCorpVault,
 		TagEnvironment,
@@ -93,8 +93,8 @@ func getFuncTypeByTag(tagName string) infra.FuncType {
 		return infra.FunctionSetupVault
 	case TagHocon:
 		return infra.FunctionSetupHocon
-	case TagJson:
-		return infra.FunctionSetupJson
+	case TagJSON:
+		return infra.FunctionSetupJSON
 	default:
 		return infra.FunctionNotExist
 	}

@@ -3,9 +3,8 @@ package infra
 import "reflect"
 
 type (
-	/*
-		GoStructorValue - it's main type which using by this library. Current preparing field contain in this type and if field structure doesn't prepared that will be contain special noValue interface.
-	*/
+	/*GoStructorValue - it's main type which using by this library. Current preparing field contain in this type and if field structure doesn't prepared that will be contain special noValue interface.
+	 */
 	GoStructorValue struct {
 		Value     reflect.Value
 		notAValue *NotAValue
@@ -49,6 +48,7 @@ func (gostructvalue GoStructorValue) CheckIsValue() bool {
 	return gostructvalue.Value.Kind() != reflect.Invalid
 }
 
-func (goStructorValue GoStructorValue) GetNotAValue() *NotAValue {
-	return goStructorValue.notAValue
+/*GetNotAValue - getting interface of can not install value*/
+func (gostructvalue GoStructorValue) GetNotAValue() *NotAValue {
+	return gostructvalue.notAValue
 }

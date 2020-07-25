@@ -2,12 +2,12 @@ package pipeline
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/go-restit/lzjson"
 	"github.com/goreflect/gostructor/infra"
 	"github.com/goreflect/gostructor/tags"
 	"github.com/goreflect/gostructor/tools"
+	"github.com/sirupsen/logrus"
 )
 
 /*JSONConfig - source json configuring*/
@@ -18,25 +18,25 @@ type JSONConfig struct {
 
 /*GetComplexType - get complex types like arrays, slices, maps from json source*/
 func (config JSONConfig) GetComplexType(context *structContext) infra.GoStructorValue {
-	fmt.Println("Level: Debug. Json configurator source start.")
+	logrus.Debug("Level: Debug. Json configurator source start.")
 	return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("getcomplext type from json not implemented"))
 }
 
 /*GetBaseType - gettin base type like string, int, float32...*/
 func (config JSONConfig) GetBaseType(context *structContext) infra.GoStructorValue {
-	fmt.Println("Level: Debug. Json configurator source start.")
+	logrus.Debug("Level: Debug. Json configurator source start.")
 	parsed, notAValue := config.typeSafeLoadConfigFile(context)
 	if !parsed {
 		return *notAValue
 	}
-	nameField := context.StructField.Tag.Get(tags.TagJson)
+	nameField := context.StructField.Tag.Get(tags.TagJSON)
 	if config.validation(nameField) {
 		nameField = context.Prefix + context.StructField.Name
 	}
-	fmt.Println("Level: Debug. Key for getting values from source: ", nameField)
+	logrus.Debug("Level: Debug. Key for getting values from source: ", nameField)
 
 	parsedValue := config.configureFileParsed.Get(nameField)
-	fmt.Println("Level: Debug. Get from json source: ", parsedValue.String())
+	logrus.Debug("Level: Debug. Get from json source: ", parsedValue.String())
 	return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("getbase type from json not implemented"))
 }
 

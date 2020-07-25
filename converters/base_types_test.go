@@ -100,7 +100,7 @@ func Test_convertToFloat32Failed(t *testing.T) {
 				source:      reflect.ValueOf(struct{ field1 string }{field1: "test"}),
 				destination: reflect.ValueOf(float32(0.0)),
 			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(struct{ field1 string }{field1: "test"}), errors.New("can not be converted from this type: struct beacuse this type not supported")),
+			want: infra.NewGoStructorNoValue(reflect.ValueOf(struct{ field1 string }{field1: "test"}), errors.New("can not be converted from this type: struct because this type not supported")),
 		},
 	}
 	for _, tt := range tests {

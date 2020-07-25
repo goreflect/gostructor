@@ -2,12 +2,12 @@ package pipeline
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/goreflect/gostructor/infra"
 	"github.com/goreflect/gostructor/tags"
+	"github.com/sirupsen/logrus"
 )
 
 type (
@@ -48,7 +48,7 @@ const (
 	sourceFileNotUsed  = 2
 
 	notSupportedTypeError = "not supported type "
-
+	// EmptyAdditionalPrefix - empty of node prefix name
 	EmptyAdditionalPrefix = ""
 )
 
@@ -58,7 +58,7 @@ const (
 func (context structContext) getFieldName() string {
 	for _, val := range []string{
 		tags.TagHocon,
-		tags.TagJson,
+		tags.TagJSON,
 		tags.TagYaml,
 		tags.TagDefault,
 		tags.TagEnvironment,
@@ -73,6 +73,7 @@ func (context structContext) getFieldName() string {
 		if len(tagCustomer) == 0 {
 			continue
 		}
+		logrus.Warn("not working properly. Changed by future realese")
 		// TODO: change this case by add for range case checking tag custom (if user setup node and path, it's should be return node.path way)
 		// for _, tagCustom := range []string{tags.TagCustomerNode, tags.TagCustomerPath} {
 		// 	if tagCustomer[0] == tagCustom {
@@ -99,7 +100,7 @@ func getFunctionChain(fileName string, pipelineChanes []infra.FuncType) *Pipelin
 	for _, pipelineChain := range pipelineChanes {
 		stageFunction, sourceType, err := getChainByIdentifier(pipelineChain, fileName)
 		if err != nil {
-			fmt.Println("[Pipeline]: level: debug. error while getting chain stage function. Error: " + err.Error())
+			logrus.Error("error while getting chain stage function. Error: " + err.Error())
 			continue
 		}
 		sourcesTypes[sourceType]++
@@ -125,7 +126,7 @@ func getChainByIdentifier(
 		return &EnvironmentConfig{}, sourceFileNotUsed, nil
 	case infra.FunctionSetupHocon:
 		return &HoconConfig{fileName: fileName}, sourceFileInDisk, nil
-	case infra.FunctionSetupJson:
+	case infra.FunctionSetupJSON:
 		return &JSONConfig{FileName: fileName}, sourceFileInDisk, nil
 	case infra.FunctionSetupYaml:
 		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
@@ -155,7 +156,7 @@ func Configure(
 
 	defer func() {
 		if e := recover(); e != nil {
-			fmt.Println("[Pipeline]: ERROR: ", e)
+			logrus.Error(e)
 			err = e.(error)
 		}
 	}()
@@ -172,7 +173,7 @@ func Configure(
 	// currentChain := pipeline.chains
 	if err := pipeline.setFile(fileName); err != nil {
 		if pipeline.checkSourcesConfigure() {
-			fmt.Println("[Pipeline]: level: Warning. can not be access to file or server. ", err.Error())
+			logrus.Warn("can not be access to file or server. ", err.Error())
 		}
 	}
 
@@ -180,7 +181,7 @@ func Configure(
 		Value:  reflect.ValueOf(structure),
 		Prefix: prefix,
 	}); err != nil {
-		fmt.Println("Level: error. Message: [Pipeline]: error while configuring your structure. Errors: ", err.Error())
+		logrus.Error("error while configuring your structure. Errors: ", err.Error())
 		return nil, err
 	}
 	return structure, nil
@@ -272,7 +273,7 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 	switch valueIndirect.Kind() {
 	case reflect.Slice, reflect.Map, reflect.Array:
 		valueGet := pipeline.chains.stageFunction.GetComplexType(context)
-		fmt.Println("Loglevel: Debug Message: [Pipeline]:  value get from parsing slice: ", valueGet)
+		logrus.Debug("value get from parsing slice: ", valueGet)
 		return pipeline.setupValue(context, &valueGet)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		return errors.New("not implemented types of unsigned integer")
@@ -289,7 +290,7 @@ func (pipeline *Pipeline) setupValue(context *structContext, value *infra.GoStru
 	if value.CheckIsValue() {
 		// add check for setuping valueGet in valueIndirect
 		if valueIndirect.CanSet() {
-			fmt.Println("Loglevel: Debug Message: [Pipeline]: setupe value in struct")
+			logrus.Debug("setupe value in struct")
 			valueIndirect.Set(value.Value)
 			return nil
 		} else {

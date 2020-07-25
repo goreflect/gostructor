@@ -29,7 +29,7 @@ func TestGetFunctionTypes(t *testing.T) {
 			},
 			want: []infra.FuncType{
 				infra.FunctionSetupHocon,
-				infra.FunctionSetupJson,
+				infra.FunctionSetupJSON,
 				infra.FunctionSetupDefault,
 				infra.FunctionSetupVault,
 			},
