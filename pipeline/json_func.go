@@ -12,6 +12,8 @@ import (
 
 /*JSONConfig - source json configuring*/
 type JSONConfig struct {
+	FileName            string
+	configureFileParsed lzjson.Node
 }
 
 /*GetComplexType - get complex types like arrays, slices, maps from json source*/

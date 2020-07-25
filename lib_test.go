@@ -1,7 +1,6 @@
 package gostructor
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -36,12 +35,12 @@ type (
 	// 	} `cf_hocon:"node=planC.tururu.tratatat.planZ"`
 	// }
 
-	MyStruct5 struct {
-		Field1 string  `cf_json:"field1"`
-		Field2 int16   `cf_json:"myTestField2"`
-		Field3 bool    `cf_json:"field3"`
-		Field4 float32 `cf_json:"field4"`
-		Field5 []int16 `cf_json:"field5"`
+	EnvStruct struct {
+		Field1 int16   `cf_env:"myField1"`
+		Field2 string  `cf_env:"myField2"`
+		Field3 bool    `cf_env:"myField3"`
+		Field4 float32 `cf_env:"myField4"`
+		Field5 []bool  `cf_env:"myField5"`
 	}
 )
 
@@ -136,12 +135,6 @@ func Test_getValueFromEnvironment(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	assert.Equal(t, &MyStruct4{
-		NestedStruct4: struct{ Field1 string }{
-			Field1: "testValueByTest",
-		},
-	}, myStruct.(*MyStruct4))
-}
 
 	assert.Equal(t, &EnvStruct{
 		Field1: 12,
