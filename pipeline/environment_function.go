@@ -49,6 +49,9 @@ func (config EnvironmentConfig) GetBaseType(context *structContext) infra.GoStru
 
 	if valueTag != "" {
 		value := os.Getenv(valueTag)
+		if value == "" {
+			return infra.NewGoStructorNoValue(context.Value, errors.New("Readed value from environment was empty"))
+		}
 		return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(value), valueIndirect)
 	}
 	return infra.NewGoStructorNoValue(context.Value, errors.New("getBaseType can not get field by empty tag value of tag: "+tags.TagEnvironment))

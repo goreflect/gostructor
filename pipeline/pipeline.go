@@ -16,6 +16,7 @@ type (
 		chains       *Chain
 		errors       []string
 		sourcesTypes []int
+		curentChain  *Chain
 	}
 
 	/*Chain - this is structure contain information for executing function by ordering
@@ -226,10 +227,18 @@ func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 	case reflect.Struct:
 		return pipeline.preparedInlineStructFields(valuePtr, context)
 	default:
-		if err := pipeline.configuringValues(context); err != nil {
-			pipeline.addNewErrorWhileParsing(err.Error())
+		pipeline.curentChain = pipeline.chains
+		for {
+			if err := pipeline.configuringValues(context); err != nil {
+				pipeline.addNewErrorWhileParsing(err.Error())
+				if errSettingChain := pipeline.setNextChain(); errSettingChain != nil {
+					return pipeline.getErrorAsOne()
+				}
+				continue
+			}
+			break
 		}
-		return pipeline.getErrorAsOne()
+		return nil
 	}
 }
 
@@ -274,13 +283,13 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 	valueIndirect := reflect.Indirect(context.Value)
 	switch valueIndirect.Kind() {
 	case reflect.Slice, reflect.Map, reflect.Array:
-		valueGet := pipeline.chains.stageFunction.GetComplexType(context)
+		valueGet := pipeline.curentChain.stageFunction.GetComplexType(context)
 		logrus.Debug("value get from parsing slice: ", valueGet)
 		return pipeline.setupValue(context, &valueGet)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		return errors.New("not implemented types of unsigned integer")
 	case reflect.String, reflect.Float32, reflect.Float64, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		valueGet := pipeline.chains.stageFunction.GetBaseType(context)
+		valueGet := pipeline.curentChain.stageFunction.GetBaseType(context)
 		return pipeline.setupValue(context, &valueGet)
 	default:
 		return errors.New("not supported type for hocon parsing")
@@ -314,5 +323,17 @@ func (pipeline *Pipeline) checkValuePrefix(prefix string) error {
 	if prefix == "" || prefix[len(prefix)-1] == '.' || len(prefix) <= 1 {
 		return errors.New("can not have entry point")
 	}
+	return nil
+}
+
+func (pipeline *Pipeline) setNextChain() error {
+	if pipeline.curentChain == nil {
+		pipeline.curentChain = pipeline.chains
+		return nil
+	}
+	if pipeline.curentChain.next == nil {
+		return errors.New("can not change chain function")
+	}
+	pipeline.curentChain = pipeline.curentChain.next
 	return nil
 }
