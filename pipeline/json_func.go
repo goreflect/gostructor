@@ -36,6 +36,11 @@ func (config JSONConfig) GetBaseType(context *structContext) infra.GoStructorVal
 	logrus.Debug("Level: Debug. Key for getting values from source: ", nameField)
 
 	parsedValue := config.configureFileParsed.Get(nameField)
+	logrus.Error("Node: ", config.configureFileParsed.Type(), "values: ", string(config.configureFileParsed.Raw()))
+	if parsedValue.ParseError() != nil {
+		logrus.Error("Can not parsed value from json decoder: ", parsedValue.ParseError())
+		return infra.NewGoStructorNoValue(context.Value, parsedValue.ParseError())
+	}
 	logrus.Debug("Level: Debug. Get from json source: ", parsedValue.String())
 	return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("getbase type from json not implemented"))
 }
@@ -53,12 +58,7 @@ func (config *JSONConfig) typeSafeLoadConfigFile(context *structContext) (bool, 
 			notValue := infra.NewGoStructorNoValue(context.Value, err)
 			return false, &notValue
 		}
-		configParsed := lzjson.Decode(fileBuffer)
-		if err != nil {
-			notValue := infra.NewGoStructorNoValue(context.Value, err)
-			return false, &notValue
-		}
-		config.configureFileParsed = configParsed
+		config.configureFileParsed = lzjson.Decode(fileBuffer)
 		return true, nil
 	}
 	return true, nil
