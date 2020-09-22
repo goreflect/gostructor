@@ -283,14 +283,20 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 	valueIndirect := reflect.Indirect(context.Value)
 	switch valueIndirect.Kind() {
 	case reflect.Slice, reflect.Map, reflect.Array:
-		valueGet := pipeline.curentChain.stageFunction.GetComplexType(context)
-		logrus.Debug("value get from parsing slice: ", valueGet)
-		return pipeline.setupValue(context, &valueGet)
+		if pipeline.curentChain != nil {
+			valueGet := pipeline.curentChain.stageFunction.GetComplexType(context)
+			logrus.Debug("value get from parsing slice: ", valueGet)
+			return pipeline.setupValue(context, &valueGet)
+		}
+		return errors.New("can not be configuring complex type. Can not configured current field")
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		return errors.New("not implemented types of unsigned integer")
 	case reflect.String, reflect.Float32, reflect.Float64, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		valueGet := pipeline.curentChain.stageFunction.GetBaseType(context)
-		return pipeline.setupValue(context, &valueGet)
+		if pipeline.curentChain != nil {
+			valueGet := pipeline.curentChain.stageFunction.GetBaseType(context)
+			return pipeline.setupValue(context, &valueGet)
+		}
+		return errors.New("can not be configuring base type. Can not configured current field")
 	default:
 		return errors.New("not supported type for hocon parsing")
 	}
