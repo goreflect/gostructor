@@ -43,6 +43,11 @@ type (
 		Field4 float32 `cf_env:"myField4"`
 		Field5 []bool  `cf_env:"myField5"`
 	}
+
+	ManySourceStrategies struct {
+		Field1 int16  `cf_env:"myField1" cf_hocon:"field2" cf_default:"14"`
+		Field2 string `cf_hocon:"field2" cf_default:"test_tratata" cf_env:"test_tururu"`
+	}
 )
 
 func Test_parseHocon1(t *testing.T) {
@@ -178,4 +183,19 @@ func Test_configureEasy(t *testing.T) {
 func TestChangeLogsParams(t *testing.T) {
 	ChangeLogLevel(logrus.DebugLevel)
 	ChangeLogFormatter(&logrus.JSONFormatter{})
+}
+
+func Test_covarianceSources(t *testing.T) {
+	os.Setenv("test_tururu", "tururum")
+	defer func() {
+		os.Unsetenv("test_tururu")
+	}()
+
+	myStruct, err := ConfigureSmart(&ManySourceStrategies{}, "")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	t.Log(myStruct)
 }

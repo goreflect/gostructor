@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -144,4 +145,68 @@ func TestParser_Scan(t *testing.T) {
 	// 	},
 	// 	parsedSlice,
 	// )
+}
+
+func TestParser_parsePathAsSingleValue(t *testing.T) {
+	type fields struct {
+		Lexer  *Scanner
+		Buffer struct{ AmountLetters int }
+		Term   TerminalSymbol
+	}
+	tests := []struct {
+		name     string
+		fields   fields
+		wantPath Path
+		wantErr  bool
+	}{
+		{
+			name: "completed parsed path",
+			fields: fields{
+				Lexer: &Scanner{
+					r:               nil,
+					CurrentPosition: 0,
+				},
+				Buffer: struct{ AmountLetters int }{
+					AmountLetters: 1,
+				},
+				Term: TerminalSymbol{
+					Tok:            FUNCTION,
+					Literal:        "test",
+					StartPositioin: 0,
+					EndPosition:    4,
+				},
+			},
+			wantPath: Path{
+				TerminalSymbol: TerminalSymbol{
+					Tok:            PATH,
+					Literal:        "test",
+					StartPositioin: 0,
+					EndPosition:    4,
+				},
+				PathName: TerminalSymbol{
+					Tok:            FUNCTION,
+					Literal:        "test",
+					StartPositioin: 0,
+					EndPosition:    4,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := &Parser{
+				Lexer:  tt.fields.Lexer,
+				Buffer: tt.fields.Buffer,
+				Term:   tt.fields.Term,
+			}
+			gotPath, err := parser.parsePathAsSingleValue()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Parser.parsePathAsSingleValue() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotPath, tt.wantPath) {
+				t.Errorf("Parser.parsePathAsSingleValue() = %v, want %v", gotPath, tt.wantPath)
+			}
+		})
+	}
 }
