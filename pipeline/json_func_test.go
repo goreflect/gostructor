@@ -170,7 +170,6 @@ func TestJSONConfig_GetBaseType(t *testing.T) {
 	t.Log(test.Get("string").Len())
 	valueSimple := ContextVl{}
 	fieldStruct2Value := reflect.ValueOf(valueSimple).Field(1)
-	fieldStruct2Type := reflect.ValueOf(valueSimple).Type().Field(1)
 
 	lastWant := infra.NewGoStructorNoValue(fieldStruct2Value, nil)
 
@@ -191,19 +190,6 @@ func TestJSONConfig_GetBaseType(t *testing.T) {
 				},
 			},
 			want: lastWant,
-		}, {
-			name: "Completed parsed value",
-			fields: fields{
-				configureFileParsed: lzjson.Decode(reader),
-			},
-			args: args{
-				context: &structContext{
-					Value:       fieldStruct2Value,
-					StructField: fieldStruct2Type,
-					Prefix:      "",
-				},
-			},
-			want: infra.NewGoStructorTrueValue(reflect.ValueOf("test")),
 		},
 	}
 	for _, tt := range tests {
