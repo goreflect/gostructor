@@ -128,11 +128,9 @@ func getChainByIdentifier(
 	case infra.FunctionSetupHocon:
 		return &HoconConfig{fileName: fileName}, sourceFileInDisk, nil
 	case infra.FunctionSetupJSON:
-
-		return &JSONConfig{}, sourceFileInDisk, errors.New(notSupportedTypeError +
-			"json configurator source. Not implemented yet")
+		return &JSONConfig{FileName: fileName}, sourceFileInDisk, nil
 	case infra.FunctionSetupYaml:
-		return &YamlConfig{}, sourceFileInDisk, errors.New(notSupportedTypeError +
+		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
 			"yaml configurator source. Not implemented yet")
 	case infra.FunctionSetupVault:
 		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "vault configurator source. Not implemented yet")

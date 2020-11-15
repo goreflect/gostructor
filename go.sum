@@ -6,6 +6,8 @@ github.com/go-akka/configuration v0.0.0-20190919102339-a31c845c4b1b h1:3tSuByOnO
 github.com/go-akka/configuration v0.0.0-20190919102339-a31c845c4b1b/go.mod h1:19bUnum2ZAeftfwwLZ/wRe7idyfoW2MfmXO464Hrfbw=
 github.com/go-akka/configuration v0.0.0-20200115015912-550403a6bd87 h1:qsA6HPoRXYJ1a2fsHVUmieRTg+otMAM4wEJgSWzumL8=
 github.com/go-akka/configuration v0.0.0-20200115015912-550403a6bd87/go.mod h1:19bUnum2ZAeftfwwLZ/wRe7idyfoW2MfmXO464Hrfbw=
+github.com/go-restit/lzjson v0.0.0-20161206095556-efe3c53acc68 h1:QR2R74UbwMtnEVGVvNfcx6mQmWGgN8abQeXOy92pQIo=
+github.com/go-restit/lzjson v0.0.0-20161206095556-efe3c53acc68/go.mod h1:7vXSKQt83WmbPeyVjCfNT9YDJ5BUFmcwFsEjI9SCvYM=
 github.com/google/go-cmp v0.5.2 h1:X2ev0eStA3AbceY54o37/0PQ/UWqKEiiO2dKL5OPaFM=
 github.com/google/go-cmp v0.5.2/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/goreflect/go_hocon v0.0.1 h1:n05o2/7F4S2Q6ZOnn02Sm3kEj/zmkvThk2m7uQQ1Ong=

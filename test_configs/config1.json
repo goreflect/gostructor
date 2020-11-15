@@ -1,0 +1,11 @@
+{
+    "field1": "test1Field",
+    "myTestField2": 23,
+    "field3": true,
+    "field4": 12.4,
+    "field5": [
+        23,
+        12,
+        45
+    ]
+}

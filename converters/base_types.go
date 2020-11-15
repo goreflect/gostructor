@@ -5,9 +5,8 @@ import (
 	"reflect"
 	"strconv"
 
-	logrus "github.com/sirupsen/logrus"
-
 	"github.com/goreflect/gostructor/infra"
+	logrus "github.com/sirupsen/logrus"
 )
 
 func convertToInt(source reflect.Value, destination reflect.Value) infra.GoStructorValue {
