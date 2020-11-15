@@ -3,7 +3,7 @@
 
 ____
 
-## Version: v0.4.3
+## Version: v0.4.5
 
 Universal configuration library by tags
 
@@ -28,7 +28,7 @@ Universal configuration library by tags
 - [x] cf_default - setup default value for this field
 - [x] cf_env - setup value from env variable by name in this tag
 - [ ] cf_yaml - setup value for this field from yaml (version > 0.6)
-- [ ] cf_json - setup value for this field from json (version > 0.5)
+- [x] cf_json - setup value for this field from json (version > 0.5)
 - [ ] cf_server - setup value from configuration server like spring cloud config server or others (version>0.7)
 - [ ] cf_vault - setup secret for this field from hashi corp vault (version>0.8)
 
