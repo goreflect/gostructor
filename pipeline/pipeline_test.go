@@ -693,3 +693,68 @@ func TestPipeline_recursiveParseFields(t *testing.T) {
 		})
 	}
 }
+
+func TestPipeline_setNextChain(t *testing.T) {
+	type fields struct {
+		chains       *Chain
+		errors       []string
+		sourcesTypes []int
+		curentChain  *Chain
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "correct changed current stage function",
+			fields: fields{
+				chains: &Chain{
+					stageFunction: EnvironmentConfig{},
+					next:          nil,
+				},
+				errors:       nil,
+				sourcesTypes: nil,
+				curentChain:  nil,
+			},
+			wantErr: false,
+		},
+		{
+			name: "incorrect change current stage function",
+			fields: fields{
+				chains: &Chain{
+					next: nil,
+				},
+				curentChain: &Chain{
+					stageFunction: EnvironmentConfig{},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "correct change current stage function",
+			fields: fields{
+				curentChain: &Chain{
+					stageFunction: EnvironmentConfig{},
+					next: &Chain{
+						stageFunction: &DefaultConfig{},
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pipeline := &Pipeline{
+				chains:       tt.fields.chains,
+				errors:       tt.fields.errors,
+				sourcesTypes: tt.fields.sourcesTypes,
+				curentChain:  tt.fields.curentChain,
+			}
+			if err := pipeline.setNextChain(); (err != nil) != tt.wantErr {
+				t.Errorf("Pipeline.setNextChain() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
