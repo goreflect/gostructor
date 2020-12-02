@@ -1,0 +1,75 @@
+package pipeline
+
+import (
+	"errors"
+
+	"github.com/goreflect/gostructor/infra"
+	"github.com/goreflect/gostructor/properties"
+	vault "github.com/mittwald/vaultgo"
+	"github.com/sirupsen/logrus"
+)
+
+/*VaultConfig - source vault configuring*/
+type VaultConfig struct {
+	Config     *properties.VaultConfiguration
+	connection *vault.Client
+}
+
+func (config *VaultConfig) configureVault() error {
+	configured, errConfigure := Configure(properties.VaultConfiguration{}, "", []infra.FuncType{infra.FunctionSetupEnvironment}, "", true)
+	if errConfigure != nil {
+		logrus.Error("Can not initialize vault properties. Please setup VAULT_ADDRESS & VAULT_TOKEN for working with cf_vault")
+		return errConfigure
+	}
+	config.Config = configured.(*properties.VaultConfiguration)
+	return nil
+}
+
+func (config *VaultConfig) connect() error {
+	conn, errConnection := vault.NewClient(config.Config.VaultAddress, vault.WithCaPath(""), vault.WithAuthToken(config.Config.VaultToken))
+	if errConnection != nil {
+		return errConnection
+	}
+	config.connection = conn
+	return nil
+}
+
+func (config *VaultConfig) vaultAvailable() error {
+	if config.Config == nil {
+		if err := config.configureVault(); err != nil {
+			logrus.Error("Configure Vault Error: ", err)
+			return err
+		}
+	}
+
+	if config.connection == nil {
+		return config.connect()
+	}
+	return nil
+}
+
+func (config *VaultConfig) prepareLayer(context *structContext) error {
+	if err := config.configureVault(); err != nil {
+		return err
+	}
+
+	if errConn := config.vaultAvailable(); errConn != nil {
+		logrus.Error("Error while connect to vault: ", errConn)
+		return errConn
+	}
+	return nil
+}
+
+func (config VaultConfig) GetBaseType(context *structContext) infra.GoStructorValue {
+	if err := config.prepareLayer(context); err != nil {
+		infra.NewGoStructorNoValue(context.Value, err)
+	}
+	return infra.NewGoStructorNoValue(context.Value, errors.New("Not implemented yet"))
+}
+
+func (config VaultConfig) GetComplexType(context *structContext) infra.GoStructorValue {
+	if err := config.prepareLayer(context); err != nil {
+		infra.NewGoStructorNoValue(context.Value, err)
+	}
+	return infra.NewGoStructorNoValue(context.Value, errors.New("Not implemented yet"))
+}
