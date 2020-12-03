@@ -136,9 +136,9 @@ func Test_getChainByIdentifier(t *testing.T) {
 			args: args{
 				idFunc: infra.FunctionSetupVault,
 			},
-			want:    nil,
+			want:    &VaultConfig{},
 			want1:   sourceFielInServer,
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "check unknown setup function",

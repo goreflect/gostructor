@@ -133,7 +133,7 @@ func getChainByIdentifier(
 		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
 			"yaml configurator source. Not implemented yet")
 	case infra.FunctionSetupVault:
-		return VaultConfig{}, sourceFielInServer, nil
+		return &VaultConfig{}, sourceFielInServer, nil
 	case infra.FunctionSetupConfigServer:
 		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not implemented yet")
 	default:

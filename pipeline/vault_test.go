@@ -23,5 +23,4 @@ func TestConnectionToVault(t *testing.T) {
 		return
 	}
 	t.Log(result)
-	t.Error()
 }
