@@ -3,7 +3,7 @@
 
 ____
 
-## Version: v0.4.5
+## Version: v0.5.1
 
 Universal configuration library by tags
 
@@ -12,6 +12,7 @@ Universal configuration library by tags
 - hocon values
 - default values
 - environment variables
+- vault configs
 
 ## Current supporting types
 
@@ -30,7 +31,7 @@ Universal configuration library by tags
 - [ ] cf_yaml - setup value for this field from yaml (version > 0.6)
 - [x] cf_json - setup value for this field from json (version > 0.5)
 - [ ] cf_server - setup value from configuration server like spring cloud config server or others (version>0.7)
-- [ ] cf_vault - setup secret for this field from hashi corp vault (version>0.8)
+- [x] cf_vault - setup secret for this field from hashi corp vault
 
 ## Running configuring by smart variant
 
@@ -86,4 +87,20 @@ func myConfigurator() {
     // now, u structure already filled
 } 
 
+```
+
+## Fetch settings secrets from vault
+
+For fetching secrets you should add 2 environment variables: VAULT_ADDRESS, VAULT_TOKEN. After all, you can add cf_vault tag into your structure tags. 
+
+Now vault configure support all basic types and also complex type: slice
+
+For Example:
+
+```go
+type Test struct {
+    MySecretKey string `cf_vault:"my-secret-service/stage/tururu#my-key"`
+    MyCustomIntKey int16 `cf_vault:"my-secret-service/stage/tururur#my-key2"`
+    TestSda []int32 `cf_vault:"my-secret-service/stage/tururu#my-key3"`
+}
 ```
