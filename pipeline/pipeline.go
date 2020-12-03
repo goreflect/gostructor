@@ -133,7 +133,7 @@ func getChainByIdentifier(
 		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
 			"yaml configurator source. Not implemented yet")
 	case infra.FunctionSetupVault:
-		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "vault configurator source. Not implemented yet")
+		return VaultConfig{}, sourceFielInServer, nil
 	case infra.FunctionSetupConfigServer:
 		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not implemented yet")
 	default:
@@ -250,7 +250,6 @@ func (pipeline *Pipeline) preparedInlineStructFields(value reflect.Value, contex
 			StructField: value.Type().Field(i),
 			Prefix:      pipeline.preparePrefix(context.Prefix, value.Type().Field(i)),
 		}); err != nil {
-			pipeline.addNewErrorWhileParsing(err.Error())
 			return pipeline.getErrorAsOne()
 		}
 	}
@@ -335,7 +334,7 @@ func (pipeline *Pipeline) setNextChain() error {
 		pipeline.curentChain = pipeline.chains
 		return nil
 	}
-	if pipeline.curentChain.next == nil {
+	if pipeline.curentChain.next == nil || pipeline.curentChain.next.stageFunction == nil {
 		return errors.New("can not change chain function")
 	}
 	pipeline.curentChain = pipeline.curentChain.next
