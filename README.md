@@ -3,7 +3,7 @@
 
 ____
 
-## Version: v0.5.1
+## Version: v0.5.2
 
 Universal configuration library by tags
 
@@ -13,6 +13,7 @@ Universal configuration library by tags
 - default values
 - environment variables
 - vault configs
+- json values
 
 ## Current supporting types
 
@@ -32,6 +33,7 @@ Universal configuration library by tags
 - [x] cf_json - setup value for this field from json (version > 0.5)
 - [ ] cf_server - setup value from configuration server like spring cloud config server or others (version>0.7)
 - [x] cf_vault - setup secret for this field from hashi corp vault
+- [ ] cf_gserver - setup values from configuration server gostructor realtime configurator server (version>0.6)
 
 ## Running configuring by smart variant
 
