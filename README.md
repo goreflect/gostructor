@@ -3,7 +3,7 @@
 
 ____
 
-## Version: v0.5.1
+## Version: v0.6.1
 
 Universal configuration library by tags
 
@@ -13,6 +13,7 @@ Universal configuration library by tags
 - default values
 - environment variables
 - vault configs
+- json values
 
 ## Current supporting types
 
@@ -50,7 +51,8 @@ type Test struct {
 //....
 
 func myConfigurator() {
-    myStruct, errConfiguring := gostructir.ConfigureSmart(&Test{}, "testhocon.hocon")
+    os.Setenv(tags.HoconFile, , "testhocon.hocon")
+    myStruct, errConfiguring := gostructir.ConfigureSmart(&Test{})
     // check errConfiguring for any errors
     if errConfiguring != nil {
         /// action for error
@@ -74,7 +76,8 @@ type Test struct {
 }
 
 func myConfigurator() {
-    myStruct, errConfiguring := gostructir.ConfigureSetup(&Test{}, "testhocon.hocon", []infra.FuncType{
+    os.Setenv(tags.HoconFile, , "testhocon.hocon")
+    myStruct, errConfiguring := gostructir.ConfigureSetup(&Test{}, []infra.FuncType{
         infra.FunctionSetupEnvironment,
     })// you should setup only by order configure
     // check errConfiguring for any errors
@@ -104,3 +107,11 @@ type Test struct {
     TestSda []int32 `cf_vault:"my-secret-service/stage/tururu#my-key3"`
 }
 ```
+
+## Setting up files or any other sources
+
+By the way u can configuring files by environment variables:
+
+1. For hocon files - GOSTRUCTOR_HOCON
+2. For json files - GOSTRUCTOR_JSON
+3. For yaml files - GOSTRUCTOR_YAML
