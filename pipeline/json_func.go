@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"errors"
+	"os"
 
 	"github.com/go-restit/lzjson"
 	"github.com/goreflect/gostructor/infra"
@@ -12,7 +13,7 @@ import (
 
 /*JSONConfig - source json configuring*/
 type JSONConfig struct {
-	FileName            string
+	fileName            string
 	configureFileParsed lzjson.Node
 }
 
@@ -50,10 +51,17 @@ func (config JSONConfig) validation(value string) bool {
 	return value == ""
 }
 
+func (config *JSONConfig) configuredFileFromEnv() {
+	config.fileName = os.Getenv(tags.JSONFile)
+}
+
 // return true - if loaded config or successfully load config by filename
 func (config *JSONConfig) typeSafeLoadConfigFile(context *structContext) (bool, *infra.GoStructorValue) {
+	if config.fileName == "" {
+
+	}
 	if config.configureFileParsed == nil {
-		fileBuffer, err := tools.ReadFromFile(config.FileName)
+		fileBuffer, err := tools.ReadFromFile(config.fileName)
 		if err != nil {
 			notValue := infra.NewGoStructorNoValue(context.Value, err)
 			return false, &notValue

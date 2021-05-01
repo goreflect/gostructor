@@ -61,7 +61,7 @@ func Test_convertToFloat32(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToFloat32(tt.args.source, tt.args.destination); !reflect.DeepEqual(got.Value.Interface(), tt.want.Value.Interface()) {
+			if got := convertToFloatOrder(tt.args.source, tt.args.destination, 32); !reflect.DeepEqual(got.Value.Interface(), tt.want.Value.Interface()) {
 				t.Errorf("convertToFloat32() = %v, want %v", got, tt.want)
 			}
 		})
@@ -105,7 +105,7 @@ func Test_convertToFloat32Failed(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToFloat32(tt.args.source, tt.args.destination); !reflect.DeepEqual(got.GetNotAValue().Error.Error(), tt.want.GetNotAValue().Error.Error()) {
+			if got := convertToFloatOrder(tt.args.source, tt.args.destination, 32); !reflect.DeepEqual(got.GetNotAValue().Error.Error(), tt.want.GetNotAValue().Error.Error()) {
 				t.Errorf("convertToFloat32() = %v, want %v", got.GetNotAValue().Error.Error(), tt.want.GetNotAValue().Error.Error())
 			}
 		})
@@ -150,8 +150,8 @@ func Test_convertToFloat64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToFloat64(tt.args.source, tt.args.destination); !reflect.DeepEqual(got.Value.Interface(), tt.want.Value.Interface()) {
-				t.Errorf("convertToFloat64() = %v, want %v", got.Value.Interface(), tt.want.Value.Interface())
+			if got := convertToFloatOrder(tt.args.source, tt.args.destination, 64); !reflect.DeepEqual(got.Value.Interface(), tt.want.Value.Interface()) {
+				t.Errorf("convertToFloat64() = %v, want %v", got.Value.Kind(), tt.want.Value.Kind())
 			}
 		})
 	}

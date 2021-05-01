@@ -17,19 +17,19 @@ func ConvertBetweenPrimitiveTypes(source reflect.Value, destination reflect.Valu
 	case reflect.Int:
 		return convertToInt(source, destination)
 	case reflect.Int8:
-		return convertToInt8(source, destination)
+		return convertToIntOrder(source, destination, 8)
 	case reflect.Int16:
-		return convertToInt16(source, destination)
+		return convertToIntOrder(source, destination, 16)
 	case reflect.Int32:
-		return convertToInt32(source, destination)
+		return convertToIntOrder(source, destination, 32)
 	case reflect.Int64:
-		return convertToInt64(source, destination)
+		return convertToIntOrder(source, destination, 64)
 	case reflect.String:
 		return convertToString(source, destination)
 	case reflect.Float32:
-		return convertToFloat32(source, destination)
+		return convertToFloatOrder(source, destination, 32)
 	case reflect.Float64:
-		return convertToFloat64(source, destination)
+		return convertToFloatOrder(source, destination, 64)
 	case reflect.Bool:
 		return convertToBool(source, destination)
 	default:

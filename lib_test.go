@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/goreflect/gostructor/infra"
+	"github.com/goreflect/gostructor/pipeline"
+	"github.com/goreflect/gostructor/tags"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -51,7 +53,8 @@ type (
 )
 
 func Test_parseHocon1(t *testing.T) {
-	myStruct, err := ConfigureSetup(&MyStruct{}, "./test_configs/test1.hocon", "", []infra.FuncType{infra.FunctionSetupHocon})
+	os.Setenv(tags.HoconFile, "./test_configs/test1.hocon")
+	myStruct, err := ConfigureSetup(&MyStruct{}, pipeline.EmptyAdditionalPrefix, []infra.FuncType{infra.FunctionSetupHocon})
 	if err != nil {
 		t.Error("error while configurig: ", err)
 		return
@@ -65,7 +68,8 @@ func Test_parseHocon1(t *testing.T) {
 }
 
 func Test_parseHocon(t *testing.T) {
-	myStruct, err := ConfigureSetup(&MyStruct2{}, "./test_configs/testmap.hocon", "", []infra.FuncType{infra.FunctionSetupHocon})
+	os.Setenv(tags.HoconFile, "./test_configs/testmap.hocon")
+	myStruct, err := ConfigureSetup(&MyStruct2{}, pipeline.EmptyAdditionalPrefix, []infra.FuncType{infra.FunctionSetupHocon})
 	if err != nil {
 		t.Error("error while configuring: ", err)
 		return
@@ -136,7 +140,7 @@ func Test_getValueFromEnvironment(t *testing.T) {
 		os.Unsetenv("myField4")
 		os.Unsetenv("myField5")
 	}()
-	myStruct, err := ConfigureSmart(&EnvStruct{}, "")
+	myStruct, err := ConfigureSmart(&EnvStruct{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -164,7 +168,7 @@ func Test_configureEasy(t *testing.T) {
 		os.Unsetenv("myField4")
 		os.Unsetenv("myField5")
 	}()
-	myStruct, err := ConfigureEasy(&EnvStruct{}, "")
+	myStruct, err := ConfigureEasy(&EnvStruct{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -191,7 +195,7 @@ func Test_covarianceSources(t *testing.T) {
 		os.Unsetenv("test_tururu")
 	}()
 
-	myStruct, err := ConfigureSmart(&ManySourceStrategies{}, "")
+	myStruct, err := ConfigureSmart(&ManySourceStrategies{})
 	if err != nil {
 		t.Error(err)
 		return

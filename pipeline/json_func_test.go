@@ -58,7 +58,7 @@ func TestJSONConfig_GetComplexType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := JSONConfig{
-				FileName:            tt.fields.FileName,
+				fileName:            tt.fields.FileName,
 				configureFileParsed: tt.fields.configureFileParsed,
 			}
 			got := config.GetComplexType(tt.args.context)
@@ -135,7 +135,7 @@ func TestJSONConfig_typeSafeLoadConfigFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := &JSONConfig{
-				FileName:            tt.fields.FileName,
+				fileName:            tt.fields.FileName,
 				configureFileParsed: tt.fields.configureFileParsed,
 			}
 			got, got1 := config.typeSafeLoadConfigFile(tt.args.context)
@@ -195,7 +195,7 @@ func TestJSONConfig_GetBaseType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := JSONConfig{
-				FileName:            tt.fields.FileName,
+				fileName:            tt.fields.FileName,
 				configureFileParsed: tt.fields.configureFileParsed,
 			}
 			got := config.GetBaseType(tt.args.context)

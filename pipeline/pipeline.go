@@ -89,7 +89,7 @@ func (context structContext) getFieldName() string {
 }
 
 // get pipeline of functions in chain notation
-func getFunctionChain(fileName string, pipelineChanes []infra.FuncType) *Pipeline {
+func getFunctionChain(pipelineChanes []infra.FuncType) *Pipeline {
 	chain := &Chain{
 		stageFunction: nil,
 		next:          nil,
@@ -99,7 +99,7 @@ func getFunctionChain(fileName string, pipelineChanes []infra.FuncType) *Pipelin
 
 	currentChain := chain
 	for _, pipelineChain := range pipelineChanes {
-		stageFunction, sourceType, err := getChainByIdentifier(pipelineChain, fileName)
+		stageFunction, sourceType, err := getChainByIdentifier(pipelineChain)
 		if err != nil {
 			logrus.Error("error while getting chain stage function. Error: " + err.Error())
 			continue
@@ -118,17 +118,16 @@ func getFunctionChain(fileName string, pipelineChanes []infra.FuncType) *Pipelin
 // doesntHaveSourceFile - if source is another source
 func getChainByIdentifier(
 	// idFunc - identifier of function configuration source
-	idFunc infra.FuncType,
-	fileName string) (IConfigure, int, error) {
+	idFunc infra.FuncType) (IConfigure, int, error) {
 	switch idFunc {
 	case infra.FunctionSetupDefault:
 		return &DefaultConfig{}, sourceFileNotUsed, nil
 	case infra.FunctionSetupEnvironment:
 		return &EnvironmentConfig{}, sourceFileNotUsed, nil
 	case infra.FunctionSetupHocon:
-		return &HoconConfig{fileName: fileName}, sourceFileInDisk, nil
+		return &HoconConfig{}, sourceFileInDisk, nil
 	case infra.FunctionSetupJSON:
-		return &JSONConfig{FileName: fileName}, sourceFileInDisk, nil
+		return &JSONConfig{}, sourceFileInDisk, nil
 	case infra.FunctionSetupYaml:
 		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
 			"yaml configurator source. Not implemented yet")
@@ -146,8 +145,6 @@ func getChainByIdentifier(
 func Configure(
 	// Needed configure structure
 	structure interface{},
-	// filename for file configuring
-	fileName string,
 	// functions will be configure structure
 	pipelineChains []infra.FuncType,
 	// prefix by getting data from source placed in entry
@@ -166,16 +163,9 @@ func Configure(
 
 	if smartConfigure {
 		analysedChains := tags.GetFunctionTypes(structure)
-		pipeline = getFunctionChain(fileName, analysedChains)
+		pipeline = getFunctionChain(analysedChains)
 	} else {
-		pipeline = getFunctionChain(fileName, pipelineChains)
-	}
-
-	// currentChain := pipeline.chains
-	if err := pipeline.setFile(fileName); err != nil {
-		if pipeline.checkSourcesConfigure() {
-			logrus.Warn("can not be access to file or server. ", err.Error())
-		}
+		pipeline = getFunctionChain(pipelineChains)
 	}
 
 	if err := pipeline.recursiveParseFields(&structContext{
@@ -186,34 +176,6 @@ func Configure(
 		return nil, err
 	}
 	return structure, nil
-}
-
-// if the source is a file or server, a warning will be added if the resource is not available to receive data from it
-func (pipeline *Pipeline) checkSourcesConfigure() bool {
-	for source, amount := range pipeline.sourcesTypes {
-		switch source {
-		case sourceFileInDisk, sourceFielInServer:
-			if amount > 0 {
-				return true
-			}
-		case sourceFileNotUsed:
-			continue
-		default:
-			return false
-		}
-	}
-	return false
-}
-
-func (pipeline *Pipeline) setFile(fileName string) error {
-	if fileName == "" {
-		return errors.New("file with empty name can not be open")
-	}
-
-	if err := checkFileAccessibility(fileName); err != nil {
-		return errors.New("can not open file. Error: " + err.Error())
-	}
-	return nil
 }
 
 func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {

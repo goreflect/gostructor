@@ -54,7 +54,7 @@ func Test_getFunctionChain(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getFunctionChain(tt.args.fileName, tt.args.pipelineChanes); !reflect.DeepEqual(got, tt.want) {
+			if got := getFunctionChain(tt.args.pipelineChanes); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("getFunctionChain() = %v, want %v", got, tt.want)
 			}
 		})
@@ -94,22 +94,18 @@ func Test_getChainByIdentifier(t *testing.T) {
 		{
 			name: "check function setup hocon",
 			args: args{
-				idFunc:   infra.FunctionSetupHocon,
-				fileName: "test",
+				idFunc: infra.FunctionSetupHocon,
 			},
-			want:    &HoconConfig{fileName: "test"},
+			want:    &HoconConfig{},
 			want1:   sourceFileInDisk,
 			wantErr: false,
 		},
 		{
 			name: "check function setup json",
 			args: args{
-				idFunc:   infra.FunctionSetupJSON,
-				fileName: "test",
+				idFunc: infra.FunctionSetupJSON,
 			},
-			want: &JSONConfig{
-				FileName: "test",
-			},
+			want:    &JSONConfig{},
 			want1:   sourceFileInDisk,
 			wantErr: false,
 		},
@@ -152,7 +148,7 @@ func Test_getChainByIdentifier(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := getChainByIdentifier(tt.args.idFunc, tt.args.fileName)
+			got, got1, err := getChainByIdentifier(tt.args.idFunc)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("getChainByIdentifier() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -162,53 +158,6 @@ func Test_getChainByIdentifier(t *testing.T) {
 			}
 			if got1 != tt.want1 {
 				t.Errorf("getChainByIdentifier() got1 = %v, want %v", got1, tt.want1)
-			}
-		})
-	}
-}
-
-func TestPipeline_checkSourcesConfigure(t *testing.T) {
-	type fields struct {
-		chains       *Chain
-		errors       []string
-		sourcesTypes []int
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   bool
-	}{
-		{
-			name: "check source in disk and in server",
-			fields: fields{
-				sourcesTypes: []int{1, 1, 0},
-			},
-			want: true,
-		},
-		{
-			name: "check source not used",
-			fields: fields{
-				sourcesTypes: []int{0, 0, 1},
-			},
-			want: false,
-		},
-		{
-			name: "check not know source",
-			fields: fields{
-				sourcesTypes: []int{0, 0, 0, 1},
-			},
-			want: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pipeline := &Pipeline{
-				chains:       tt.fields.chains,
-				errors:       tt.fields.errors,
-				sourcesTypes: tt.fields.sourcesTypes,
-			}
-			if got := pipeline.checkSourcesConfigure(); got != tt.want {
-				t.Errorf("Pipeline.checkSourcesConfigure() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -640,7 +589,7 @@ func TestConfigure(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotResult, err := Configure(tt.args.structure, tt.args.fileName, tt.args.pipelineChaines, tt.args.prefix, tt.args.smartConfigure)
+			gotResult, err := Configure(tt.args.structure, tt.args.pipelineChaines, tt.args.prefix, tt.args.smartConfigure)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Configure() error = %v, wantErr %v", err, tt.wantErr)
 				return

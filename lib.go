@@ -28,9 +28,8 @@ func ChangeLogFormatter(formatter logrus.Formatter) {
 ConfigureEasy - default pipeline setup for configure your structure
 */
 func ConfigureEasy(
-	structure interface{},
-	fileName string) (interface{}, error) {
-	return pipeline.Configure(structure, fileName, []infra.FuncType{
+	structure interface{}) (interface{}, error) {
+	return pipeline.Configure(structure, []infra.FuncType{
 		infra.FunctionSetupEnvironment,
 		infra.FunctionSetupHocon,
 		infra.FunctionSetupDefault,
@@ -42,10 +41,9 @@ ConfigureSetup - pipeline with your settings stages for your structure
 */
 func ConfigureSetup(
 	structure interface{},
-	fileName string,
 	prefix string,
 	functions []infra.FuncType) (interface{}, error) {
-	return pipeline.Configure(structure, fileName, functions, prefix, pipeline.DirtyConfiguring)
+	return pipeline.Configure(structure, functions, prefix, pipeline.DirtyConfiguring)
 }
 
 /*
@@ -53,7 +51,6 @@ ConfigureSmart - configuring by analysing tags for add prefer strategy for confi
 */
 func ConfigureSmart(
 	structure interface{},
-	fileName string,
 ) (interface{}, error) {
-	return pipeline.Configure(structure, fileName, nil, pipeline.EmptyAdditionalPrefix, pipeline.SmartConfiguring)
+	return pipeline.Configure(structure, nil, pipeline.EmptyAdditionalPrefix, pipeline.SmartConfiguring)
 }

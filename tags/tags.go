@@ -15,4 +15,8 @@ const (
 
 	TagCustomerNode = "node"
 	TagCustomerPath = "path"
+
+	HoconFile = "GOSTRUCTOR_HOCON"
+	YamlFile  = "GOSTRUCTOR_YAML"
+	JSONFile  = "GOSTRUCTOR_JSON"
 )

@@ -410,7 +410,7 @@ func Test_convertToInt8FromStringSuccess(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt8(tt.args.source, tt.args.destination); !reflect.DeepEqual(got, tt.want) {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 8); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("convertToInt8() = %v, want %v", got, tt.want)
 			}
 		})
@@ -441,7 +441,7 @@ func Test_convertToInt16FromString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt16(tt.args.source, tt.args.destination); got.Value.Interface().(int16) != int16(1234) {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 16); got.Value.Interface().(int16) != int16(1234) {
 				t.Errorf("convertToInt16() = %v, want %v", got, tt.want)
 			}
 		})
@@ -469,7 +469,7 @@ func Test_convertToInt16FromInt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt16(tt.args.source, tt.args.destination); got.Value.Interface().(int16) != int16(1234) {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 16); got.Value.Interface().(int16) != int16(1234) {
 				t.Errorf("convertToInt16() = %v, want %v", got, tt.want)
 			}
 		})
@@ -498,7 +498,7 @@ func Test_convertToInt16FromStruct(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt16(tt.args.source, tt.args.destination); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 16); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
 				t.Log("converted error: ", got.GetNotAValue().Error.Error())
 				t.Log("expected error: ", tt.want.GetNotAValue().Error)
 				t.Errorf("convertToInt16() = %v, want %v", got, tt.want)
@@ -529,7 +529,7 @@ func Test_convertToInt16FromStringFailed(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt16(tt.args.source, tt.args.destination); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 16); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
 				t.Log("converted error: ", got.GetNotAValue().Error.Error())
 				t.Log("expected error: ", tt.want.GetNotAValue().Error)
 				t.Errorf("convertToInt16() = %v, want %v", got, tt.want)
@@ -559,7 +559,7 @@ func Test_convertToInt32(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt32(tt.args.source, tt.args.destination); got.Value.Interface().(int32) != tt.want.Value.Interface().(int32) {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 32); got.Value.Interface().(int32) != tt.want.Value.Interface().(int32) {
 				t.Errorf("convertToInt32() = %v, want %v", got, tt.want)
 			}
 		})
@@ -587,7 +587,7 @@ func Test_convertToInt32FromInt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt32(tt.args.source, tt.args.destination); got.Value.Interface().(int32) != tt.want.Value.Interface().(int32) {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 32); got.Value.Interface().(int32) != tt.want.Value.Interface().(int32) {
 				t.Errorf("convertToInt32() = %v, want %v", got, tt.want)
 			}
 		})
@@ -615,7 +615,7 @@ func Test_convertToInt32FromInt64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt32(tt.args.source, tt.args.destination); got.Value.Interface().(int32) != tt.want.Value.Interface().(int32) {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 32); got.Value.Interface().(int32) != tt.want.Value.Interface().(int32) {
 				t.Errorf("convertToInt32() = %v, want %v", got.Value.Interface(), tt.want.Value.Interface())
 			}
 		})
@@ -643,7 +643,7 @@ func Test_convertToInt32FromStruct(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt32(tt.args.source, tt.args.destination); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 32); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
 				t.Errorf("convertToInt32() = %v, want %v", got.Value.Interface(), tt.want.Value.Interface())
 			}
 		})
@@ -673,7 +673,7 @@ func Test_convertToInt32FromStringFailed(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt32(tt.args.source, tt.args.destination); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 32); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
 				t.Errorf("convertToInt32() = %v, want %v", got.Value.Interface(), tt.want.Value.Interface())
 			}
 		})
@@ -701,7 +701,7 @@ func Test_convertToInt64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt64(tt.args.source, tt.args.destination); got.Value.Interface().(int64) != tt.want.Value.Interface().(int64) {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 64); got.Value.Interface().(int64) != tt.want.Value.Interface().(int64) {
 				t.Errorf("convertToInt64() = %v, want %v", got, tt.want)
 			}
 		})
@@ -729,7 +729,7 @@ func Test_convertToInt64FromInt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt64(tt.args.source, tt.args.destination); got.Value.Interface().(int64) != tt.want.Value.Interface().(int64) {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 64); got.Value.Interface().(int64) != tt.want.Value.Interface().(int64) {
 				t.Errorf("convertToInt64() = %v, want %v", got, tt.want)
 			}
 		})
@@ -757,7 +757,7 @@ func Test_convertToInt64FromStruct(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt64(tt.args.source, tt.args.destination); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 64); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
 				t.Errorf("convertToInt64() = %v, want %v", got, tt.want)
 			}
 		})
@@ -787,7 +787,7 @@ func Test_convertToInt64FromStringFailed(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToInt64(tt.args.source, tt.args.destination); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
+			if got := convertToIntOrder(tt.args.source, tt.args.destination, 64); got.GetNotAValue().Error.Error() != tt.want.GetNotAValue().Error.Error() {
 				t.Errorf("convertToInt64() = %v, want %v", got, tt.want)
 			}
 		})

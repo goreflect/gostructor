@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"errors"
+	"os"
 	"reflect"
 	"strings"
 
@@ -54,8 +55,15 @@ func (config HoconConfig) GetComplexType(context *structContext) infra.GoStructo
 	}
 }
 
+func (config *HoconConfig) configuredFile() {
+	config.fileName = os.Getenv(tags.HoconFile)
+}
+
 // return true - if loaded config or successfully load config by filename
 func (config *HoconConfig) typeSafeLoadConfigFile() error {
+	if config.fileName == "" {
+		config.configuredFile()
+	}
 	if config.configureFileParsed == nil {
 		configParsed, err := gohocon.LoadConfig(config.fileName)
 		if err != nil {

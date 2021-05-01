@@ -20,7 +20,7 @@ type VaultConfig struct {
 }
 
 func (config *VaultConfig) configureVault() error {
-	configured, errConfigure := Configure(&properties.VaultConfiguration{}, "", []infra.FuncType{infra.FunctionSetupEnvironment}, "", true)
+	configured, errConfigure := Configure(&properties.VaultConfiguration{}, []infra.FuncType{infra.FunctionSetupEnvironment}, "", true)
 	if errConfigure != nil {
 		logrus.Error("Can not initialize vault properties. Please setup VAULT_ADDRESS & VAULT_TOKEN for working with cf_vault")
 		return errConfigure
