@@ -185,7 +185,7 @@ func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 	valuePtr := reflect.Indirect(context.Value)
 	switch valuePtr.Kind() {
 	case reflect.Struct:
-		return pipeline.preparedInlineStructFields(valuePtr, context)
+		return pipeline.prepareInlineStructFields(valuePtr, context)
 	default:
 		pipeline.curentChain = pipeline.chains
 		for {
@@ -202,7 +202,7 @@ func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 	}
 }
 
-func (pipeline *Pipeline) preparedInlineStructFields(value reflect.Value, context *structContext) error {
+func (pipeline *Pipeline) prepareInlineStructFields(value reflect.Value, context *structContext) error {
 	if context.Prefix == "" {
 		context.Prefix += value.Type().Name()
 	}
@@ -257,7 +257,7 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 		}
 		return errors.New("can not be configuring base type. Can not configured current field")
 	default:
-		return errors.New("not supported type for hocon parsing")
+		return errors.New("not supported type for parsing")
 	}
 }
 
@@ -266,15 +266,14 @@ func (pipeline *Pipeline) setupValue(context *structContext, value *infra.GoStru
 	if value.CheckIsValue() {
 		// add check for setuping valueGet in valueIndirect
 		if valueIndirect.CanSet() {
-			logrus.Debug("setupe value in struct")
+			logrus.Debug("setup value in struct")
 			valueIndirect.Set(value.Value)
 			return nil
-		} else {
-			return errors.New("can not set " + value.Value.Kind().String() + " into struct field.")
 		}
-	} else {
-		return errors.New("Loglevel: Debug Message:  value get not implementedable value: ")
+		return errors.New("can not set " + value.Value.Kind().String() + " into struct field.")
 	}
+
+	return errors.New("Loglevel: Debug Message:  value get not implementedable value: ")
 }
 
 func (pipeline *Pipeline) checkValueTypeIsPointer(value reflect.Value) error {
