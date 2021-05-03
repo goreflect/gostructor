@@ -72,8 +72,7 @@ func (config *YamlConfig) configuredFileFromEnv() {
 // return true - if loaded config or successfully load config by filename
 func (config *YamlConfig) typeSafeLoadConfigFile(context *structContext) (bool, *infra.GoStructorValue) {
 	if config.fileName == "" {
-		var notValue = infra.NewGoStructorNoValue(context.Value, errors.New("Can not parsed value"))
-		return false, &notValue
+		config.configuredFileFromEnv()
 	}
 	if config.parsedData == nil {
 		fileBuffer, err := tools.ReadFromFile(config.fileName)

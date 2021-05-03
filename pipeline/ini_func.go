@@ -9,7 +9,6 @@ import (
 
 /*IniConfig - source toml for configuring*/
 type IniConfig struct {
-	fileName string
 }
 
 /*GetComplexType - getting from yaml slices, maps, arrays...*/

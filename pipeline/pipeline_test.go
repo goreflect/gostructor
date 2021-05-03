@@ -63,8 +63,7 @@ func Test_getFunctionChain(t *testing.T) {
 
 func Test_getChainByIdentifier(t *testing.T) {
 	type args struct {
-		idFunc   infra.FuncType
-		fileName string
+		idFunc infra.FuncType
 	}
 	tests := []struct {
 		name    string

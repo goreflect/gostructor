@@ -63,7 +63,7 @@ func (config *JSONConfig) configuredFileFromEnv() {
 // return true - if loaded config or successfully load config by filename
 func (config *JSONConfig) typeSafeLoadConfigFile(context *structContext) (bool, *infra.GoStructorValue) {
 	if config.fileName == "" {
-
+		config.configuredFileFromEnv()
 	}
 	if config.configureFileParsed == nil {
 		fileBuffer, err := tools.ReadFromFile(config.fileName)

@@ -72,20 +72,6 @@ func (context structContext) getFieldName() string {
 		if tag == "" {
 			continue
 		}
-		// Not actual to any of available tags
-		tagCustomer := strings.Split(tag, ",")
-		if len(tagCustomer) == 0 {
-			continue
-		}
-		logrus.Warn("not working properly. Changed by future realese")
-		// TODO: change this case by add for range case checking tag custom (if user setup node and path, it's should be return node.path way)
-		// for _, tagCustom := range []string{tags.TagCustomerNode, tags.TagCustomerPath} {
-		// 	if tagCustomer[0] == tagCustom {
-		// 		if tagCustomer[1] != "" {
-		// 			return true, tagCustomer[1]
-		// 		}
-		// 	}
-		// }
 		return tag
 	}
 	return context.StructField.Name

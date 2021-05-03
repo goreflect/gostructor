@@ -9,7 +9,6 @@ import (
 
 /*TomlConfig - source toml for configuring*/
 type TomlConfig struct {
-	fileName string
 }
 
 /*GetComplexType - getting from yaml slices, maps, arrays...*/
