@@ -2,11 +2,13 @@ package pipeline
 
 import (
 	"errors"
+	"os"
 	"reflect"
 	"strings"
 
 	"github.com/goreflect/gostructor/infra"
 	"github.com/goreflect/gostructor/tags"
+	"github.com/goreflect/gostructor/tags/priority"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,6 +19,7 @@ type (
 		errors       []string
 		sourcesTypes []int
 		curentChain  *Chain
+		priority     string
 	}
 
 	/*Chain - this is structure contain information for executing function by ordering
@@ -98,7 +101,67 @@ func getFunctionChain(pipelineChanes []infra.FuncType) *Pipeline {
 		currentChain.next = new(Chain)
 		currentChain = currentChain.next
 	}
-	return &Pipeline{chains: chain, sourcesTypes: sourcesTypes}
+
+	return &Pipeline{chains: chain, sourcesTypes: sourcesTypes, priority: extractPriorityFromEnv()}
+}
+
+func getChainsByPriority(context *structContext, pipelineChanes []infra.FuncType) *Chain {
+	chain := &Chain{
+		stageFunction: nil,
+		next:          nil,
+		notAValues:    nil,
+	}
+	sourcesTypes := make([]int, 3)
+
+	currentChain := chain
+	for _, pipelineChain := range pipelineChanes {
+		stageFunction, sourceType, err := getChainByIdentifier(pipelineChain)
+		if err != nil {
+			logrus.Error("error while getting chain stage function. Error: " + err.Error())
+			continue
+		}
+		sourcesTypes[sourceType]++
+		currentChain.stageFunction = stageFunction
+		currentChain.next = new(Chain)
+		currentChain = currentChain.next
+	}
+
+	return chain
+}
+
+func extractPriorityFromEnv() string {
+	return os.Getenv(tags.Priority)
+}
+
+func getFuncTypesByTagsName(tagsResult []string) []infra.FuncType {
+	result := []infra.FuncType{}
+	for _, value := range tagsResult {
+		switch value {
+		case tags.TagHocon:
+			result = append(result, infra.FunctionSetupHocon)
+		case tags.TagJSON:
+			result = append(result, infra.FunctionSetupJSON)
+		case tags.TagEnvironment:
+			result = append(result, infra.FunctionSetupEnvironment)
+		case tags.TagYaml:
+			result = append(result, infra.FunctionSetupYaml)
+		case tags.TagIni:
+			result = append(result, infra.FunctionSetupIni)
+		case tags.TagToml:
+			result = append(result, infra.FunctionSetupToml)
+		case tags.TagDefault:
+			result = append(result, infra.FunctionSetupDefault)
+		case tags.TagHashiCorpVault:
+			result = append(result, infra.FunctionSetupVault)
+		case tags.TagServerFile:
+			result = append(result, infra.FunctionSetupConfigServer)
+		case tags.TagServerKeyValue:
+			result = append(result, infra.FunctionKeyValueServer)
+		default:
+			continue
+		}
+	}
+	return result
 }
 
 // getChainByIdentifier - get function configure source and return
@@ -126,6 +189,36 @@ func getChainByIdentifier(
 	case infra.FunctionSetupToml:
 		return &TomlConfig{}, sourceFileInDisk, nil
 	case infra.FunctionSetupConfigServer:
+		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not implemented yet")
+	case infra.FunctionKeyValueServer:
+		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not implemented yet")
+	default:
+		return nil, sourceFileNotUsed, errors.New(notSupportedTypeError +
+			"you should search in lib available type configurator source or you are welcome to contribute.")
+	}
+}
+
+func getChainByTagName(tagName string) (IConfigure, int, error) {
+	switch tagName {
+	case tags.TagDefault:
+		return &DefaultConfig{}, sourceFileNotUsed, nil
+	case tags.TagEnvironment:
+		return &EnvironmentConfig{}, sourceFileNotUsed, nil
+	case tags.TagHocon:
+		return &HoconConfig{}, sourceFileInDisk, nil
+	case tags.TagJSON:
+		return &JSONConfig{}, sourceFileInDisk, nil
+	case tags.TagYaml:
+		return &YamlConfig{}, sourceFileInDisk, nil
+	case tags.TagHashiCorpVault:
+		return &VaultConfig{}, sourceFielInServer, nil
+	case tags.TagIni:
+		return &IniConfig{}, sourceFileInDisk, nil
+	case tags.TagToml:
+		return &TomlConfig{}, sourceFileInDisk, nil
+	case tags.TagServerFile:
+		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not implemented yet")
+	case tags.TagServerKeyValue:
 		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not implemented yet")
 	default:
 		return nil, sourceFileNotUsed, errors.New(notSupportedTypeError +
@@ -179,7 +272,7 @@ func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 	case reflect.Struct:
 		return pipeline.prepareInlineStructFields(valuePtr, context)
 	default:
-		pipeline.curentChain = pipeline.chains
+		pipeline.extractOrderChainOrUseSettingUpChains(context)
 		for {
 			if err := pipeline.configuringValues(context); err != nil {
 				pipeline.addNewErrorWhileParsing(err.Error())
@@ -194,6 +287,21 @@ func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 	}
 }
 
+func (pipeline *Pipeline) extractOrderChainOrUseSettingUpChains(context *structContext) {
+	tag := context.StructField.Tag.Get(tags.TagPriority)
+	if tag != "" {
+		analyzedParser := priority.NewParser(strings.NewReader(tag))
+		analyzedOrder, err := analyzedParser.Parse()
+		if err == nil {
+			resultDirty := priority.GetPriorityChains(analyzedOrder, pipeline.priority)
+			pipeline.curentChain = getChainsByPriority(context, GetFuncTypesByTagsName(resultDirty))
+			return
+		}
+		logrus.Error("Can not worked with priority order: ", err)
+	}
+	pipeline.curentChain = pipeline.chains
+}
+
 func (pipeline *Pipeline) prepareInlineStructFields(value reflect.Value, context *structContext) error {
 	if context.Prefix == "" {
 		context.Prefix += value.Type().Name()
@@ -204,7 +312,7 @@ func (pipeline *Pipeline) prepareInlineStructFields(value reflect.Value, context
 			StructField: value.Type().Field(i),
 			Prefix:      pipeline.preparePrefix(context.Prefix, value.Type().Field(i)),
 		}); err != nil {
-			return pipeline.getErrorAsOne()
+			return err
 		}
 	}
 	return nil
