@@ -294,7 +294,7 @@ func (pipeline *Pipeline) extractOrderChainOrUseSettingUpChains(context *structC
 		analyzedOrder, err := analyzedParser.Parse()
 		if err == nil {
 			resultDirty := priority.GetPriorityChains(analyzedOrder, pipeline.priority)
-			pipeline.curentChain = getChainsByPriority(context, GetFuncTypesByTagsName(resultDirty))
+			pipeline.curentChain = getChainsByPriority(context, getFuncTypesByTagsName(resultDirty))
 			return
 		}
 		logrus.Error("Can not worked with priority order: ", err)
