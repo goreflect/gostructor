@@ -1,7 +1,7 @@
 name: Publish Patch for lib
 on: [push]
 jobs:
-  build:
+  publishing:
     runs-on: ubuntu-18.04
     steps:
       - name: checkout to master
