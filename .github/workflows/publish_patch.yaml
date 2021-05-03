@@ -15,8 +15,8 @@ jobs:
           git config --local user.email "kubitre@gmail.com"
           ./increment_version.bash
           git diff-index --quiet HEAD || git commit -m "upgrade patch" -a
-          git tag golang/$(cat .version)
-          git push -q origin golang/$(cat .version)
+          git tag $(cat .version)
+          git push -q origin $(cat .version)
       - name: push lib to github repo
         uses: ad-m/github-push-action@master
         with:
