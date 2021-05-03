@@ -63,8 +63,11 @@ func (context structContext) getFieldName() string {
 		tags.TagYaml,
 		tags.TagDefault,
 		tags.TagEnvironment,
-		tags.TagConfigServer,
-		tags.TagHashiCorpVault} {
+		tags.TagServerFile,
+		tags.TagHashiCorpVault,
+		tags.TagServerKeyValue,
+		tags.TagIni,
+		tags.TagToml} {
 		tag := context.StructField.Tag.Get(val)
 		if tag == "" {
 			continue
@@ -129,10 +132,13 @@ func getChainByIdentifier(
 	case infra.FunctionSetupJSON:
 		return &JSONConfig{}, sourceFileInDisk, nil
 	case infra.FunctionSetupYaml:
-		return nil, sourceFileInDisk, errors.New(notSupportedTypeError +
-			"yaml configurator source. Not implemented yet")
+		return &YamlConfig{}, sourceFileInDisk, nil
 	case infra.FunctionSetupVault:
 		return &VaultConfig{}, sourceFielInServer, nil
+	case infra.FunctionSetupIni:
+		return &IniConfig{}, sourceFileInDisk, nil
+	case infra.FunctionSetupToml:
+		return &TomlConfig{}, sourceFileInDisk, nil
 	case infra.FunctionSetupConfigServer:
 		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not implemented yet")
 	default:

@@ -3,7 +3,7 @@
 
 ____
 
-## Version: v0.6.1
+## Version: v0.6
 
 Universal configuration library by tags
 
@@ -14,6 +14,8 @@ Universal configuration library by tags
 - environment variables
 - vault configs
 - json values
+- yaml values
+- ini values
 
 ## Current supporting types
 
@@ -24,14 +26,26 @@ Universal configuration library by tags
 - map[string\int]string\int\float32\float64
 - slices of any types from (int32, int64, int, string, bool, float32, float64)
 
+## Plan of upgrading
+0.8:
+    1. adding support key\value store backends (with callback)
+    2. adding support config server fetching content like Spring Cloud Config Server
+
+0.9:
+    1. adding support uint types 
+    2. change transition dependencies like go-yaml, lfjson by native map[interface{}]interface{}
+
 ### Tags
 
 - [x] cf_hocon - setup value for this field from hocon
 - [x] cf_default - setup default value for this field
 - [x] cf_env - setup value from env variable by name in this tag
-- [ ] cf_yaml - setup value for this field from yaml (version > 0.6)
+- [x] cf_yaml - setup value for this field from yaml (version > 0.6)
 - [x] cf_json - setup value for this field from json (version > 0.5)
-- [ ] cf_server - setup value from configuration server like spring cloud config server or others (version>0.7)
+- [ ] cf_ini - setup value for this field from ini (version > 0.7)
+- [ ] cf_toml - setup value for this field from toml (version > 0.7)
+- [ ] cf_server_file - setup value from configuration server like spring cloud config server or others (version>0.8)
+- [ ] cf_server_kv - setup value from configuration key\value store (version > 0.8)
 - [x] cf_vault - setup secret for this field from hashi corp vault
 
 ## Running configuring by smart variant
@@ -115,3 +129,9 @@ By the way u can configuring files by environment variables:
 1. For hocon files - GOSTRUCTOR_HOCON
 2. For json files - GOSTRUCTOR_JSON
 3. For yaml files - GOSTRUCTOR_YAML
+4. For ini files - GOSTRUCTOR_INI
+5. For toml files - GOSTRUCTOR_TOML
+
+## Infrastructure
+
+For the best way to automatic publish versions of patch added github workflow for publish in master changes

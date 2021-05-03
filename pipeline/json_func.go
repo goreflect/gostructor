@@ -3,8 +3,10 @@ package pipeline
 import (
 	"errors"
 	"os"
+	"reflect"
 
 	"github.com/go-restit/lzjson"
+	"github.com/goreflect/gostructor/converters"
 	"github.com/goreflect/gostructor/infra"
 	"github.com/goreflect/gostructor/tags"
 	"github.com/goreflect/gostructor/tools"
@@ -43,6 +45,9 @@ func (config JSONConfig) GetBaseType(context *structContext) infra.GoStructorVal
 		return infra.NewGoStructorNoValue(context.Value, parsedValue.ParseError())
 	}
 	logrus.Debug("Level: Debug. Get from json source: ", parsedValue.String())
+	if !config.validation(parsedValue.String()) {
+		return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(parsedValue.String()), context.Value)
+	}
 	return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("getbase type from json not implemented"))
 }
 

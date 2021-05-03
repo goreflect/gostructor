@@ -1,0 +1,24 @@
+name: Publish Patch for lib
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: checkout to master
+        uses: actions/checkout@master
+      - name: checkout to current branch
+        run:
+          git checkout ${{github.ref.branch}}
+      - name: Commit new patch version
+        run: |
+          git config --local user.name "kubitre bot"
+          git config --local user.email "kubitre@gmail.com"
+          ./increment_version.bash
+          git diff-index --quiet HEAD || git commit -m "upgrade patch" -a
+          git tag golang/$(cat .version)
+          git push -q origin golang/$(cat .version)
+      - name: push lib to github repo
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{secrets.GITHUB_TOKEN}}
+          force: true

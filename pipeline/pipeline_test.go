@@ -114,9 +114,9 @@ func Test_getChainByIdentifier(t *testing.T) {
 			args: args{
 				idFunc: infra.FunctionSetupYaml,
 			},
-			want:    nil,
+			want:    &YamlConfig{},
 			want1:   sourceFileInDisk,
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "check function setup config server",

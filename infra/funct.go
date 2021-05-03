@@ -14,10 +14,14 @@ const (
 	FunctionSetupJSON = iota
 	// FunctionSetupYaml - function configuring from yaml
 	FunctionSetupYaml = iota
+	FunctionSetupIni  = iota
+	FunctionSetupToml = iota
 	// FunctionSetupDefault - function configuring from default values
 	FunctionSetupDefault = iota
 	// FunctionSetupVault - function configuring from vault secured backend
 	FunctionSetupVault = iota
 	// FunctionSetupConfigServer - function configuring by any types (json, yaml, hocon, toml, txt...) from configuring server with settings
 	FunctionSetupConfigServer = iota
+
+	FunctionKeyValueServer = iota
 )

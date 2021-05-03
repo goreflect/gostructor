@@ -41,7 +41,7 @@ func TestGetFunctionTypes(t *testing.T) {
 					field1 string `cf_hocon:"test1" cf_default:"test2"`
 					field2 int    `cf_hocon:"test3" cf_default:"test4"`
 					field3 struct {
-						field string `cf_vault:"token=1234,value=password" cf_yaml:"for_test" cf_env:"test" cf_server:"test"`
+						field string `cf_vault:"token=1234,value=password" cf_yaml:"for_test" cf_env:"test" cf_server_file:"test"`
 					}
 				}{},
 			},

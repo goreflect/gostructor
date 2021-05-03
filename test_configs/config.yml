@@ -1,0 +1,14 @@
+test: 1
+test2:
+  - string
+  - string2
+  - string3
+test3:
+  - 1
+  - 2
+  - 3
+test5:
+  test4: str1
+  test6:
+    - 1231
+    - 15123

@@ -65,7 +65,10 @@ func checkFuncsByTags(structField reflect.StructField) []int {
 		TagHashiCorpVault,
 		TagEnvironment,
 		TagDefault,
-		TagConfigServer,
+		TagServerFile,
+		TagIni,
+		TagToml,
+		TagServerKeyValue,
 	} {
 		tagInField := structField.Tag.Get(value)
 		if tagInField == "" {
@@ -83,8 +86,10 @@ func getFuncTypeByTag(tagName string) infra.FuncType {
 	switch tagName {
 	case TagYaml:
 		return infra.FunctionSetupYaml
-	case TagConfigServer:
+	case TagServerFile:
 		return infra.FunctionSetupConfigServer
+	case TagServerKeyValue:
+		return infra.FunctionKeyValueServer
 	case TagDefault:
 		return infra.FunctionSetupDefault
 	case TagEnvironment:
@@ -95,6 +100,10 @@ func getFuncTypeByTag(tagName string) infra.FuncType {
 		return infra.FunctionSetupHocon
 	case TagJSON:
 		return infra.FunctionSetupJSON
+	case TagIni:
+		return infra.FunctionSetupIni
+	case TagToml:
+		return infra.FunctionSetupToml
 	default:
 		return infra.FunctionNotExist
 	}
