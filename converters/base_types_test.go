@@ -156,3 +156,7 @@ func Test_convertToFloat64(t *testing.T) {
 		})
 	}
 }
+
+func Test_convertToUint8(t *testing.T) {
+
+}

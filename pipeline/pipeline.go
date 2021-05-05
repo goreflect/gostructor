@@ -5,6 +5,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"unsafe"
 
 	"github.com/goreflect/gostructor/infra"
 	"github.com/goreflect/gostructor/tags"
@@ -275,7 +276,6 @@ func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 		pipeline.extractOrderChainOrUseSettingUpChains(context)
 		for {
 			if err := pipeline.configuringValues(context); err != nil {
-				pipeline.addNewErrorWhileParsing(err.Error())
 				if errSettingChain := pipeline.setNextChain(); errSettingChain != nil {
 					return pipeline.getErrorAsOne()
 				}
@@ -348,9 +348,21 @@ func (pipeline *Pipeline) configuringValues(context *structContext) error {
 			return pipeline.setupValue(context, &valueGet)
 		}
 		return errors.New("can not be configuring complex type. Can not configured current field")
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return errors.New("not implemented types of unsigned integer")
-	case reflect.String, reflect.Float32, reflect.Float64, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+	case
+		reflect.String,
+		reflect.Float32,
+		reflect.Float64,
+		reflect.Bool,
+		reflect.Int,
+		reflect.Int8,
+		reflect.Int16,
+		reflect.Int32,
+		reflect.Int64,
+		reflect.Uint,
+		reflect.Uint8,
+		reflect.Uint16,
+		reflect.Uint32,
+		reflect.Uint64:
 		if pipeline.curentChain != nil {
 			valueGet := pipeline.curentChain.stageFunction.GetBaseType(context)
 			return pipeline.setupValue(context, &valueGet)
@@ -370,7 +382,13 @@ func (pipeline *Pipeline) setupValue(context *structContext, value *infra.GoStru
 			valueIndirect.Set(value.Value)
 			return nil
 		}
-		return errors.New("can not set " + value.Value.Kind().String() + " into struct field.")
+		// change data by address
+		logrus.Info(context.Value.Type())
+		logrus.Info(valueIndirect.Type())
+		unsafeValue := reflect.NewAt(valueIndirect.Type(), unsafe.Pointer(valueIndirect.UnsafeAddr())).Elem()
+		unsafeValue.Set(value.Value)
+		return nil
+
 	}
 
 	return errors.New("Loglevel: Debug Message:  value get not implementedable value: ")

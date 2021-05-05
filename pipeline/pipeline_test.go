@@ -706,3 +706,67 @@ func TestPipeline_setNextChain(t *testing.T) {
 		})
 	}
 }
+
+type TestStructPriority struct {
+	field1 string `cf_default:"tururu" cf_env:"MY_TEST" cf_priority:"stage1:cf_env,cf_default;stage2:cf_default,cf_env"`
+}
+
+func TestPipelineOrderConfiguring(t *testing.T) {
+	type args struct {
+		structure       interface{}
+		fileName        string
+		pipelineChaines []infra.FuncType
+		prefix          string
+		smartConfigure  bool
+	}
+
+	myTestStruct := TestStructPriority{}
+	os.Setenv("MY_TEST", "TURURU")
+	tests := []struct {
+		name        string
+		args        args
+		wantResult  interface{}
+		wantErr     bool
+		setPriority string
+	}{
+		{
+			name: "success configuring from cf_env",
+			args: args{
+				structure:       &myTestStruct,
+				fileName:        "",
+				pipelineChaines: []infra.FuncType{infra.FunctionSetupDefault},
+				prefix:          "",
+				smartConfigure:  true,
+			},
+			wantResult:  "TURURU",
+			wantErr:     false,
+			setPriority: "stage1",
+		},
+		{
+			name: "success configuring from cf_default",
+			args: args{
+				structure:       &myTestStruct,
+				fileName:        "test",
+				pipelineChaines: []infra.FuncType{infra.FunctionSetupJSON},
+				prefix:          "",
+				smartConfigure:  true,
+			},
+			wantResult:  "tururu",
+			wantErr:     false,
+			setPriority: "stage2",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			os.Setenv("GOSTRUCTOR_PRIORITY", tt.setPriority)
+			gotResult, err := Configure(tt.args.structure, tt.args.pipelineChaines, tt.args.prefix, tt.args.smartConfigure)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Configure() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotResult.(*TestStructPriority).field1 != tt.wantResult {
+				t.Errorf("Not equaled result, ordering not working")
+			}
+		})
+	}
+}

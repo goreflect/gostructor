@@ -127,3 +127,31 @@ func choseTypeByOrder(value float64, order int) reflect.Value {
 	}
 	return reflect.ValueOf(value)
 }
+
+func convertToUintOrder(source reflect.Value, destination reflect.Value, order int) infra.GoStructorValue {
+	switch source.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return infra.NewGoStructorTrueValue(chooseTypeByOrder(source.Uint(), order))
+	case reflect.String:
+		parsed, errParsed := strconv.ParseUint(source.String(), 10, order)
+		if errParsed != nil {
+			return infra.NewGoStructorNoValue(destination, errParsed)
+		}
+		return infra.NewGoStructorTrueValue(chooseTypeByOrder(parsed, order))
+	default:
+		return infra.NewGoStructorNoValue(source, errors.New("not supported convertation"))
+	}
+}
+
+func chooseTypeByOrder(value uint64, order int) reflect.Value {
+	switch order {
+	case 8:
+		return reflect.ValueOf(uint8(value))
+	case 16:
+		return reflect.ValueOf(uint16(value))
+	case 32:
+		return reflect.ValueOf(uint32(value))
+	default:
+		return reflect.ValueOf(value)
+	}
+}
