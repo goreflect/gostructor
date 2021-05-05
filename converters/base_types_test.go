@@ -42,22 +42,6 @@ func Test_convertToFloat32(t *testing.T) {
 			},
 			want: infra.NewGoStructorTrueValue(reflect.ValueOf(float32(12.3))),
 		},
-		// {
-		// 	name: "converted from float64 into float32",
-		// 	args: args{
-		// 		source:      reflect.ValueOf(float64(12.3)),
-		// 		destination: reflect.ValueOf(float32(0.0)),
-		// 	},
-		// 	want: infra.NewGoStructorTrueValue(reflect.ValueOf(float32(12.3))),
-		// },
-		// {
-		// 	name: "converted from string into float32 failed",
-		// 	args: args{
-		// 		source:      reflect.ValueOf("12.3asd"),
-		// 		destination: reflect.ValueOf(float32(0.0)),
-		// 	},
-		// 	want: infra.NewGoStructorNoValue(reflect.ValueOf("12.3asd"), errors.New("")),
-		// },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
