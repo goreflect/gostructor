@@ -115,7 +115,7 @@ func myConfigurator() {
 
 ```
 
-## Fetch settings secrets from vault
+## Fetching secrets from vault
 
 For fetching secrets you should add 2 environment variables: VAULT_ADDRESS, VAULT_TOKEN. After all, you can add cf_vault tag into your structure tags. 
 
