@@ -15,7 +15,8 @@ Universal configuration library by tags
 - vault configs
 - json values
 - yaml values
-- ini values
+- ini values (developing)
+- toml values (developing)
 
 ## Current supporting types
 
@@ -29,29 +30,36 @@ Universal configuration library by tags
 
 ## Plan of upgrading
 0.8:
-    1. adding support key\value store backends (with callback)
-    2. adding support config server fetching content like Spring Cloud Config Server
-
+1. Adding support file store fetching
 0.9:
-    1. adding support uint types 
-    2. change transition dependencies like go-yaml, lfjson by native map[interface{}]interface{}
+1. adding support key\value store backends (with callback)
+2. adding support config server fetching content like Spring Cloud Config Server
+
+1.0:
+1. adding support uint types (done 0.6.6)
+2. change transition dependencies like go-yaml, lfjson by native map[string]interface{}\string
+
+## Ideas for future
+
+1. Live watching for contract by git (maybe mechanism for watching changes like do it spring)
+2. CodeGen plugin for protoc for generating models with predefined tags
 
 ### Tags
 
 - [x] cf_hocon - setup value for this field from hocon
 - [x] cf_default - setup default value for this field
 - [x] cf_env - setup value from env variable by name in this tag
-- [x] cf_yaml - setup value for this field from yaml (version > 0.6)
-- [x] cf_json - setup value for this field from json (version > 0.5)
+- [x] cf_yaml - setup value for this field from yaml 
+- [x] cf_json - setup value for this field from json
 - [ ] cf_ini - setup value for this field from ini (version > 0.7)
 - [ ] cf_toml - setup value for this field from toml (version > 0.7)
 - [ ] cf_server_file - setup value from configuration server like spring cloud config server or others (version>0.8)
-- [ ] cf_server_kv - setup value from configuration key\value store (version > 0.8)
+- [ ] cf_server_kv - setup value from configuration key\value store (version > 0.9)
 - [x] cf_vault - setup secret for this field from hashi corp vault
 
 ## Running configuring by smart variant
 
-For Run configuration by smart variant autostart analysing of using tags. library will start configuring  your structure by pipeline with all founded tags.
+For Run configuration by smart variant autostart analysing of using tags. Library will start configuring  your structure by pipeline with all founded tags.
 
 ```go
 type Test struct {
