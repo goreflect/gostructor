@@ -199,34 +199,6 @@ func getChainByIdentifier(
 	}
 }
 
-func getChainByTagName(tagName string) (IConfigure, int, error) {
-	switch tagName {
-	case tags.TagDefault:
-		return &DefaultConfig{}, sourceFileNotUsed, nil
-	case tags.TagEnvironment:
-		return &EnvironmentConfig{}, sourceFileNotUsed, nil
-	case tags.TagHocon:
-		return &HoconConfig{}, sourceFileInDisk, nil
-	case tags.TagJSON:
-		return &JSONConfig{}, sourceFileInDisk, nil
-	case tags.TagYaml:
-		return &YamlConfig{}, sourceFileInDisk, nil
-	case tags.TagHashiCorpVault:
-		return &VaultConfig{}, sourceFielInServer, nil
-	case tags.TagIni:
-		return &IniConfig{}, sourceFileInDisk, nil
-	case tags.TagToml:
-		return &TomlConfig{}, sourceFileInDisk, nil
-	case tags.TagServerFile:
-		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not implemented yet")
-	case tags.TagServerKeyValue:
-		return nil, sourceFielInServer, errors.New(notSupportedTypeError + "configure server configurator source. Not implemented yet")
-	default:
-		return nil, sourceFileNotUsed, errors.New(notSupportedTypeError +
-			"you should search in lib available type configurator source or you are welcome to contribute.")
-	}
-}
-
 // Configure - main configurer
 func Configure(
 	// Needed configure structure
@@ -325,10 +297,6 @@ func (pipeline *Pipeline) preparePrefix(contextPrefix string, value reflect.Stru
 	}
 	getPrefix := (structContext{StructField: value}.getFieldName())
 	return prefix + getPrefix
-}
-
-func (pipeline *Pipeline) addNewErrorWhileParsing(err string) {
-	pipeline.errors = append(pipeline.errors, err)
 }
 
 func (pipeline *Pipeline) getErrorAsOne() error {
