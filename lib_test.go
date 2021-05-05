@@ -86,47 +86,6 @@ func Test_parseHocon(t *testing.T) {
 	}, myStruct.(*MyStruct2))
 }
 
-// Depreacted because in pipeline can not supported node, path inline tag value
-// func Test_parseHoconWithNodeNotation(t *testing.T) {
-// 	mystruct, err := ConfigureSetup(&MyStruct3{}, "./test_configs/testmap.hocon", "", []infra.FuncType{infra.FunctionSetupHocon})
-// 	if err != nil {
-// 		fmt.Println("error while configuring: ", err)
-// 	}
-// 	assert.Equal(t, &MyStruct3{
-// 		NestedStruct2: struct {
-// 			Field1 string "cf_hocon:\"test1\""
-// 		}{
-// 			Field1: "testValueByNodeInTag",
-// 		},
-// 	}, mystruct.(*MyStruct3))
-// }
-
-// Depreacted because in pipeline can not supported node, path inline tag value
-// func Test_parseHoconWithNodeNotation2(t *testing.T) {
-// 	myStruct, err := ConfigureSetup(&MyStruct4{}, "./test_configs/testmap.hocon", "", []infra.FuncType{infra.FunctionSetupHocon})
-// 	if err != nil {
-// 		fmt.Println("error while configuring: ", err)
-// 	}
-// 	assert.Equal(t, &MyStruct4{
-// 		NestedStruct4: struct{ Field1 string }{
-// 			Field1: "testValueByTest",
-// 		},
-// 	}, myStruct.(*MyStruct4))
-// }
-
-// Depreacted because in pipeline can not supported node, path inline tag value
-// func Test_smartConfigure(t *testing.T) {
-// 	myStruct, err := ConfigureSmart(&MyStruct4{}, "./test_configs/testmap.hocon")
-// 	if err != nil {
-// 		fmt.Println("error while configuring: ", err)
-// 	}
-// 	assert.Equal(t, &MyStruct4{
-// 		NestedStruct4: struct{ Field1 string }{
-// 			Field1: "testValueByTest",
-// 		},
-// 	}, myStruct.(*MyStruct4))
-// }
-
 func Test_getValueFromEnvironment(t *testing.T) {
 	os.Setenv("myField1", "12")
 	os.Setenv("myField2", "test")
