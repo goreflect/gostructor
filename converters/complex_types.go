@@ -9,7 +9,7 @@ import (
 func convertSlice(source reflect.Value, destination reflect.Value) infra.GoStructorValue {
 	destResult := reflect.MakeSlice(destination.Type(), source.Len(), source.Cap())
 	for i := 0; i < source.Len(); i++ {
-		convertedValue := ConvertBetweenPrimitiveTypes(source.Index(i), destResult.Index(i))
+		convertedValue := ConvertBetweenPrimitiveTypes(reflect.ValueOf(source.Index(i).Interface().(string)), destResult.Index(i))
 		if convertedValue.GetNotAValue() != nil {
 			return convertedValue
 		}

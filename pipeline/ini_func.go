@@ -51,7 +51,7 @@ func (config IniConfig) GetComplexType(context *structContext) infra.GoStructorV
 		logrus.Error("Can not parsed key", err)
 		return infra.NewGoStructorNoValue(context.Value, err)
 	}
-	return converters.ConvertBetweenComplexTypes(reflect.ValueOf(parsedKey.Strings(",")), context.Value)
+	return converters.ConvertBetweenComplexTypes(reflect.ValueOf(parsedKey.Strings(",")), context.getSafeValue())
 }
 
 /*GetBaseType - getting from ini string, int, float32 ...*/
@@ -86,7 +86,7 @@ func (config IniConfig) GetBaseType(context *structContext) infra.GoStructorValu
 		logrus.Error("Can not parsed key", err)
 		return infra.NewGoStructorNoValue(context.Value, err)
 	}
-	return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(parsedKey.Value()), context.Value)
+	return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(parsedKey.Value()), context.getSafeValue())
 }
 
 // validation - true if everting ok

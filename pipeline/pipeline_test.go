@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/goreflect/gostructor/infra"
+	"github.com/goreflect/gostructor/tags"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_getFunctionChain(t *testing.T) {
@@ -711,6 +713,14 @@ type TestStructPriority struct {
 	field1 string `cf_default:"tururu" cf_env:"MY_TEST" cf_priority:"stage1:cf_env,cf_default;stage2:cf_default,cf_env"`
 }
 
+type TestStructTomlIni struct {
+	field1 string   `cf_ini:"TEST#test" cf_toml:"postgres#password"`
+	fiedl2 int32    `cf_ini:"TEST#test2" cf_toml:"postgres#test1"`
+	field3 float32  `cf_ini:"TEST#test3" cf_toml:"postgres#test2"`
+	field4 []string `cf_ini:"TEST#test4" cf_toml:"postgres#test3"`
+	field5 int16    `cf_ini:"TEST#test5" cf_toml:"postgres#test4"`
+}
+
 func TestPipelineOrderConfiguring(t *testing.T) {
 	type args struct {
 		structure       interface{}
@@ -767,6 +777,82 @@ func TestPipelineOrderConfiguring(t *testing.T) {
 			if gotResult.(*TestStructPriority).field1 != tt.wantResult {
 				t.Errorf("Not equaled result, ordering not working")
 			}
+		})
+	}
+}
+
+func TestPipelineTomlConfiguring(t *testing.T) {
+	type args struct {
+		structure       interface{}
+		fileName        string
+		pipelineChaines []infra.FuncType
+		prefix          string
+		smartConfigure  bool
+	}
+
+	myTestStruct1 := TestStructTomlIni{}
+	myTestStruct2 := TestStructTomlIni{}
+	tests := []struct {
+		name       string
+		args       args
+		wantResult interface{}
+		wantErr    bool
+		wantToml   bool
+	}{
+		{
+			name: "success configuring from cf_toml",
+			args: args{
+				structure:       &myTestStruct1,
+				fileName:        "",
+				pipelineChaines: []infra.FuncType{infra.FunctionSetupDefault},
+				prefix:          "",
+				smartConfigure:  true,
+			},
+			wantResult: &TestStructTomlIni{
+				field1: "mypassword",
+				fiedl2: 1231,
+				field3: 43.52,
+				field4: []string{"myTest1", "myTest2"},
+				field5: 123,
+			},
+			wantErr:  false,
+			wantToml: true,
+		},
+		{
+			name: "success configuring from cf_ini",
+			args: args{
+				structure:       &myTestStruct2,
+				fileName:        "",
+				pipelineChaines: []infra.FuncType{infra.FunctionSetupDefault},
+				prefix:          "",
+				smartConfigure:  true,
+			},
+			wantResult: &TestStructTomlIni{
+				field1: "tururu",
+				fiedl2: 614,
+				field3: 86.27,
+				field4: []string{"str1", "str2", "str3"},
+				field5: 15,
+			},
+			wantErr:  false,
+			wantToml: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantToml {
+				os.Setenv(tags.TomlFile, "../test_configs/config.toml")
+			} else {
+				os.Setenv(tags.IniFile, "../test_configs/config.ini")
+			}
+			gotResult, err := Configure(tt.args.structure, tt.args.pipelineChaines, tt.args.prefix, tt.args.smartConfigure)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Configure() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			t.Log("Got result : ", gotResult)
+			assert.Equal(t, tt.wantResult, gotResult)
+			os.Clearenv()
 		})
 	}
 }

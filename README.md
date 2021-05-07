@@ -3,7 +3,7 @@
 
 ____
 
-## Version: v0.6
+## Version: v0.7
 
 Universal configuration library by tags
 
@@ -51,8 +51,8 @@ Universal configuration library by tags
 - [x] cf_env - setup value from env variable by name in this tag
 - [x] cf_yaml - setup value for this field from yaml 
 - [x] cf_json - setup value for this field from json
-- [ ] cf_ini - setup value for this field from ini (version > 0.7)
-- [ ] cf_toml - setup value for this field from toml (version > 0.7)
+- [x] cf_ini - setup value for this field from ini (version > 0.7)
+- [x] cf_toml - setup value for this field from toml (version > 0.7)
 - [ ] cf_server_file - setup value from configuration server like spring cloud config server or others (version>0.8)
 - [ ] cf_server_kv - setup value from configuration key\value store (version > 0.9)
 - [x] cf_vault - setup secret for this field from hashi corp vault

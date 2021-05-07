@@ -15,6 +15,7 @@ require (
 	github.com/mittwald/vaultgo v0.0.6
 	github.com/onsi/ginkgo v1.16.1 // indirect
 	github.com/onsi/gomega v1.11.0 // indirect
+	github.com/pelletier/go-toml v1.9.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/crypto v0.0.0-20210503195802-e9a32991a82e // indirect

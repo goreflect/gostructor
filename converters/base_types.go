@@ -112,10 +112,8 @@ func convertToFloatOrder(source reflect.Value, destination reflect.Value, order 
 			return infra.NewGoStructorNoValue(destination, errParsed)
 		}
 		return infra.NewGoStructorTrueValue(choseTypeByOrder(float64(parsed), order))
-	case reflect.Float32:
-		return infra.NewGoStructorTrueValue(source)
-	case reflect.Float64:
-		return infra.NewGoStructorNoValue(destination, errors.New("can not convert from float64 into float32"))
+	case reflect.Float32, reflect.Float64:
+		return infra.NewGoStructorTrueValue(choseTypeByOrder(source.Float(), order))
 	default:
 		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" because this type not supported"))
 	}

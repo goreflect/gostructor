@@ -1,0 +1,7 @@
+[postgres]
+user = "pelletier"
+password = "mypassword"
+test1 = 1231
+test2 = 43.52
+test3 = ["myTest1", "myTest2"]
+test4 = 123

@@ -36,10 +36,18 @@ type (
 	 */
 	structContext struct {
 		Value       reflect.Value
+		UnsafeValue reflect.Value
 		StructField reflect.StructField
 		Prefix      string
 	}
 )
+
+func (context structContext) getSafeValue() reflect.Value {
+	if context.Value.Kind() == reflect.Ptr && (context.UnsafeValue != reflect.Value{}) {
+		return context.UnsafeValue
+	}
+	return context.Value
+}
 
 const (
 	/*SmartConfiguring - flag which inform library need for start analyzing all tags in derived structure for setting function types of configuring structure
@@ -247,6 +255,7 @@ func (pipeline *Pipeline) recursiveParseFields(context *structContext) error {
 	default:
 		pipeline.extractOrderChainOrUseSettingUpChains(context)
 		for {
+			context.UnsafeValue = reflect.NewAt(valuePtr.Type(), unsafe.Pointer(valuePtr.UnsafeAddr())).Elem()
 			if err := pipeline.configuringValues(context); err != nil {
 				if errSettingChain := pipeline.setNextChain(); errSettingChain != nil {
 					return pipeline.getErrorAsOne()
@@ -350,11 +359,7 @@ func (pipeline *Pipeline) setupValue(context *structContext, value *infra.GoStru
 			valueIndirect.Set(value.Value)
 			return nil
 		}
-		// change data by address
-		logrus.Info(context.Value.Type())
-		logrus.Info(valueIndirect.Type())
-		unsafeValue := reflect.NewAt(valueIndirect.Type(), unsafe.Pointer(valueIndirect.UnsafeAddr())).Elem()
-		unsafeValue.Set(value.Value)
+		context.getSafeValue().Set(value.Value)
 		return nil
 
 	}

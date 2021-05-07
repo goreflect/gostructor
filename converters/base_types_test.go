@@ -63,14 +63,6 @@ func Test_convertToFloat32Failed(t *testing.T) {
 		want infra.GoStructorValue
 	}{
 		{
-			name: "converted from float64 into float32 failed",
-			args: args{
-				source:      reflect.ValueOf(float64(12.3)),
-				destination: reflect.ValueOf(float32(0.0)),
-			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(float64(12.3)), errors.New("can not convert from float64 into float32")),
-		},
-		{
 			name: "converted from string into float32 failed",
 			args: args{
 				source:      reflect.ValueOf("12.3asd"),

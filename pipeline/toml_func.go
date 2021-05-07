@@ -1,24 +1,103 @@
 package pipeline
 
 import (
-	"errors"
+	"os"
+	"reflect"
+	"strings"
 
+	"github.com/goreflect/gostructor/converters"
 	"github.com/goreflect/gostructor/infra"
+	"github.com/goreflect/gostructor/tags"
+	"github.com/goreflect/gostructor/tools"
+	toml "github.com/pelletier/go-toml"
 	"github.com/sirupsen/logrus"
 )
 
 /*TomlConfig - source toml for configuring*/
 type TomlConfig struct {
+	fileName   string
+	parsedData *toml.Tree
 }
 
-/*GetComplexType - getting from yaml slices, maps, arrays...*/
-func (yaml TomlConfig) GetComplexType(context *structContext) infra.GoStructorValue {
-	logrus.Debug("yaml configurator source run")
-	return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("getcomplex type from yaml not implemented"))
+/*GetComplexType - getting from config slices, maps, arrays...*/
+func (config TomlConfig) GetComplexType(context *structContext) infra.GoStructorValue {
+	logrus.Debug("toml configurator source run")
+	parsed, notAValue := config.typeSafeLoadConfigFile(context)
+	if !parsed {
+		return *notAValue
+	}
+	nameField := context.StructField.Tag.Get(tags.TagToml)
+	var sectionName string = ""
+	var keyName string = ""
+	if config.validation(nameField) {
+		nameField = context.Prefix + context.StructField.Name
+	}
+
+	if strings.Contains(nameField, "#") {
+		splited := strings.Split(nameField, "#")
+		logrus.Debug("Level: Debug. Section and key for getting values from source: ", splited)
+		sectionName = splited[0] + "."
+		keyName = splited[1]
+	} else {
+		keyName = nameField
+	}
+	parsedSection := config.parsedData.Get(sectionName + keyName)
+	return converters.ConvertBetweenComplexTypes(reflect.ValueOf(parsedSection), context.getSafeValue())
 }
 
-/*GetBaseType - getting from yaml string, int, float32 ...*/
-func (yaml TomlConfig) GetBaseType(context *structContext) infra.GoStructorValue {
-	logrus.Debug("yaml configurator source run")
-	return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("get base type from yaml not implemented"))
+/*GetBaseType - getting from config string, int, float32 ...*/
+func (config TomlConfig) GetBaseType(context *structContext) infra.GoStructorValue {
+	logrus.Debug("Level: Debug. Toml configurator source start.")
+	parsed, notAValue := config.typeSafeLoadConfigFile(context)
+	if !parsed {
+		return *notAValue
+	}
+	nameField := context.StructField.Tag.Get(tags.TagToml)
+	var sectionName string = ""
+	var keyName string = ""
+	if config.validation(nameField) {
+		nameField = context.Prefix + context.StructField.Name
+	}
+
+	if strings.Contains(nameField, "#") {
+		splited := strings.Split(nameField, "#")
+		logrus.Debug("Level: Debug. Section and key for getting values from source: ", splited)
+		sectionName = splited[0] + "."
+		keyName = splited[1]
+	} else {
+		keyName = nameField
+	}
+	parsedSection := config.parsedData.Get(sectionName + keyName)
+	return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(parsedSection), context.getSafeValue())
+}
+
+// validation - true if everting ok
+func (config TomlConfig) validation(value string) bool {
+	return value == ""
+}
+
+func (config *TomlConfig) configuredFileFromEnv() {
+	config.fileName = os.Getenv(tags.TomlFile)
+}
+
+// return true - if loaded config or successfully load config by filename
+func (config *TomlConfig) typeSafeLoadConfigFile(context *structContext) (bool, *infra.GoStructorValue) {
+	if config.fileName == "" {
+		config.configuredFileFromEnv()
+	}
+	if config.parsedData == nil {
+		fileBuffer, err := tools.ReadFromFile(config.fileName)
+		if err != nil {
+			notValue := infra.NewGoStructorNoValue(context.Value, err)
+			return false, &notValue
+		}
+		tomlData, err1 := toml.Load(fileBuffer.String())
+		if err1 != nil {
+			var notValue = infra.NewGoStructorNoValue(context.getSafeValue(), err1)
+			return false, &notValue
+		}
+		config.parsedData = tomlData
+		return true, nil
+	}
+	return true, nil
 }
