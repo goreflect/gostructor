@@ -28,7 +28,7 @@ func (config IniConfig) GetComplexType(context *structContext) infra.GoStructorV
 	}
 	nameField := context.StructField.Tag.Get(tags.TagIni)
 	var sectionName string = ""
-	var keyName string = ""
+	var key string = ""
 	if config.validation(nameField) {
 		nameField = context.Prefix + context.StructField.Name
 	}
@@ -37,16 +37,16 @@ func (config IniConfig) GetComplexType(context *structContext) infra.GoStructorV
 		splited := strings.Split(nameField, "#")
 		logrus.Debug("Level: Debug. Section and key for getting values from source: ", splited)
 		sectionName = splited[0]
-		keyName = splited[1]
+		key = splited[1]
 	} else {
-		keyName = nameField
+		key = nameField
 	}
 	parsedSection, err := config.iniFile.GetSection(sectionName)
 	if err != nil {
 		logrus.Error("Can not parsed section", err)
 		return infra.NewGoStructorNoValue(context.Value, err)
 	}
-	parsedKey, err := parsedSection.GetKey(keyName)
+	parsedKey, err := parsedSection.GetKey(key)
 	if err != nil {
 		logrus.Error("Can not parsed key", err)
 		return infra.NewGoStructorNoValue(context.Value, err)
@@ -63,7 +63,7 @@ func (config IniConfig) GetBaseType(context *structContext) infra.GoStructorValu
 	}
 	nameField := context.StructField.Tag.Get(tags.TagIni)
 	var sectionName string = ""
-	var keyName string = ""
+	var key string = ""
 	if config.validation(nameField) {
 		nameField = context.Prefix + context.StructField.Name
 	}
@@ -72,16 +72,16 @@ func (config IniConfig) GetBaseType(context *structContext) infra.GoStructorValu
 		splited := strings.Split(nameField, "#")
 		logrus.Debug("Level: Debug. Section and key for getting values from source: ", splited)
 		sectionName = splited[0]
-		keyName = splited[1]
+		key = splited[1]
 	} else {
-		keyName = nameField
+		key = nameField
 	}
 	parsedSection, err := config.iniFile.GetSection(sectionName)
 	if err != nil {
 		logrus.Error("Can not parsed section", err)
 		return infra.NewGoStructorNoValue(context.Value, err)
 	}
-	parsedKey, err := parsedSection.GetKey(keyName)
+	parsedKey, err := parsedSection.GetKey(key)
 	if err != nil {
 		logrus.Error("Can not parsed key", err)
 		return infra.NewGoStructorNoValue(context.Value, err)
