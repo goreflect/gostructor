@@ -791,7 +791,6 @@ func TestPipelineTomlConfiguring(t *testing.T) {
 	}
 
 	myTestStruct1 := TestStructTomlIni{}
-	myTestStruct2 := TestStructTomlIni{}
 	tests := []struct {
 		name       string
 		args       args
@@ -818,6 +817,43 @@ func TestPipelineTomlConfiguring(t *testing.T) {
 			wantErr:  false,
 			wantToml: true,
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantToml {
+				os.Setenv(tags.TomlFile, "../test_configs/config.toml")
+			} else {
+				os.Setenv(tags.IniFile, "../test_configs/config.ini")
+			}
+			gotResult, err := Configure(tt.args.structure, tt.args.pipelineChaines, tt.args.prefix, tt.args.smartConfigure)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Configure() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			t.Log("Got result : ", gotResult)
+			assert.Equal(t, tt.wantResult, gotResult)
+			os.Clearenv()
+		})
+	}
+}
+
+func TestPipelineIniConfiguring(t *testing.T) {
+	type args struct {
+		structure       interface{}
+		fileName        string
+		pipelineChaines []infra.FuncType
+		prefix          string
+		smartConfigure  bool
+	}
+
+	myTestStruct2 := TestStructTomlIni{}
+	tests := []struct {
+		name       string
+		args       args
+		wantResult interface{}
+		wantErr    bool
+		wantToml   bool
+	}{
 		{
 			name: "success configuring from cf_ini",
 			args: args{
