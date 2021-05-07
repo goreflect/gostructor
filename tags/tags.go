@@ -20,6 +20,8 @@ const (
 	HoconFile = "GOSTRUCTOR_HOCON"
 	YamlFile  = "GOSTRUCTOR_YAML"
 	JSONFile  = "GOSTRUCTOR_JSON"
+	IniFile   = "GOSTRUCTOR_INI"
+	TomlFile  = "GOSTRUCTOR_TOML"
 
 	Priority = "GOSTRUCTOR_PRIORITY"
 )

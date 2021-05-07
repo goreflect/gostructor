@@ -3,6 +3,7 @@ module github.com/goreflect/gostructor
 go 1.15
 
 require (
+	github.com/go-ini/ini v1.62.0 // indirect
 	github.com/go-restit/lzjson v0.0.0-20161206095556-efe3c53acc68
 	github.com/goccy/go-yaml v1.8.9
 	github.com/google/go-cmp v0.5.5 // indirect
