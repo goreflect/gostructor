@@ -796,7 +796,6 @@ func TestPipelineTomlConfiguring(t *testing.T) {
 		args       args
 		wantResult interface{}
 		wantErr    bool
-		wantToml   bool
 	}{
 		{
 			name: "success configuring from cf_toml",
@@ -814,17 +813,12 @@ func TestPipelineTomlConfiguring(t *testing.T) {
 				field4: []string{"myTest1", "myTest2"},
 				field5: 123,
 			},
-			wantErr:  false,
-			wantToml: true,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantToml {
-				os.Setenv(tags.TomlFile, "../test_configs/config.toml")
-			} else {
-				os.Setenv(tags.IniFile, "../test_configs/config.ini")
-			}
+			os.Setenv(tags.TomlFile, "../test_configs/config.toml")
 			gotResult, err := Configure(tt.args.structure, tt.args.pipelineChaines, tt.args.prefix, tt.args.smartConfigure)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Configure() error = %v, wantErr %v", err, tt.wantErr)
@@ -852,7 +846,6 @@ func TestPipelineIniConfiguring(t *testing.T) {
 		args       args
 		wantResult interface{}
 		wantErr    bool
-		wantToml   bool
 	}{
 		{
 			name: "success configuring from cf_ini",
@@ -870,17 +863,13 @@ func TestPipelineIniConfiguring(t *testing.T) {
 				field4: []string{"str1", "str2", "str3"},
 				field5: 15,
 			},
-			wantErr:  false,
-			wantToml: false,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantToml {
-				os.Setenv(tags.TomlFile, "../test_configs/config.toml")
-			} else {
-				os.Setenv(tags.IniFile, "../test_configs/config.ini")
-			}
+
+			os.Setenv(tags.IniFile, "../test_configs/config.ini")
 			gotResult, err := Configure(tt.args.structure, tt.args.pipelineChaines, tt.args.prefix, tt.args.smartConfigure)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Configure() error = %v, wantErr %v", err, tt.wantErr)
