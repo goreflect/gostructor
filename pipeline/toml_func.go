@@ -28,7 +28,7 @@ func (config TomlConfig) GetComplexType(context *structContext) infra.GoStructor
 	}
 	nameField := context.StructField.Tag.Get(tags.TagToml)
 	var sectionName string = ""
-	var key string = ""
+	var field string = ""
 	if config.validation(nameField) {
 		nameField = context.Prefix + context.StructField.Name
 	}
@@ -37,11 +37,11 @@ func (config TomlConfig) GetComplexType(context *structContext) infra.GoStructor
 		splited := strings.Split(nameField, "#")
 		logrus.Debug("Level: Debug. Section and key for getting values from source: ", splited)
 		sectionName = splited[0] + "."
-		key = splited[1]
+		field = splited[1]
 	} else {
-		key = nameField
+		field = nameField
 	}
-	parsedSection := config.parsedData.Get(sectionName + key)
+	parsedSection := config.parsedData.Get(sectionName + field)
 	return converters.ConvertBetweenComplexTypes(reflect.ValueOf(parsedSection), context.getSafeValue())
 }
 
@@ -54,7 +54,7 @@ func (config TomlConfig) GetBaseType(context *structContext) infra.GoStructorVal
 	}
 	nameField := context.StructField.Tag.Get(tags.TagToml)
 	var sectionName string = ""
-	var key string = ""
+	var field string = ""
 	if config.validation(nameField) {
 		nameField = context.Prefix + context.StructField.Name
 	}
@@ -63,11 +63,11 @@ func (config TomlConfig) GetBaseType(context *structContext) infra.GoStructorVal
 		splited := strings.Split(nameField, "#")
 		logrus.Debug("Level: Debug. Section and key for getting values from source: ", splited)
 		sectionName = splited[0] + "."
-		key = splited[1]
+		field = splited[1]
 	} else {
-		key = nameField
+		field = nameField
 	}
-	parsedSection := config.parsedData.Get(sectionName + key)
+	parsedSection := config.parsedData.Get(sectionName + field)
 	return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(parsedSection), context.getSafeValue())
 }
 
