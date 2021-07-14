@@ -4,7 +4,7 @@
 ____
 
 
-<img src="https://goreflect.github.io/gostructor/LogotypeGostructor.png"/>
+<img src="https://github.com/goreflect/gostructor/raw/master/LogotypeGostructor.png"/>
 
 ## Version: v0.7
 
