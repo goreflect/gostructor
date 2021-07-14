@@ -3,6 +3,9 @@
 
 ____
 
+
+<img src="https://goreflect.github.io/gostructor/LogotypeGostructor.png"/>
+
 ## Version: v0.7
 
 Universal configuration library by tags
