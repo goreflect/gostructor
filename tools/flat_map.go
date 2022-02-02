@@ -35,7 +35,7 @@ func mergeMap(source map[string]interface{}, destination map[string]interface{})
 		result[key] = value
 	}
 	for key, value := range destination {
-		if reflect.ValueOf(key).Kind() != firstKeyType {
+		if reflect.ValueOf(key).Kind() != firstKeyType && len(result) > 0 {
 			return result // TODO: make error
 		}
 		result[key] = value
