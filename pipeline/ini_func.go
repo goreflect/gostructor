@@ -27,8 +27,8 @@ func (config IniConfig) GetComplexType(context *structContext) infra.GoStructorV
 		return *notAValue
 	}
 	nameField := context.StructField.Tag.Get(tags.TagIni)
-	var sectionName string = ""
-	var field string = ""
+	var sectionName string
+	var field string
 	if config.validation(nameField) {
 		nameField = context.Prefix + context.StructField.Name
 	}
@@ -62,8 +62,8 @@ func (config IniConfig) GetBaseType(context *structContext) infra.GoStructorValu
 		return *notAValue
 	}
 	nameField := context.StructField.Tag.Get(tags.TagIni)
-	var sectionName string = ""
-	var field string = ""
+	var sectionName string
+	var field string
 	if config.validation(nameField) {
 		nameField = context.Prefix + context.StructField.Name
 	}

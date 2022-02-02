@@ -27,8 +27,8 @@ func (config TomlConfig) GetComplexType(context *structContext) infra.GoStructor
 		return *notAValue
 	}
 	nameField := context.StructField.Tag.Get(tags.TagToml)
-	var sectionName string = ""
-	var field string = ""
+	var sectionName string
+	var field string
 	if config.validation(nameField) {
 		nameField = context.Prefix + context.StructField.Name
 	}
@@ -53,8 +53,8 @@ func (config TomlConfig) GetBaseType(context *structContext) infra.GoStructorVal
 		return *notAValue
 	}
 	nameField := context.StructField.Tag.Get(tags.TagToml)
-	var sectionName string = ""
-	var field string = ""
+	var sectionName string
+	var field string
 	if config.validation(nameField) {
 		nameField = context.Prefix + context.StructField.Name
 	}

@@ -818,6 +818,7 @@ func TestPipelineTomlConfiguring(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			os.Clearenv()
 			os.Setenv(tags.TomlFile, "../test_configs/config.toml")
 			gotResult, err := Configure(tt.args.structure, tt.args.pipelineChaines, tt.args.prefix, tt.args.smartConfigure)
 			if (err != nil) != tt.wantErr {
@@ -826,7 +827,6 @@ func TestPipelineTomlConfiguring(t *testing.T) {
 			}
 			t.Log("Got result : ", gotResult)
 			assert.Equal(t, tt.wantResult, gotResult)
-			os.Clearenv()
 		})
 	}
 }
@@ -868,7 +868,7 @@ func TestPipelineIniConfiguring(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
+			os.Clearenv()
 			os.Setenv(tags.IniFile, "../test_configs/config.ini")
 			gotResult, err := Configure(tt.args.structure, tt.args.pipelineChaines, tt.args.prefix, tt.args.smartConfigure)
 			if (err != nil) != tt.wantErr {
@@ -877,7 +877,6 @@ func TestPipelineIniConfiguring(t *testing.T) {
 			}
 			t.Log("Got result : ", gotResult)
 			assert.Equal(t, tt.wantResult, gotResult)
-			os.Clearenv()
 		})
 	}
 }
