@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         go-version: [1.14.x, 1.15.x, 1.16.x, 1.17.x]
-        platform: [ubuntu-latest]
+        platform: [ubuntu-18.04, ubuntu-20.04]
     runs-on: ${{ matrix.platform }}
     steps:
     - name: Install Go
@@ -49,6 +49,7 @@ jobs:
         run: |
           git config --local user.name "kubitre bot"
           git config --local user.email "kubitre@gmail.com"
+          ls -la
           ./increment_version.bash
           git diff-index --quiet HEAD || git commit -m "upgrade patch" -a
           git tag $(cat .version)
