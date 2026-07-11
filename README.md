@@ -2,17 +2,15 @@
 
 [![Actions Status](https://github.com/goreflect/gostructor/workflows/CI_dev/badge.svg)](https://github.com/goreflect/gostructor/actions?query=workflow%3ACI_dev)
 [![Go Report Card](https://goreportcard.com/badge/github.com/goreflect/gostructor)](https://goreportcard.com/report/github.com/goreflect/gostructor)
-[![codecov](https://codecov.io/gh/goreflect/gostructor/branch/master/graph/badge.svg)](https://codecov.io/gh/goreflect/gostructor)
 [![Go Reference](https://pkg.go.dev/badge/github.com/goreflect/gostructor.svg)](https://pkg.go.dev/github.com/goreflect/gostructor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <img src="logo.svg" alt="gostructor" width="640"/>
 
 **gostructor** fills the fields of a Go struct from any mix of configuration
-sources — environment variables, HOCON, JSON, YAML, INI, TOML, HashiCorp
-Vault, or plain struct-tag defaults — driven entirely by struct tags. Point
-one or more sources at a field and let gostructor resolve, convert, and set
-the value via reflection.
+sources — environment variables, files, HashiCorp Vault, or plain
+struct-tag defaults — driven entirely by struct tags, in the priority order
+you choose per field.
 
 ```go
 type Config struct {
@@ -21,11 +19,42 @@ type Config struct {
     Debug bool   `cf_env:"APP_DEBUG" cf_default:"false"`
 }
 
-cfg := &Config{}
-if _, err := gostructor.ConfigureSmart(cfg); err != nil {
-    log.Fatal(err)
-}
+cfg, err := gostructor.Configure(&Config{})
 ```
+
+That one field having both `cf_env` and `cf_default` — tried in that order,
+first one that resolves wins — is what gostructor actually gives you beyond
+a plain unmarshaller: **one field, several possible sources, resolved with a
+priority you control**, rather than merging every source into one map and
+unmarshalling it once.
+
+## Why v1.0 looks different from earlier versions
+
+This release is a deliberate break from the pre-1.0 API, aligned with how
+Go config libraries are actually built today:
+
+- **A generics-based API.** `Configure[T](cfg *T, opts ...Option) (*T, error)`
+  replaces `ConfigureSmart`/`ConfigureSetup`/`ConfigureEasy` and the
+  `(interface{}, error)` + type-assert dance every caller used to write.
+- **The core module has zero third-party dependencies.** Environment
+  variables, `cf_default`, JSON, and INI are handled with the standard
+  library and a small hand-written parser. YAML, TOML, HOCON, and Vault
+  support live in **separate modules** you opt into individually — `go get`
+  only pulls in what you actually use.
+- **Hand-written INI and HOCON-subset and TOML-subset parsers**, replacing
+  dependencies on a years-stale `go-ini` fork and an unstable, single-author
+  HOCON library. YAML deliberately stays on the mature
+  [`goccy/go-yaml`](https://github.com/goccy/go-yaml) rather than
+  reimplementing that spec by hand — see [Known limitations](#known-limitations)
+  for exactly why.
+- **`log/slog`, not `logrus`.** Pass your own `*slog.Logger` via
+  `WithLogger`; nothing is written anywhere unless you ask for it.
+- **A real extension point.** `Source` is a two-method interface any package
+  can implement (see how `gostructor/yaml`, `gostructor/vault`, etc. do it),
+  registered via `WithSources` — not a stub that silently did nothing.
+
+If you're upgrading from a pre-1.0 version, see
+[Migrating from v0.x](#migrating-from-v0x).
 
 ## Table of contents
 
@@ -33,15 +62,19 @@ if _, err := gostructor.ConfigureSmart(cfg); err != nil {
 - [Quick start](#quick-start)
 - [Supported sources](#supported-sources)
 - [Supported field types](#supported-field-types)
-- [Configuration modes](#configuration-modes)
+- [The `Configure` API](#the-configure-api)
 - [Sources in detail](#sources-in-detail)
   - [Defaults](#defaults-cf_default)
   - [Environment variables](#environment-variables-cf_env)
-  - [HOCON / JSON / YAML / INI / TOML](#hocon--json--yaml--ini--toml)
-  - [HashiCorp Vault](#hashicorp-vault-cf_vault)
+  - [JSON and INI (core)](#json-and-ini-core)
+  - [YAML, TOML, HOCON (optional modules)](#yaml-toml-hocon-optional-modules)
+  - [HashiCorp Vault (optional module)](#hashicorp-vault-optional-module)
   - [Combining multiple sources with priority](#combining-multiple-sources-with-priority)
+- [Hooks: validation and transformation](#hooks-validation-and-transformation)
 - [Logging](#logging)
+- [Writing your own Source](#writing-your-own-source)
 - [Known limitations](#known-limitations)
+- [Migrating from v0.x](#migrating-from-v0x)
 - [Roadmap](#roadmap)
 - [Development](#development)
 - [Contributing](#contributing)
@@ -53,7 +86,18 @@ if _, err := gostructor.ConfigureSmart(cfg); err != nil {
 go get github.com/goreflect/gostructor
 ```
 
-Requires Go 1.16+.
+That alone gets you `cf_env`, `cf_default`, `cf_json`, and `cf_ini` with no
+dependencies beyond the Go standard library. Add whichever of these you
+need:
+
+```sh
+go get github.com/goreflect/gostructor/yaml    # cf_yaml
+go get github.com/goreflect/gostructor/toml    # cf_toml
+go get github.com/goreflect/gostructor/hocon   # cf_hocon
+go get github.com/goreflect/gostructor/vault   # cf_vault
+```
+
+Requires Go 1.24+.
 
 ## Quick start
 
@@ -73,43 +117,38 @@ type Config struct {
 }
 
 func main() {
-    cfg := &Config{}
-    if _, err := gostructor.ConfigureSmart(cfg); err != nil {
+    cfg, err := gostructor.Configure(&Config{})
+    if err != nil {
         log.Fatal(err)
     }
     fmt.Printf("%+v\n", cfg)
 }
 ```
 
-`ConfigureSmart` inspects the tags present on the struct and automatically
-builds the pipeline of sources needed to resolve it — you don't have to list
-them by hand. The struct is filled in place; the returned `interface{}` is
-the same pointer you passed in, so the return value only needs checking for
-`nil`/type-asserting if you prefer not to keep your own reference:
-
-```go
-result, err := gostructor.ConfigureSmart(cfg)
-cfg = result.(*Config) // equivalent to the cfg you already have
-```
+`Configure` reads the struct tags present on `Config`, tries each field's
+sources in order (`cf_env` before `cf_default` here), and returns the same
+pointer you passed in — so `cfg` is both the argument and the result. A
+field with no gostructor tags at all is left untouched; a field that *does*
+carry a tag but that no configured source can resolve is a hard error, so
+misconfiguration fails loudly instead of shipping a zero value.
 
 ## Supported sources
 
-| Tag | Source | Requires |
-|---|---|---|
-| `cf_default` | Inline default value on the tag itself | — |
-| `cf_env` | Environment variable | — |
-| `cf_hocon` | HOCON file | `GOSTRUCTOR_HOCON=path/to/file.hocon` |
-| `cf_json` | JSON file | `GOSTRUCTOR_JSON=path/to/file.json` |
-| `cf_yaml` | YAML file | `GOSTRUCTOR_YAML=path/to/file.yml` |
-| `cf_ini` | INI file | `GOSTRUCTOR_INI=path/to/file.ini` |
-| `cf_toml` | TOML file | `GOSTRUCTOR_TOML=path/to/file.toml` |
-| `cf_vault` | HashiCorp Vault secret | `VAULT_ADDRESS`, `VAULT_TOKEN` |
-| `cf_priority` | Per-field source ordering when a field carries several of the tags above | — |
+| Tag | Source | Module | Requires |
+|---|---|---|---|
+| `cf_default` | Inline default value on the tag itself | core | — |
+| `cf_env` | Environment variable | core | — |
+| `cf_json` | JSON file | core | `GOSTRUCTOR_JSON=path/to/file.json` |
+| `cf_ini` | INI file | core | `GOSTRUCTOR_INI=path/to/file.ini` |
+| `cf_yaml` | YAML file | `gostructor/yaml` | `GOSTRUCTOR_YAML=path/to/file.yml` |
+| `cf_toml` | TOML file | `gostructor/toml` | `GOSTRUCTOR_TOML=path/to/file.toml` |
+| `cf_hocon` | HOCON file | `gostructor/hocon` | `GOSTRUCTOR_HOCON=path/to/file.hocon` |
+| `cf_vault` | HashiCorp Vault secret | `gostructor/vault` | `VAULT_ADDR`, `VAULT_TOKEN` |
+| `cf_priority` | Per-field source ordering when a field carries several of the tags above | core | — |
 
-`cf_server_file` and `cf_server_kv` are reserved for a future remote
-config-server / key-value-store backend (Spring Cloud Config Server style).
-The tags parse today but resolving them currently returns a "not implemented
-yet" error — see [Roadmap](#roadmap).
+Non-core sources must be added explicitly via `WithSources` — the core
+module has no way to know they exist (that's the whole point of the
+zero-dependency core).
 
 ## Supported field types
 
@@ -119,39 +158,42 @@ yet" error — see [Roadmap](#roadmap).
 - `string`
 - `bool`
 - slices of any of the above, e.g. `[]int32`, `[]string`, `[]bool`
-- `map[string|int]string|int|float32|float64|bool`, when the source itself is
-  structured data (HOCON, JSON, YAML, INI, TOML). `cf_env` and `cf_default`
-  encode values as a flat comma-separated string and so can only populate
+- `map[string|int]string|int|float32|float64|bool`, when the source is
+  structured data (JSON, YAML, TOML, HOCON) and the tag addresses a whole
+  nested object rather than one leaf value. `cf_env`, `cf_default`, `cf_ini`,
+  and `cf_vault` encode values as a flat string and so can only populate
   slices, not maps.
 
-## Configuration modes
-
-gostructor exposes three entry points, all built on the same pipeline
-internals:
-
-- **`ConfigureSmart(structure)`** — reads every tag on the struct and derives
-  the pipeline automatically. This is the one to reach for by default.
-- **`ConfigureSetup(structure, prefix, []infra.FuncType)`** — you list the
-  sources explicitly, in the order they should be tried:
-
-  ```go
-  myStruct, err := gostructor.ConfigureSetup(&Config{}, "", []infra.FuncType{
-      infra.FunctionSetupEnvironment,
-      infra.FunctionSetupHocon,
-      infra.FunctionSetupDefault,
-  })
-  ```
-- **`ConfigureEasy(structure)`** — a fixed convenience pipeline equivalent to
-  `ConfigureSetup` with `env → hocon → default`, for the common case where
-  that's all you need.
-
-All three return `(interface{}, error)`; on success the `interface{}` is the
-same struct pointer you passed in, type-asserted back to your struct type if
-you want it:
+## The `Configure` API
 
 ```go
-cfg := myStruct.(*Config)
+func Configure[T any](target *T, opts ...Option) (*T, error)
 ```
+
+With no options, `Configure` uses the core module's built-in sources — Env,
+JSON, then Default, in that order — auto-selected per field by which tags
+are actually present. Bring in other sources with `WithSources`, which
+replaces the default list with an explicit, ordered one:
+
+```go
+import (
+    "github.com/goreflect/gostructor"
+    "github.com/goreflect/gostructor/yaml"
+)
+
+cfg, err := gostructor.Configure(&Config{}, gostructor.WithSources(
+    gostructor.Env(),
+    yaml.New(),
+    gostructor.Default(),
+))
+```
+
+Sources are tried in the order given; the first one that reports a value
+for a field wins (see [priority](#combining-multiple-sources-with-priority)
+for per-field overrides). `Env()`, `Default()`, `JSON()`, and `INI()` are
+built into the core module; each also has a `*File(path string)` variant
+(`JSONFile`, `INIFile`, `yaml.File`, ...) to read from an explicit path
+instead of the source's environment variable.
 
 ## Sources in detail
 
@@ -159,8 +201,8 @@ cfg := myStruct.(*Config)
 
 ```go
 type Config struct {
-    Retries int      `cf_default:"3"`
-    Flags   []bool   `cf_default:"true,false,true"`
+    Retries int    `cf_default:"3"`
+    Flags   []bool `cf_default:"true,false,true"`
 }
 ```
 
@@ -176,22 +218,58 @@ type Config struct {
 }
 ```
 
-### HOCON / JSON / YAML / INI / TOML
-
-Point gostructor at a file via the matching `GOSTRUCTOR_*` environment
-variable, then tag fields with the source's key (INI/TOML additionally
-support `section#key`):
+### JSON and INI (core)
 
 ```go
 type Config struct {
-    Host string   `cf_yaml:"server.host"`
-    Tags []string `cf_yaml:"server.tags"`
+    Host string `cf_json:"server.host"`
+    Tags []int  `cf_json:"server.tags"`
 }
 ```
 
 ```go
-os.Setenv(tags.YamlFile, "config.yml")
-cfg, err := gostructor.ConfigureSmart(&Config{})
+os.Setenv(gostructor.JSONFileEnvVar, "config.json")
+cfg, err := gostructor.Configure(&Config{})
+```
+
+```json
+{"server": {"host": "0.0.0.0", "tags": [1, 2, 3]}}
+```
+
+A dotted tag value (`server.host`) descends into nested JSON objects without
+requiring a matching nested Go struct; `cf_json:"server"` on a
+`map[string]T` field would address the whole nested object instead.
+
+INI uses `section#key` instead of dotted paths, since INI's own structure is
+two levels (section, then key), matching how `cf_toml`/`cf_vault` address
+their sources too:
+
+```go
+type Config struct {
+    Password string `cf_ini:"database#password"`
+}
+```
+
+```ini
+[database]
+password = secret
+```
+
+### YAML, TOML, HOCON (optional modules)
+
+Each lives in its own module and mirrors JSON's addressing style (YAML) or
+INI's (TOML/HOCON), and is registered explicitly via `WithSources`:
+
+```go
+import "github.com/goreflect/gostructor/yaml"
+
+type Config struct {
+    Host string   `cf_yaml:"server.host"`
+    Tags []string `cf_yaml:"server.tags"`
+}
+
+os.Setenv(yaml.FileEnvVar, "config.yml")
+cfg, err := gostructor.Configure(&Config{}, gostructor.WithSources(yaml.New()))
 ```
 
 ```yaml
@@ -202,27 +280,37 @@ server:
     - eu-west
 ```
 
-Nested maps in YAML/JSON are flattened to dotted keys internally
-(`server.host`), which is why the tag above reads `server.host` rather than
-requiring a nested struct.
+`gostructor/toml` and `gostructor/hocon` ship **hand-written parsers for a
+practical subset** of each format, not the full spec — see
+[Known limitations](#known-limitations) for exactly what's out of scope
+before you commit a config file that needs it.
 
-### HashiCorp Vault (`cf_vault`)
+### HashiCorp Vault (optional module)
 
-Set `VAULT_ADDRESS` and `VAULT_TOKEN`, then tag fields as `path/to/secret#key`:
+Set `VAULT_ADDR` and `VAULT_TOKEN` (the same variables the `vault` CLI
+itself uses), then tag fields as `path/to/secret#key`:
 
 ```go
+import "github.com/goreflect/gostructor/vault"
+
 type Config struct {
     APIKey    string  `cf_vault:"my-service/stage/creds#api-key"`
     RateLimit int16   `cf_vault:"my-service/stage/limits#rate"`
     Allowlist []int32 `cf_vault:"my-service/stage/net#allowlist"` // comma-separated secret value
 }
+
+cfg, err := gostructor.Configure(&Config{}, gostructor.WithSources(vault.New()))
 ```
+
+Built on the official [`hashicorp/vault/api`](https://github.com/hashicorp/vault)
+client, not a third-party wrapper.
 
 ### Combining multiple sources with priority
 
 A field can carry several source tags at once; by default gostructor tries
-them in a fixed internal order. To control that order per field, add
-`cf_priority` and set `GOSTRUCTOR_PRIORITY` to the name of the stage you want:
+whatever's in your source list, in that order. To override the order for
+one specific field, add `cf_priority` and set `GOSTRUCTOR_PRIORITY` to the
+name of the stage you want:
 
 ```go
 type Config struct {
@@ -231,69 +319,126 @@ type Config struct {
 ```
 
 ```go
-os.Setenv("GOSTRUCTOR_PRIORITY", "prod") // tries cf_env first, falls back to cf_default
+os.Setenv(gostructor.PriorityEnvVar, "prod") // this field tries cf_env first, falls back to cf_default
+```
+
+## Hooks: validation and transformation
+
+`WithHook` runs after a value is resolved but before it's set on the
+struct — return an error to reject it, or a different value to transform
+it:
+
+```go
+cfg, err := gostructor.Configure(&Config{}, gostructor.WithHook(
+    func(field gostructor.FieldContext, value any) (any, error) {
+        if field.Name == "Port" && value.(int) < 1024 {
+            return nil, fmt.Errorf("port %v is a privileged port", value)
+        }
+        return value, nil
+    },
+))
 ```
 
 ## Logging
 
-gostructor logs through [`logrus`](https://github.com/sirupsen/logrus) at
-`ErrorLevel` by default:
-
 ```go
-gostructor.ChangeLogLevel(logrus.DebugLevel)
-gostructor.ChangeLogFormatter(&logrus.JSONFormatter{})
+logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+cfg, err := gostructor.Configure(&Config{}, gostructor.WithLogger(logger))
 ```
 
-These calls affect the global `logrus` logger, so treat them the same as any
-other process-wide logging configuration — set them once, early, rather than
-per call site.
+With no `WithLogger`, `Configure` logs nothing.
+
+## Writing your own Source
+
+```go
+type Source interface {
+    Tag() string
+    Resolve(field FieldContext) (value any, found bool, err error)
+}
+```
+
+`found=false` means "nothing to contribute for this field" (for example,
+the field doesn't carry your tag), letting `Configure` fall through to the
+next source instead of treating it as an error. Look at
+`gostructor/yaml`'s `source.go` for a complete, short example — it's about
+seventy lines including file loading and error handling.
 
 ## Known limitations
 
-This library has been around a while and predates several ideas it would be
-built with today. In the interest of not surprising anyone:
+- **`gostructor/hocon` and `gostructor/toml` parse a practical subset, not
+  the full spec.** Both are hand-written and intentionally bounded in
+  scope:
+  - HOCON: no `${}` substitutions, no `include`, no duration/size unit
+    literals (`10m`, `5 MB`), no string concatenation across values.
+  - TOML: no datetimes, no inline tables (`{ a = 1 }`), no arrays of
+    tables (`[[table]]`), no multiline/triple-quoted strings.
 
-- **Middleware hooks are not wired up yet.** An `IMiddleware` interface
-  exists for validating/transforming values as they're read, but there's no
-  registry or dispatch behind it yet — it's a placeholder for now, not a
-  usable extension point.
-- **Remote config sources are not implemented.** `cf_server_file` and
-  `cf_server_kv` (config-server and key/value-store backends) parse but
-  return an explicit "not implemented yet" error when resolved.
-- **Error values are plain `errors.New`, not wrapped/typed.** You can't
-  `errors.Is`/`errors.As` against specific gostructor failure modes today —
-  match on the message if you need to branch on error type.
-- **A couple of upstream dependencies are pre-1.0** (`goreflect/go_hocon`,
-  `mittwald/vaultgo`), so HOCON and Vault support inherit whatever stability
-  guarantees those projects currently offer.
+  If your config file needs any of those, gostructor will return a parse
+  error rather than silently misinterpreting it — but you'll want a
+  different tool for that file. YAML deliberately did **not** get the same
+  hand-written treatment: full YAML (block/flow styles, anchors and
+  aliases, implicit typing) is large enough that reimplementing it
+  correctly is a multi-year undertaking even for dedicated parser
+  projects, so `gostructor/yaml` stays on `goccy/go-yaml`.
+- **Error values are plain `errors.New`/`fmt.Errorf`, not sentinel
+  errors.** You can `errors.Is`/`errors.As` through the `%w`-wrapped chain
+  down to the underlying cause, but there's no `ErrNotFound`-style sentinel
+  to match on yet.
+- **Struct fields must be exported.** Unlike some earlier versions of this
+  library, there's no `unsafe`-pointer trick to write into unexported
+  fields — this matches `encoding/json`'s own convention and keeps the
+  engine free of `unsafe`.
 
-None of the above affects the documented, tested paths — `cf_default`,
-`cf_env`, `cf_hocon`, `cf_json`, `cf_yaml`, `cf_ini`, `cf_toml`, and
-`cf_vault` are all exercised by the test suite for both base and complex
-(slice/map) field types.
+## Migrating from v0.x
+
+The tag names (`cf_env`, `cf_default`, `cf_json`, ...) are unchanged. What's
+different:
+
+- `ConfigureSmart(cfg)` / `myStruct.(*Config)` → `cfg, err := gostructor.Configure(&Config{})`,
+  no type assertion needed.
+- `ConfigureSetup(cfg, prefix, []infra.FuncType{...})` →
+  `gostructor.Configure(&Config{}, gostructor.WithSources(...))`.
+- YAML, TOML, HOCON, and Vault now require importing their own module (see
+  [Install](#install)) and passing their source explicitly via
+  `WithSources` — they're no longer bundled into the core import.
+- `cf_hocon`/`cf_yaml`/`cf_json` tag values are now always explicit dotted
+  paths from the document root (`server.host`); the old implicit
+  struct-name-based prefixing is gone.
+- `ChangeLogLevel`/`ChangeLogFormatter` (global `logrus` config) →
+  `gostructor.WithLogger(*slog.Logger)`, passed per call.
 
 ## Roadmap
 
-- [ ] File-store fetching for remote configuration
-- [ ] Key/value store backend support (`cf_server_kv`), with change callbacks
-- [ ] Config-server fetching in the style of Spring Cloud Config Server
-      (`cf_server_file`)
-- [ ] A real middleware dispatch/registry behind `IMiddleware`
-- [ ] Typed/wrapped errors (`errors.Is`/`errors.As` support)
+`cf_server_file` and `cf_server_kv` (a remote config-server and a
+key/value-store backend, Spring Cloud Config Server style) were on earlier
+versions' roadmap and remain unimplemented. They're intentionally left out
+of core v1.0 scope — the plan is to ship them the same way YAML/TOML/HOCON/
+Vault work today: as separate, explicitly-opted-into modules implementing
+`Source`, once there's a concrete design for the network/auth/retry
+surface a remote source needs. Not yet scheduled:
 
-Longer-term ideas, not yet scheduled:
-
-- Live-reloading a struct's values when its backing source changes (e.g.
-  watching a git-tracked config file, à la Spring Cloud Config)
-- A `protoc` plugin to generate structs with gostructor tags pre-applied
+- A key/value store backend module, with change callbacks
+- A config-server-fetching module
+- Sentinel/wrapped error types for `errors.Is`/`errors.As`
+- Live-reloading a struct's values when its backing source changes
 
 ## Development
 
+Each module (core, `yaml`, `toml`, `hocon`, `vault`) is verified
+independently:
+
 ```sh
-go build ./...
-go vet ./...
-go test ./... -cover
+go build ./... && go vet ./... && go test ./... -cover        # from the repo root (core)
+cd yaml  && go build ./... && go vet ./... && go test ./... -cover
+cd toml  && go build ./... && go vet ./... && go test ./... -cover
+cd hocon && go build ./... && go vet ./... && go test ./... -cover
+cd vault && go build ./... && go vet ./... && go test ./... -cover
 ```
+
+Each submodule's `go.mod` carries a local `replace` directive pointing at
+`../` so it builds against your working copy of core instead of a published
+release; that line is a no-op for anyone importing the module normally,
+since Go only applies `replace` directives from the main module of a build.
 
 ## Contributing
 

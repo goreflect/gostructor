@@ -1,13 +1,11 @@
 module github.com/goreflect/gostructor
 
-go 1.16
+go 1.24
+
+require github.com/stretchr/testify v1.7.0
 
 require (
-	github.com/go-ini/ini v1.66.3
-	github.com/goccy/go-yaml v1.9.5
-	github.com/goreflect/go_hocon v0.0.2
-	github.com/mittwald/vaultgo v0.0.11
-	github.com/pelletier/go-toml v1.9.4
-	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.0
+	github.com/davecgh/go-spew v1.1.0 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )

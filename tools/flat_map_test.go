@@ -3,7 +3,6 @@ package tools
 import (
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +17,6 @@ func TestFlatMap(t *testing.T) {
 		},
 	})
 
-	logrus.Info(result)
 	assert.Equal(t, "test", result["test2.test5.1"])
 }
 
