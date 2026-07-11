@@ -117,7 +117,10 @@ func TestDefaultConfig_GetComplexType(t *testing.T) {
 	}
 }
 
-func TestDefaultConfig_GetComplexTypeNotImlemented(t *testing.T) {
+// TestDefaultConfig_GetComplexTypeUnsupportedMapFormat documents a known limitation:
+// the cf_default tag format ("a,b,c") only describes lists, so a map-typed field
+// with a default tag cannot be parsed into key/value pairs and returns an error.
+func TestDefaultConfig_GetComplexTypeUnsupportedMapFormat(t *testing.T) {
 	strct := struct {
 		field map[string]string `cf_default:"12:12sda,51:5sda"`
 	}{}
@@ -130,10 +133,9 @@ func TestDefaultConfig_GetComplexTypeNotImlemented(t *testing.T) {
 		name   string
 		config DefaultConfig
 		args   args
-		want   infra.GoStructorValue
 	}{
 		{
-			name:   "get map from default tag not implemented",
+			name:   "get map from default tag is unsupported",
 			config: DefaultConfig{},
 			args: args{
 				context: &structContext{
@@ -141,14 +143,14 @@ func TestDefaultConfig_GetComplexTypeNotImlemented(t *testing.T) {
 					StructField: fieldType,
 				},
 			},
-			want: infra.NewGoStructorNoValue(fieldValue, errors.New("not implemented")),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := DefaultConfig{}
-			if got := config.GetComplexType(tt.args.context); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DefaultConfig.GetComplexType() = %v, want %v", got, tt.want)
+			got := config.GetComplexType(tt.args.context)
+			if got.GetNotAValue() == nil {
+				t.Errorf("DefaultConfig.GetComplexType() expected error for unsupported default-tag map format, got value %v", got.Value)
 			}
 		})
 	}

@@ -246,7 +246,7 @@ func TestConvertBetweenPrimitiveTypesToIntFromIntSuccess(t *testing.T) {
 	}
 }
 
-func TestConvertBetweenPrimitiveTypesToIntFromIntFailed(t *testing.T) {
+func TestConvertBetweenPrimitiveTypesToIntFromFloatTruncates(t *testing.T) {
 	type args struct {
 		source      reflect.Value
 		destination reflect.Value
@@ -254,24 +254,26 @@ func TestConvertBetweenPrimitiveTypesToIntFromIntFailed(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want infra.GoStructorValue
+		want int
 	}{
 		{
-			name: "failed convert from int to int",
+			name: "float source is truncated into int destination",
 			args: args{
 				source:      reflect.ValueOf(0000.1),
 				destination: reflect.ValueOf(int(0)),
 			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(int(0)), errors.New("can not be converted from this type: "+reflect.Float32.String()+" because this type not supported")),
+			want: 0,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := ConvertBetweenPrimitiveTypes(tt.args.source, tt.args.destination)
-			if got.GetNotAValue().Error != tt.want.GetNotAValue().Error {
-				t.Log("completed")
-			} else {
-				t.Error("error while convert between int types because source is more than 64 bit value")
+			if got.GetNotAValue() != nil {
+				t.Errorf("unexpected error while converting float64 to int: %v", got.GetNotAValue().Error)
+				return
+			}
+			if got.Value.Interface().(int) != tt.want {
+				t.Errorf("got %v, want %v", got.Value.Interface(), tt.want)
 			}
 		})
 	}

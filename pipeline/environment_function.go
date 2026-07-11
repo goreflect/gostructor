@@ -25,12 +25,11 @@ func (config EnvironmentConfig) GetComplexType(context *structContext) infra.GoS
 	valueIndirect := reflect.Indirect(context.Value)
 	valueTag := context.StructField.Tag.Get(tags.TagEnvironment)
 	if config.checkTagValue(valueTag) {
-		// TODO: increase message by information about what wrong in future issues
-		return infra.NewGoStructorNoValue(context.Value, errors.New("can not be empty. "))
+		return infra.NewGoStructorNoValue(context.Value, errors.New("cf_env tag value for field '"+context.StructField.Name+"' is empty"))
 	}
 	value := os.Getenv(valueTag)
 	if err := middlewares.ExecutorMiddlewaresByTagValue(value, tags.TagEnvironment); err != nil {
-		return infra.NewGoStructorNoValue(context.Value, errors.New("can not checks by middlewares. err: "+err.Error()))
+		return infra.NewGoStructorNoValue(context.Value, errors.New("middleware check failed: "+err.Error()))
 	}
 	array, err := tools.ConvertStringIntoArray(value, tools.ConfigureConverts{Separator: tools.COMMA})
 	if err != nil {
@@ -50,14 +49,13 @@ func (config EnvironmentConfig) GetBaseType(context *structContext) infra.GoStru
 	if !config.checkTagValue(valueTag) {
 		value := os.Getenv(valueTag)
 		if value == "" {
-			return infra.NewGoStructorNoValue(context.Value, errors.New("Readed value from environment was empty"))
+			return infra.NewGoStructorNoValue(context.Value, errors.New("environment variable '"+valueTag+"' was not set or was empty"))
 		}
 		return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(value), valueIndirect)
 	}
-	return infra.NewGoStructorNoValue(context.Value, errors.New("getBaseType can not get field by empty tag value of tag: "+tags.TagEnvironment))
+	return infra.NewGoStructorNoValue(context.Value, errors.New("cf_env tag value for field '"+context.StructField.Name+"' is empty"))
 }
 
-// TODO: change signature by error interface
 func (config EnvironmentConfig) checkTagValue(tagvalue string) bool {
 	// in the future in this case will be added a call middlewares functions
 	return tagvalue == ""

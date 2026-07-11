@@ -721,6 +721,84 @@ type TestStructTomlIni struct {
 	field5 int16    `cf_ini:"TEST#test5" cf_toml:"postgres#test4"`
 }
 
+type TestStructYaml struct {
+	Field1 int    `cf_yaml:"test"`
+	Field2 string `cf_yaml:"test5.test4"`
+	Field3 []int  `cf_yaml:"test5.test6"`
+}
+
+type TestStructJSON struct {
+	Field1 string `cf_json:"string"`
+	Field2 []int  `cf_json:"complextArray"`
+}
+
+// TestPipelineYamlConfiguring drives cf_yaml end-to-end through the real
+// pipeline (as opposed to calling YamlConfig.GetBaseType/GetComplexType
+// directly), which is the only way to exercise the field addressing used
+// by recursiveParseFields/configuringValues in production.
+func TestPipelineYamlConfiguring(t *testing.T) {
+	myTestStruct := TestStructYaml{}
+	tests := []struct {
+		name       string
+		wantResult interface{}
+		wantErr    bool
+	}{
+		{
+			name: "success configuring from cf_yaml",
+			wantResult: &TestStructYaml{
+				Field1: 1,
+				Field2: "str1",
+				Field3: []int{1231, 15123},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			os.Clearenv()
+			os.Setenv(tags.YamlFile, "../test_configs/config.yml")
+			gotResult, err := Configure(&myTestStruct, []infra.FuncType{infra.FunctionSetupDefault}, "", true)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Configure() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.wantResult, gotResult)
+		})
+	}
+}
+
+// TestPipelineJSONConfiguring is the cf_json analogue of
+// TestPipelineYamlConfiguring, exercising the same real pipeline path.
+func TestPipelineJSONConfiguring(t *testing.T) {
+	myTestStruct := TestStructJSON{}
+	tests := []struct {
+		name       string
+		wantResult interface{}
+		wantErr    bool
+	}{
+		{
+			name: "success configuring from cf_json",
+			wantResult: &TestStructJSON{
+				Field1: "test",
+				Field2: []int{1, 2, 3},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			os.Clearenv()
+			os.Setenv(tags.JSONFile, "../test_configs/config1.json")
+			gotResult, err := Configure(&myTestStruct, []infra.FuncType{infra.FunctionSetupDefault}, "", true)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Configure() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.wantResult, gotResult)
+		})
+	}
+}
+
 func TestPipelineOrderConfiguring(t *testing.T) {
 	type args struct {
 		structure       interface{}

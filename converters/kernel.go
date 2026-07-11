@@ -54,7 +54,9 @@ func ConvertBetweenComplexTypes(source reflect.Value, destination reflect.Value)
 	switch destination.Kind() {
 	case reflect.Slice, reflect.Array:
 		return convertSlice(source, destination)
+	case reflect.Map:
+		return convertMap(source, destination)
 	default:
-		return infra.NewGoStructorNoValue(destination, errors.New("not implemented"))
+		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted to this complex type "+destination.Kind().String()+" because it is not supported"))
 	}
 }

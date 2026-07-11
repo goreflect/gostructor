@@ -32,11 +32,11 @@ func (yaml YamlConfig) GetComplexType(context *structContext) infra.GoStructorVa
 	}
 	logrus.Debug("Level: Debug. Key for getting values from source: ", nameField)
 
-	parsedValue := yaml.parsedData[nameField]
-	if !yaml.validation(parsedValue.(string)) {
-		return converters.ConvertBetweenComplexTypes(reflect.ValueOf(parsedValue), context.Value)
+	parsedValue, found := yaml.parsedData[nameField]
+	if !found || parsedValue == nil {
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("value for key '"+nameField+"' was not found in yaml source"))
 	}
-	return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("getcomplex type from yaml not implemented"))
+	return converters.ConvertBetweenComplexTypes(reflect.ValueOf(parsedValue), context.getSafeValue())
 }
 
 /*GetBaseType - getting from yaml string, int, float32 ...*/
@@ -52,12 +52,12 @@ func (yaml YamlConfig) GetBaseType(context *structContext) infra.GoStructorValue
 	}
 	logrus.Debug("Level: Debug. Key for getting values from source: ", nameField)
 
-	parsedValue := yaml.parsedData[nameField]
+	parsedValue, found := yaml.parsedData[nameField]
 	logrus.Debug("Level: Debug. value: ", parsedValue)
-	if !yaml.validation(parsedValue.(string)) {
-		return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(parsedValue), context.Value)
+	if !found || parsedValue == nil {
+		return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("value for key '"+nameField+"' was not found in yaml source"))
 	}
-	return infra.NewGoStructorNoValue(context.Value.Interface(), errors.New("get base type from yaml not implemented"))
+	return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(parsedValue), context.getSafeValue())
 }
 
 // validation - true if everting ok

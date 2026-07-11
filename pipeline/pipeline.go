@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -221,7 +222,11 @@ func Configure(
 	defer func() {
 		if e := recover(); e != nil {
 			logrus.Error(e)
-			err = e.(error)
+			if asErr, ok := e.(error); ok {
+				err = asErr
+			} else {
+				err = fmt.Errorf("panic while configuring structure: %v", e)
+			}
 		}
 	}()
 
@@ -364,7 +369,10 @@ func (pipeline *Pipeline) setupValue(context *structContext, value *infra.GoStru
 
 	}
 
-	return errors.New("Loglevel: Debug Message:  value get not implementedable value: ")
+	if notAValue := value.GetNotAValue(); notAValue != nil && notAValue.Error != nil {
+		return fmt.Errorf("could not resolve value for field '%s': %w", context.StructField.Name, notAValue.Error)
+	}
+	return fmt.Errorf("could not resolve value for field '%s'", context.StructField.Name)
 }
 
 func (pipeline *Pipeline) checkValueTypeIsPointer(value reflect.Value) error {

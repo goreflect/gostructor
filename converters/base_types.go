@@ -24,6 +24,12 @@ func convertToInt(source reflect.Value, destination reflect.Value) infra.GoStruc
 			return infra.NewGoStructorTrueValue(source.Convert(destination.Type()))
 		}
 		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from "+source.Kind().String()+" into int"))
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		logrus.Debug("start convert value ", source.Uint(), " into int type")
+		return infra.NewGoStructorTrueValue(reflect.ValueOf(int(source.Uint())))
+	case reflect.Float32, reflect.Float64:
+		logrus.Debug("start convert value ", source.Float(), " into int type")
+		return infra.NewGoStructorTrueValue(reflect.ValueOf(int(source.Float())))
 	default:
 		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" because this type not supported"))
 	}
@@ -44,6 +50,12 @@ func convertToIntOrder(source reflect.Value, destination reflect.Value, order in
 			return infra.NewGoStructorTrueValue(source.Convert(destination.Type()))
 		}
 		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from "+source.Kind().String()+" into int64"))
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		logrus.Debug("start convert value ", source.Uint(), " into int64 type")
+		return infra.NewGoStructorTrueValue(chooseIntByOrder(int64(source.Uint()), order))
+	case reflect.Float32, reflect.Float64:
+		logrus.Debug("start convert value ", source.Float(), " into int64 type")
+		return infra.NewGoStructorTrueValue(chooseIntByOrder(int64(source.Float()), order))
 	default:
 		return infra.NewGoStructorNoValue(destination, errors.New("can not be converted from this type: "+source.Kind().String()+" because this type not supported"))
 	}
@@ -85,6 +97,10 @@ func convertToString(source reflect.Value, destination reflect.Value) infra.GoSt
 		return infra.NewGoStructorTrueValue(reflect.ValueOf(
 			strconv.FormatInt(source.Int(), 10),
 		))
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return infra.NewGoStructorTrueValue(reflect.ValueOf(
+			strconv.FormatUint(source.Uint(), 10),
+		))
 	case reflect.Float32:
 		return infra.NewGoStructorTrueValue(reflect.ValueOf(
 			strconv.FormatFloat(source.Float(), 'E', -1, 32),
@@ -106,6 +122,8 @@ func convertToFloatOrder(source reflect.Value, destination reflect.Value, order 
 	switch source.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return infra.NewGoStructorTrueValue(choseTypeByOrder(float64(source.Int()), order))
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return infra.NewGoStructorTrueValue(choseTypeByOrder(float64(source.Uint()), order))
 	case reflect.String:
 		parsed, errParsed := strconv.ParseFloat(source.String(), order)
 		if errParsed != nil {
@@ -129,6 +147,8 @@ func choseTypeByOrder(value float64, order int) reflect.Value {
 func convertToUintOrder(source reflect.Value, destination reflect.Value, order int) infra.GoStructorValue {
 	switch source.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return infra.NewGoStructorTrueValue(chooseTypeByOrder(uint64(source.Int()), order))
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		return infra.NewGoStructorTrueValue(chooseTypeByOrder(source.Uint(), order))
 	case reflect.String:
 		parsed, errParsed := strconv.ParseUint(source.String(), 10, order)
@@ -136,6 +156,8 @@ func convertToUintOrder(source reflect.Value, destination reflect.Value, order i
 			return infra.NewGoStructorNoValue(destination, errParsed)
 		}
 		return infra.NewGoStructorTrueValue(chooseTypeByOrder(parsed, order))
+	case reflect.Float32, reflect.Float64:
+		return infra.NewGoStructorTrueValue(chooseTypeByOrder(uint64(source.Float()), order))
 	default:
 		return infra.NewGoStructorNoValue(source, errors.New("not supported convertation"))
 	}

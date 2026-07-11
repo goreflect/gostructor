@@ -2,10 +2,8 @@ package pipeline
 
 import (
 	"reflect"
-	"strings"
 	"testing"
 
-	"github.com/go-restit/lzjson"
 	"github.com/goreflect/gostructor/infra"
 )
 
@@ -15,65 +13,32 @@ type ContextVl struct {
 }
 
 func TestJSONConfig_GetComplexType(t *testing.T) {
-	reader := strings.NewReader(`
-	{
-		"string": "test",
-		"complextArray": [1,2,3]
-	}
-	`)
 	valueSimple := ContextVl{}
 
 	fieldStruct1Type := reflect.ValueOf(valueSimple).Type().Field(0)
 	fieldStruct1Value := reflect.ValueOf(valueSimple).Field(0)
 
-	type fields struct {
-		FileName            string
-		configureFileParsed lzjson.Node
+	config := JSONConfig{
+		fileName: "../test_configs/config1.json",
 	}
-	type args struct {
-		context *structContext
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   infra.GoStructorValue
-	}{
-		{
-			name: "getting complex type error",
-			fields: fields{
-				FileName:            "test",
-				configureFileParsed: lzjson.Decode(reader),
-			},
-			args: args{
-				context: &structContext{
-					Value:       fieldStruct1Value,
-					StructField: fieldStruct1Type,
-					Prefix:      "",
-				},
-			},
-			want: infra.NewGoStructorNoValue(fieldStruct1Value.Interface(), nil),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			config := JSONConfig{
-				fileName:            tt.fields.FileName,
-				configureFileParsed: tt.fields.configureFileParsed,
-			}
-			got := config.GetComplexType(tt.args.context)
+	got := config.GetComplexType(&structContext{
+		Value:       fieldStruct1Value,
+		StructField: fieldStruct1Type,
+		Prefix:      "",
+	})
 
-			if !reflect.DeepEqual(got.GetNotAValue().ValueAddress, fieldStruct1Value.Interface()) {
-				t.Errorf("JSONConfig.GetComplexType() = %v, want %v", got, tt.want)
-			}
-		})
+	if got.GetNotAValue() != nil {
+		t.Errorf("JSONConfig.GetComplexType() unexpected error = %v", got.GetNotAValue().Error)
+	}
+	if !reflect.DeepEqual(got.Value.Interface(), []int{1, 2, 3}) {
+		t.Errorf("JSONConfig.GetComplexType() = %v, want %v", got.Value.Interface(), []int{1, 2, 3})
 	}
 }
 
 func TestJSONConfig_typeSafeLoadConfigFile(t *testing.T) {
 	type fields struct {
-		FileName            string
-		configureFileParsed lzjson.Node
+		FileName   string
+		parsedData map[string]interface{}
 	}
 	type args struct {
 		context *structContext
@@ -92,8 +57,8 @@ func TestJSONConfig_typeSafeLoadConfigFile(t *testing.T) {
 		{
 			name: "check error while loading parsing node from file",
 			fields: fields{
-				FileName:            "",
-				configureFileParsed: nil,
+				FileName:   "",
+				parsedData: nil,
 			},
 			args: args{
 				context: &structContext{
@@ -106,8 +71,8 @@ func TestJSONConfig_typeSafeLoadConfigFile(t *testing.T) {
 		{
 			name: "check can not loading config from file. File Not Exist",
 			fields: fields{
-				FileName:            "../test_configs/config_err1231.json",
-				configureFileParsed: nil,
+				FileName:   "../test_configs/config_err1231.json",
+				parsedData: nil,
 			},
 			args: args{
 				context: &structContext{
@@ -120,8 +85,8 @@ func TestJSONConfig_typeSafeLoadConfigFile(t *testing.T) {
 		{
 			name: "check success loading config",
 			fields: fields{
-				FileName:            "../test_configs/config_err.json",
-				configureFileParsed: nil,
+				FileName:   "../test_configs/config_err.json",
+				parsedData: nil,
 			},
 			args: args{
 				context: &structContext{
@@ -135,8 +100,8 @@ func TestJSONConfig_typeSafeLoadConfigFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := &JSONConfig{
-				fileName:            tt.fields.FileName,
-				configureFileParsed: tt.fields.configureFileParsed,
+				fileName:   tt.fields.FileName,
+				parsedData: tt.fields.parsedData,
 			}
 			got, got1 := config.typeSafeLoadConfigFile(tt.args.context)
 			if got != tt.want {
@@ -151,33 +116,21 @@ func TestJSONConfig_typeSafeLoadConfigFile(t *testing.T) {
 
 func TestJSONConfig_GetBaseType(t *testing.T) {
 	type fields struct {
-		FileName            string
-		configureFileParsed lzjson.Node
+		FileName   string
+		parsedData map[string]interface{}
 	}
 	type args struct {
 		context *structContext
 	}
-	reader := strings.NewReader(`
-	{
-		"string": "test",
-		"complextArray": [1,2,3]
-	}
-	`)
-	test := lzjson.Decode(reader)
-	if test.Get("string").IsNull() {
-		t.Error("can not reading inside packet with json: ")
-	}
-	t.Log(test.Get("string").Len())
 	valueSimple := ContextVl{}
 	fieldStruct2Value := reflect.ValueOf(valueSimple).Field(1)
 
-	lastWant := infra.NewGoStructorNoValue(fieldStruct2Value, nil)
-
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   infra.GoStructorValue
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		want    string
 	}{
 		{
 			name: "check type parsed. Error",
@@ -189,18 +142,42 @@ func TestJSONConfig_GetBaseType(t *testing.T) {
 					Value: fieldStruct2Value,
 				},
 			},
-			want: lastWant,
+			wantErr: true,
+		},
+		{
+			name: "check success base type read",
+			fields: fields{
+				FileName: "../test_configs/config1.json",
+			},
+			args: args{
+				context: &structContext{
+					Value:       fieldStruct2Value,
+					StructField: reflect.ValueOf(ContextVl{}).Type().Field(1),
+				},
+			},
+			wantErr: false,
+			want:    "test",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := JSONConfig{
-				fileName:            tt.fields.FileName,
-				configureFileParsed: tt.fields.configureFileParsed,
+				fileName:   tt.fields.FileName,
+				parsedData: tt.fields.parsedData,
 			}
 			got := config.GetBaseType(tt.args.context)
-			if !reflect.DeepEqual(got.GetNotAValue().ValueAddress, tt.want.GetNotAValue().ValueAddress) {
-				t.Errorf("JSONConfig.GetBaseType() = %v, want %v", got, tt.want)
+			if tt.wantErr {
+				if got.GetNotAValue() == nil {
+					t.Errorf("JSONConfig.GetBaseType() expected error, got value %v", got.Value)
+				}
+				return
+			}
+			if got.GetNotAValue() != nil {
+				t.Errorf("JSONConfig.GetBaseType() unexpected error = %v", got.GetNotAValue().Error)
+				return
+			}
+			if got.Value.String() != tt.want {
+				t.Errorf("JSONConfig.GetBaseType() = %v, want %v", got.Value.String(), tt.want)
 			}
 		})
 	}

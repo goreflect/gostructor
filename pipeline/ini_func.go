@@ -114,6 +114,8 @@ func (config *IniConfig) typeSafeLoadConfigFile(context *structContext) (bool, *
 		file, err := ini.Load(fileBuffer)
 		if err != nil {
 			logrus.Error("Error while reading data from file: " + err.Error())
+			notValue := infra.NewGoStructorNoValue(context.Value, err)
+			return false, &notValue
 		}
 		config.iniFile = file
 	}

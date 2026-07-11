@@ -56,10 +56,6 @@ func (config *VaultConfig) vaultAvailable() error {
 }
 
 func (config *VaultConfig) prepareLayer(context *structContext) error {
-	if err := config.configureVault(); err != nil {
-		return err
-	}
-
 	if errConn := config.vaultAvailable(); errConn != nil {
 		logrus.Error("Error while connect to vault: ", errConn)
 		return errConn
@@ -67,21 +63,47 @@ func (config *VaultConfig) prepareLayer(context *structContext) error {
 	return nil
 }
 
+// parseTag splits a cf_vault tag ("secret/path#key") into a vault path and
+// secret key, returning an error instead of panicking on a malformed tag.
+func parseVaultTag(nameField string) (path string, secretName string, err error) {
+	parts := strings.SplitN(nameField, "#", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return "", "", errors.New("cf_vault tag '" + nameField + "' is malformed, expected format 'path/to/secret#key'")
+	}
+	return parts[0], parts[1], nil
+}
+
+func (config VaultConfig) readSecret(context *structContext, nameField string) (interface{}, error) {
+	path, secretName, err := parseVaultTag(nameField)
+	if err != nil {
+		return nil, err
+	}
+	secret, err := config.connection.Logical().Read(path)
+	if err != nil {
+		logrus.Error("Error while reading config from vault: ", err)
+		return nil, err
+	}
+	if secret == nil {
+		return nil, errors.New("no secret found in vault at path '" + path + "'")
+	}
+	secretValue, found := secret.Data[secretName]
+	if !found {
+		return nil, errors.New("key '" + secretName + "' was not found in vault secret at path '" + path + "'")
+	}
+	logrus.Debug("Secret Vault: ", secretValue)
+	return secretValue, nil
+}
+
 func (config VaultConfig) GetBaseType(context *structContext) infra.GoStructorValue {
 	if err := config.prepareLayer(context); err != nil {
 		return infra.NewGoStructorNoValue(context.Value, err)
 	}
 	nameField := context.StructField.Tag.Get(tags.TagHashiCorpVault)
-	path := strings.Split(nameField, "#")[0]
-	secretName := strings.Split(nameField, "#")[1]
-	secret, err := config.connection.Logical().Read(path)
-	secretValue := secret.Data[secretName]
-	logrus.Debug("Secret Vault: ", secretValue)
+	secretValue, err := config.readSecret(context, nameField)
 	if err != nil {
-		logrus.Error("Error while reading config from vault: ", err)
 		return infra.NewGoStructorNoValue(context.Value, err)
 	}
-	return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(secret.Data[secretName]), reflect.Indirect(context.Value))
+	return converters.ConvertBetweenPrimitiveTypes(reflect.ValueOf(secretValue), reflect.Indirect(context.Value))
 }
 
 func (config VaultConfig) GetComplexType(context *structContext) infra.GoStructorValue {
@@ -89,18 +111,17 @@ func (config VaultConfig) GetComplexType(context *structContext) infra.GoStructo
 		return infra.NewGoStructorNoValue(context.Value, err)
 	}
 	nameField := context.StructField.Tag.Get(tags.TagHashiCorpVault)
-	path := strings.Split(nameField, "#")[0]
-	secretName := strings.Split(nameField, "#")[1]
-	secret, err := config.connection.Logical().Read(path)
-	secretValue := secret.Data[secretName]
-	logrus.Debug("Secret Vault: ", secretValue)
+	secretValue, err := config.readSecret(context, nameField)
 	if err != nil {
-		logrus.Error("Error while reading config from vault: ", err)
 		return infra.NewGoStructorNoValue(context.Value, err)
 	}
 	kind := reflect.Indirect(context.Value).Kind()
 	if kind == reflect.Slice {
-		return converters.ConvertBetweenComplexTypes(reflect.ValueOf(strings.Split(secret.Data[secretName].(string), ",")), reflect.Indirect(context.Value))
+		secretString, ok := secretValue.(string)
+		if !ok {
+			return infra.NewGoStructorNoValue(context.Value, errors.New("cf_vault slice fields require a comma-separated string secret value"))
+		}
+		return converters.ConvertBetweenComplexTypes(reflect.ValueOf(strings.Split(secretString, ",")), reflect.Indirect(context.Value))
 	}
 	return infra.NewGoStructorNoValue(context.Value, errors.New("not supported complex type"))
 }

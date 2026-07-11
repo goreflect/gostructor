@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/goreflect/gostructor/infra"
-	"github.com/goreflect/gostructor/tags"
 )
 
 func TestEnvironmentConfig_GetBaseType(t *testing.T) {
@@ -77,7 +76,7 @@ func TestEnvironmentConfig_GetBaseTypeFaield(t *testing.T) {
 					Value:       myStruct1.Field(0),
 				},
 			},
-			want: infra.NewGoStructorNoValue(reflect.ValueOf(myStruct1.Field(0)), errors.New("getBaseType can not get field by empty tag value of tag: "+tags.TagEnvironment)),
+			want: infra.NewGoStructorNoValue(reflect.ValueOf(myStruct1.Field(0)), errors.New("cf_env tag value for field 'field1' is empty")),
 		},
 	}
 	for _, tt := range tests {
