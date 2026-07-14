@@ -2,11 +2,42 @@ package gostructor
 
 import "log/slog"
 
+// SecretTag marks a field whose value is sensitive: `cf_secret:""`. A tagged
+// field's value is masked everywhere it would otherwise print - the
+// resolution Report, slog trace records, and *ConvertError messages.
+const SecretTag = "cf_secret"
+
 type config struct {
 	sources    []Source
 	sourcesSet bool
 	logger     *slog.Logger
 	hooks      []Hook
+	masker     Masker
+	trace      bool
+}
+
+// Masker renders a sensitive field's value for display. It is called for any
+// field carrying the cf_secret tag before its value reaches a log, the
+// resolution report, or an error message. The default fully redacts.
+type Masker func(field FieldContext, value any) string
+
+// defaultMasker fully redacts, revealing nothing about the value.
+func defaultMasker(FieldContext, any) string { return "••••••" }
+
+// isSecret reports whether field carries the cf_secret tag (present with any
+// value, including empty: `cf_secret:""`).
+func (f FieldContext) isSecret() bool {
+	_, ok := f.Tag.Lookup(SecretTag)
+	return ok
+}
+
+// display returns v for a normal field, or the masked rendering for a secret
+// one - the value safe to put in a report or log.
+func (c *config) display(field FieldContext, v any) any {
+	if field.isSecret() {
+		return c.masker(field, v)
+	}
+	return v
 }
 
 // Hook runs after a value has been resolved for a field but before it is
@@ -47,9 +78,32 @@ func WithHook(h Hook) Option {
 	}
 }
 
+// WithMasker overrides how cf_secret fields are rendered for display. The
+// default fully redacts ("••••••"); pass your own to, say, reveal the last
+// four characters. The masker is only ever called for fields carrying the
+// cf_secret tag.
+func WithMasker(m Masker) Option {
+	return func(c *config) {
+		if m != nil {
+			c.masker = m
+		}
+	}
+}
+
+// WithTrace makes Configure log the full resolution report at debug level
+// through the configured logger (see WithLogger) once resolution completes.
+// It has no effect without a logger. To capture the report programmatically
+// instead, use ConfigureWithReport.
+func WithTrace() Option {
+	return func(c *config) {
+		c.trace = true
+	}
+}
+
 func newConfig(opts []Option) *config {
 	c := &config{
 		logger: slog.New(slog.DiscardHandler),
+		masker: defaultMasker,
 	}
 	for _, opt := range opts {
 		opt(c)

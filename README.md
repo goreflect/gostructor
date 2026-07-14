@@ -357,6 +357,54 @@ cfg, err := gostructor.Configure(&Config{}, gostructor.WithLogger(logger))
 
 With no `WithLogger`, `Configure` logs nothing.
 
+## Observability: the resolution trace
+
+A config layer is a black box exactly when you most need to trust it ("why is
+`Port` 8080 and not what's in my file?"). `ConfigureWithReport` fills the struct
+*and* returns a structured, per-field account of resolution: every source tried,
+in the order tried, which one won, and the raw and converted values.
+
+```go
+cfg, report, err := gostructor.ConfigureWithReport(&Config{})
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(report.String())
+// Port int  ⇐ cf_env(APP_PORT)=9090  [cf_default: skipped]
+// Host string  ⇐ cf_default(0.0.0.0)=0.0.0.0  [cf_env: not-found]
+
+report.Provenance() // map[string]string: field -> winning source tag
+```
+
+`report.Fields` is the machine view (`[]FieldResolution`, each with its
+`Attempts`); `report.String()` renders the human tree above. The plain
+`Configure` builds no report, so there's zero overhead when you don't ask for
+one. `WithTrace()` logs the same report through your `WithLogger` without
+changing call sites.
+
+### Masking secrets
+
+Mark a sensitive field with `cf_secret` and its value is masked everywhere it
+would otherwise print — the report, trace logs, and `*ConvertError` messages —
+while the real value still lands on your struct:
+
+```go
+type Config struct {
+    APIKey string `cf_env:"APP_API_KEY" cf_secret:""`
+}
+
+// Default fully redacts ("••••••"). Override to reveal, e.g., the last 4 chars:
+gostructor.WithMasker(func(_ gostructor.FieldContext, v any) string {
+    s, _ := v.(string)
+    if len(s) >= 4 {
+        return "••••" + s[len(s)-4:]
+    }
+    return "••••"
+})
+```
+
+See `examples/observability` for a runnable end-to-end demo.
+
 ## Writing your own Source
 
 ```go
