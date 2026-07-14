@@ -1,62 +1,25 @@
 on: [push, pull_request]
-name: CI_dev
+name: CI
+
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.16.x
-    - name: Checkout code
-      uses: actions/checkout@v1
-    - name: Install golangci-lint
-      run: |
-        go get github.com/golangci/golangci-lint/cmd/golangci-lint
-    - name: Run linters
-      run: |
-        export PATH=$PATH:$(go env GOPATH)/bin   
-        ls -la
-        golangci-lint run ./...
   test:
     strategy:
       matrix:
-        go-version: [1.14.x, 1.15.x, 1.16.x, 1.17.x]
-        platform: [ubuntu-latest]
-    runs-on: ${{ matrix.platform }}
+        module: [., yaml, toml, hocon, vault, examples/multisource]
+    runs-on: ubuntu-latest
     steps:
-    - name: Install Go
-      if: success()
-      uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go-version }}
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: check current docker
-      run: docker version
-    - name: Run tests
-      run: go test ./... -v -covermode=count
-
-  publishing:
-    runs-on: ubuntu-18.04
-    steps:
-      - name: checkout to master
-        uses: actions/checkout@v2
-      - name: checkout to current branch
-        run:
-          git checkout ${{github.ref.branch}}
-      - name: Commit new patch version
-        run: |
-          git config --local user.name "kubitre bot"
-          git config --local user.email "kubitre@gmail.com"
-          ./increment_version.bash
-          git diff-index --quiet HEAD || git commit -m "upgrade patch" -a
-          git tag $(cat .version)
-          git push -q origin $(cat .version)
-      - name: push lib to github repo
-        uses: ad-m/github-push-action@master
+      - name: Install Go
+        uses: actions/setup-go@v5
         with:
-          github_token: ${{secrets.GITHUB_TOKEN}}
-          force: true
-
-  
+          go-version: "1.24"
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build
+        working-directory: ${{ matrix.module }}
+        run: go build ./...
+      - name: Vet
+        working-directory: ${{ matrix.module }}
+        run: go vet ./...
+      - name: Test
+        working-directory: ${{ matrix.module }}
+        run: go test ./... -race -cover

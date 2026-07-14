@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" width="640" height="220" role="img" aria-labelledby="gostructorLogoTitle">
+  <title id="gostructorLogoTitle">Gostructor logo</title>
+  <defs>
+    <linearGradient id="badgeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ACD7"/>
+      <stop offset="100%" stop-color="#0090B8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- icon: sources feeding into a tagged struct -->
+  <g transform="translate(20,20)">
+    <rect x="0" y="0" width="180" height="180" rx="28" fill="url(#badgeGradient)"/>
+
+    <!-- three small source chips -->
+    <g fill="#FFFFFF" fill-opacity="0.92">
+      <rect x="24" y="26" width="34" height="18" rx="4"/>
+      <rect x="73" y="26" width="34" height="18" rx="4"/>
+      <rect x="122" y="26" width="34" height="18" rx="4"/>
+    </g>
+    <g font-family="Menlo, Consolas, monospace" font-size="10" font-weight="700" fill="#00768F" text-anchor="middle">
+      <text x="41" y="39">{ }</text>
+      <text x="90" y="39">yml</text>
+      <text x="139" y="39">env</text>
+    </g>
+
+    <!-- converging lines -->
+    <g stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="3" fill="none" stroke-linecap="round">
+      <path d="M41,44 L90,84"/>
+      <path d="M90,44 L90,84"/>
+      <path d="M139,44 L90,84"/>
+    </g>
+
+    <!-- struct card -->
+    <rect x="30" y="90" width="120" height="70" rx="10" fill="#FFFFFF"/>
+    <g fill="#00ACD7">
+      <rect x="42" y="102" width="46" height="12" rx="3"/>
+      <rect x="42" y="122" width="60" height="12" rx="3"/>
+      <rect x="42" y="142" width="36" height="12" rx="3"/>
+    </g>
+    <g fill="#0B3D45" fill-opacity="0.55">
+      <rect x="94" y="102" width="26" height="12" rx="3"/>
+      <rect x="108" y="122" width="26" height="12" rx="3"/>
+      <rect x="84" y="142" width="26" height="12" rx="3"/>
+    </g>
+  </g>
+
+  <!-- wordmark -->
+  <g transform="translate(230,0)" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+    <text x="0" y="112" font-size="52" font-weight="700" fill="#0B2A33">go<tspan fill="#00ACD7">structor</tspan></text>
+    <text x="2" y="142" font-size="17" fill="#5B7480">Universal struct configuration for Go, driven by tags</text>
+  </g>
+</svg>
