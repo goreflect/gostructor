@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/goreflect/gostructor/internal/format/ini"
-	"github.com/goreflect/gostructor/tools"
+	"github.com/goreflect/gostructor/internal/tools"
 )
 
 // INITag is the struct tag INI responds to: `cf_ini:"section#key"` (or

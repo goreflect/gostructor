@@ -1,8 +1,6 @@
-// Package vault resolves gostructor fields from HashiCorp Vault secrets,
-// via the official github.com/hashicorp/vault/api client (replacing the
-// pre-1.0, low-activity mittwald/vaultgo client v0.x used before). The
-// client reads the standard VAULT_ADDR and VAULT_TOKEN environment
-// variables itself - the same ones the `vault` CLI uses.
+// Package vault resolves gostructor fields from HashiCorp Vault secrets via
+// github.com/hashicorp/vault/api. The client reads VAULT_ADDR and
+// VAULT_TOKEN itself, the same variables the `vault` CLI uses.
 package vault
 
 import (

@@ -19,7 +19,7 @@ type fixtureConfig struct {
 }
 
 func TestYAMLSourceEndToEndFixture(t *testing.T) {
-	cfg, err := gostructor.Configure(&fixtureConfig{}, gostructor.WithSources(yaml.File("../test_configs/config.yml")))
+	cfg, err := gostructor.Configure(&fixtureConfig{}, gostructor.WithSources(yaml.File("../testdata/config.yml")))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -1,12 +1,13 @@
 package gostructor
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"sync"
 
-	"github.com/goreflect/gostructor/tools"
+	"github.com/goreflect/gostructor/internal/tools"
 )
 
 // JSONTag is the struct tag JSON responds to: `cf_json:"server.host"`.
@@ -66,7 +67,13 @@ func (s *jsonSource) load() error {
 			return
 		}
 		parsed := map[string]any{}
-		if err := json.Unmarshal(buf.Bytes(), &parsed); err != nil {
+		// UseNumber keeps integers exact (as json.Number, a string kind
+		// convert parses base-10) instead of routing every number through
+		// float64, which loses precision above 2^53 and would turn a
+		// fractional JSON value silently into a truncated int.
+		dec := json.NewDecoder(bytes.NewReader(buf.Bytes()))
+		dec.UseNumber()
+		if err := dec.Decode(&parsed); err != nil {
 			s.loadErr = fmt.Errorf("gostructor: parsing JSON file %q: %w", fileName, err)
 			return
 		}

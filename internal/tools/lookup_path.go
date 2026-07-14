@@ -6,11 +6,11 @@ import "strings"
 // produced by encoding/json.Unmarshal, go-yaml, and this module's own HOCON
 // parser) following a dot-separated path, e.g. "server.host".
 //
-// Unlike FlatMap, LookupPath does not destroy nested map/slice structure
-// along the way: if the path resolves to a sub-object or a list, that value
-// is returned as-is, so callers can address either a single leaf value or
-// an entire nested object (for map[string]T destination fields) with the
-// same mechanism.
+// LookupPath does not flatten or destroy nested map/slice structure along the
+// way: if the path resolves to a sub-object or a list, that value is returned
+// as-is, so callers can address either a single leaf value or an entire
+// nested object (for map[string]T or struct destination fields) with the same
+// mechanism.
 func LookupPath(data map[string]interface{}, path string) (interface{}, bool) {
 	var current interface{} = data
 	for _, segment := range strings.Split(path, ".") {

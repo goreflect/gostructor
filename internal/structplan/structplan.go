@@ -5,9 +5,13 @@
 package structplan
 
 import (
+	"encoding"
 	"reflect"
+	"strings"
 	"sync"
 )
+
+var textUnmarshalerType = reflect.TypeOf((*encoding.TextUnmarshaler)(nil)).Elem()
 
 // Field is one leaf (non-struct) field discovered while flattening a
 // struct's fields, including nested/embedded structs.
@@ -48,10 +52,36 @@ func walk(t reflect.Type, prefix []int, plan *Plan) {
 			continue
 		}
 		index := append(append([]int{}, prefix...), i)
-		if field.Type.Kind() == reflect.Struct {
+		if field.Type.Kind() == reflect.Struct && !isAtomic(field) {
 			walk(field.Type, index, plan)
 			continue
 		}
 		plan.Fields = append(plan.Fields, Field{Struct: field, Index: index})
 	}
+}
+
+// isAtomic reports whether a struct-typed field should be treated as a single
+// leaf value to be resolved and converted as a whole, rather than recursed
+// into and flattened. This is true when the field carries a config tag (it is
+// meant to be filled from one source key), when its type parses itself from
+// text (time.Time, net.IP, ...), or when it has no exported fields to flatten
+// - the last case previously yielded zero leaves and silently left the field
+// unset.
+func isAtomic(field reflect.StructField) bool {
+	if strings.Contains(string(field.Tag), "cf_") {
+		return true
+	}
+	if reflect.PointerTo(field.Type).Implements(textUnmarshalerType) {
+		return true
+	}
+	return !hasExportedField(field.Type)
+}
+
+func hasExportedField(t reflect.Type) bool {
+	for i := 0; i < t.NumField(); i++ {
+		if t.Field(i).PkgPath == "" {
+			return true
+		}
+	}
+	return false
 }

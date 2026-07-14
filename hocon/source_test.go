@@ -16,7 +16,7 @@ type myStruct struct {
 }
 
 func TestHOCONSourceEndToEndSlices(t *testing.T) {
-	cfg, err := gostructor.Configure(&myStruct{}, gostructor.WithSources(hocon.File("../test_configs/test1.hocon")))
+	cfg, err := gostructor.Configure(&myStruct{}, gostructor.WithSources(hocon.File("../testdata/test1.hocon")))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -41,7 +41,7 @@ type nestedFromHocon struct {
 }
 
 func TestHOCONSourceEndToEndDeepNestingAndMap(t *testing.T) {
-	cfg, err := gostructor.Configure(&nestedFromHocon{}, gostructor.WithSources(hocon.File("../test_configs/testmap.hocon")))
+	cfg, err := gostructor.Configure(&nestedFromHocon{}, gostructor.WithSources(hocon.File("../testdata/testmap.hocon")))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

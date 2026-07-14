@@ -5,7 +5,7 @@ jobs:
   test:
     strategy:
       matrix:
-        module: [., yaml, toml, hocon, vault]
+        module: [., yaml, toml, hocon, vault, examples/multisource]
     runs-on: ubuntu-latest
     steps:
       - name: Install Go

@@ -20,7 +20,7 @@ type postgresConfig struct {
 }
 
 func TestTOMLSourceEndToEnd(t *testing.T) {
-	cfg, err := gostructor.Configure(&postgresConfig{}, gostructor.WithSources(toml.File("../test_configs/config.toml")))
+	cfg, err := gostructor.Configure(&postgresConfig{}, gostructor.WithSources(toml.File("../testdata/config.toml")))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

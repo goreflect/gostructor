@@ -5,7 +5,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/goreflect/gostructor.svg)](https://pkg.go.dev/github.com/goreflect/gostructor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-<img src="logo.svg" alt="gostructor" width="640"/>
+<img src="assets/logo.svg" alt="gostructor" width="640"/>
 
 **gostructor** fills the fields of a Go struct from any mix of configuration
 sources — environment variables, files, HashiCorp Vault, or plain
@@ -28,33 +28,25 @@ a plain unmarshaller: **one field, several possible sources, resolved with a
 priority you control**, rather than merging every source into one map and
 unmarshalling it once.
 
-## Why v1.0 looks different from earlier versions
+## What changed in v1.0
 
-This release is a deliberate break from the pre-1.0 API, aligned with how
-Go config libraries are actually built today:
+- `Configure[T](cfg *T, opts ...Option) (*T, error)` replaces
+  `ConfigureSmart`/`ConfigureSetup`/`ConfigureEasy` and their
+  `(interface{}, error)` + type-assert calling convention.
+- The core module has no third-party dependencies: env vars, `cf_default`,
+  JSON, and INI are handled with the standard library and a small
+  hand-written parser. YAML, TOML, HOCON, and Vault support each live in
+  their own module, added via `go get` only when you need them.
+- INI, HOCON, and TOML are hand-written parsers for a practical subset of
+  each format (see [Known limitations](#known-limitations)); YAML stays on
+  [`goccy/go-yaml`](https://github.com/goccy/go-yaml).
+- Logging goes through `log/slog` via `WithLogger`; nothing is logged
+  unless you pass one.
+- `Source` is a two-method interface any package can implement and register
+  via `WithSources` — see `gostructor/yaml`'s `source.go` for a short
+  example.
 
-- **A generics-based API.** `Configure[T](cfg *T, opts ...Option) (*T, error)`
-  replaces `ConfigureSmart`/`ConfigureSetup`/`ConfigureEasy` and the
-  `(interface{}, error)` + type-assert dance every caller used to write.
-- **The core module has zero third-party dependencies.** Environment
-  variables, `cf_default`, JSON, and INI are handled with the standard
-  library and a small hand-written parser. YAML, TOML, HOCON, and Vault
-  support live in **separate modules** you opt into individually — `go get`
-  only pulls in what you actually use.
-- **Hand-written INI and HOCON-subset and TOML-subset parsers**, replacing
-  dependencies on a years-stale `go-ini` fork and an unstable, single-author
-  HOCON library. YAML deliberately stays on the mature
-  [`goccy/go-yaml`](https://github.com/goccy/go-yaml) rather than
-  reimplementing that spec by hand — see [Known limitations](#known-limitations)
-  for exactly why.
-- **`log/slog`, not `logrus`.** Pass your own `*slog.Logger` via
-  `WithLogger`; nothing is written anywhere unless you ask for it.
-- **A real extension point.** `Source` is a two-method interface any package
-  can implement (see how `gostructor/yaml`, `gostructor/vault`, etc. do it),
-  registered via `WithSources` — not a stub that silently did nothing.
-
-If you're upgrading from a pre-1.0 version, see
-[Migrating from v0.x](#migrating-from-v0x).
+Upgrading from a pre-1.0 version: see [Migrating from v0.x](#migrating-from-v0x).
 
 ## Table of contents
 
@@ -157,12 +149,29 @@ zero-dependency core).
 - `float32`, `float64`
 - `string`
 - `bool`
-- slices of any of the above, e.g. `[]int32`, `[]string`, `[]bool`
-- `map[string|int]string|int|float32|float64|bool`, when the source is
+- `time.Duration`, filled from a Go duration string like `"1h30m"` (numeric
+  sources are read as nanoseconds, matching `encoding/json`).
+- any named scalar type (`type Level int`, `type Env string`, ...) — the
+  value is converted to the field's underlying kind and keeps the named type.
+- any type implementing `encoding.TextUnmarshaler` (`time.Time`, `net.IP`,
+  your own enums), filled by handing it the string form.
+- pointers to any of the above (`*int`, `*time.Time`, ...): the value is
+  allocated and set. Multi-level pointers (`**T`) are not supported.
+- slices and fixed-size arrays of any supported element type, including
+  nested ones — `[]int32`, `[3]string`, `[][]int`, `[]time.Duration`.
+  For an array the source must have exactly the array's length.
+- `map[K]V` and `[]Struct` / `map[string]Struct`, when the source is
   structured data (JSON, YAML, TOML, HOCON) and the tag addresses a whole
-  nested object rather than one leaf value. `cf_env`, `cf_default`, `cf_ini`,
-  and `cf_vault` encode values as a flat string and so can only populate
-  slices, not maps.
+  nested object rather than one leaf value. Struct elements are filled by
+  matching each exported field to an object key by name, case-insensitively.
+  `cf_env`, `cf_default`, `cf_ini`, and `cf_vault` encode values as a flat
+  string and so can only populate slices, not maps or struct elements.
+
+Numeric conversions are **exact**: a fractional float into an integer field
+(`3.9` → `int`), a value that overflows the field's width (`300` → `int8`), a
+negative number into an unsigned field, and non-finite floats are all hard
+errors — never silent truncation or wraparound. A conversion failure is
+reported as a `*ConvertError` (see [error handling](#known-limitations)).
 
 ## The `Configure` API
 
@@ -365,29 +374,76 @@ seventy lines including file loading and error handling.
 
 ## Known limitations
 
-- **`gostructor/hocon` and `gostructor/toml` parse a practical subset, not
-  the full spec.** Both are hand-written and intentionally bounded in
-  scope:
+- `gostructor/hocon` and `gostructor/toml` parse a practical subset, not
+  the full spec:
   - HOCON: no `${}` substitutions, no `include`, no duration/size unit
     literals (`10m`, `5 MB`), no string concatenation across values.
   - TOML: no datetimes, no inline tables (`{ a = 1 }`), no arrays of
     tables (`[[table]]`), no multiline/triple-quoted strings.
 
-  If your config file needs any of those, gostructor will return a parse
-  error rather than silently misinterpreting it — but you'll want a
-  different tool for that file. YAML deliberately did **not** get the same
-  hand-written treatment: full YAML (block/flow styles, anchors and
-  aliases, implicit typing) is large enough that reimplementing it
-  correctly is a multi-year undertaking even for dedicated parser
-  projects, so `gostructor/yaml` stays on `goccy/go-yaml`.
-- **Error values are plain `errors.New`/`fmt.Errorf`, not sentinel
-  errors.** You can `errors.Is`/`errors.As` through the `%w`-wrapped chain
-  down to the underlying cause, but there's no `ErrNotFound`-style sentinel
-  to match on yet.
-- **Struct fields must be exported.** Unlike some earlier versions of this
-  library, there's no `unsafe`-pointer trick to write into unexported
-  fields — this matches `encoding/json`'s own convention and keeps the
-  engine free of `unsafe`.
+  A config file needing any of those produces a parse error rather than a
+  silently wrong value. `gostructor/yaml` doesn't have this limitation —
+  it wraps `goccy/go-yaml` rather than a hand-written parser.
+- Nested struct sections work either flattened (an untagged struct field is
+  descended into and its own tagged fields resolved individually) or whole (a
+  struct field that itself carries a `cf_*` tag is filled atomically from one
+  object). gostructor does not recurse *through* a pointer-to-struct field:
+  `*SubConfig` is only fillable as a whole tagged value, not flattened.
+- Struct fields must be exported; there's no `unsafe`-pointer trick to
+  write into unexported ones, matching `encoding/json`'s convention.
+
+### Error handling
+
+Every error `Configure` returns belongs to one of a small, closed set of
+categories, so you can tell exactly what went wrong — and whose fault it is —
+without string-matching. Match the sentinels with `errors.Is` and the struct
+types with `errors.As`; each struct type unwraps to its underlying cause.
+
+| Error | When | Whose problem |
+|---|---|---|
+| `ErrInvalidTarget` (sentinel) | `target` isn't a non-nil pointer to a struct | the calling code |
+| `*NotResolvedError` (wraps `ErrFieldNotResolved`) | a field carries source tags but none produced a value | a missing env var / file key / secret |
+| `*SourceError` | a source failed: file missing or malformed, Vault unreachable, ... | the backing store |
+| `*ConvertError` | a value was produced but doesn't fit the field's type (fractional float into `int`, overflow, bad duration) | the value in the config |
+| `*HookError` | a `WithHook` callback rejected the value or returned the wrong type | your validation/transform |
+
+Every field-scoped error (`NotResolvedError`, `SourceError`, `ConvertError`,
+`HookError`) implements the `FieldError` interface, so you can recover which
+field failed without switching on the concrete type:
+
+```go
+type FieldError interface {
+    error
+    FieldName() string
+}
+```
+
+```go
+cfg, err := gostructor.Configure(&Config{})
+switch {
+case err == nil:
+    // ok
+
+case errors.Is(err, gostructor.ErrFieldNotResolved):
+    var nre *gostructor.NotResolvedError
+    errors.As(err, &nre)
+    log.Fatalf("no value for %s (tried %s)", nre.Field, strings.Join(nre.Tags, ", "))
+
+case func() bool { var se *gostructor.SourceError; return errors.As(err, &se) }():
+    var se *gostructor.SourceError
+    errors.As(err, &se)
+    log.Fatalf("source %s failed for %s: %v", se.Tag, se.Field, se.Unwrap())
+
+default:
+    var ce *gostructor.ConvertError
+    if errors.As(err, &ce) {
+        // ce.Field, ce.Value, ce.Target describe exactly what didn't fit,
+        // and errors.As can reach the underlying *strconv.NumError etc.
+        log.Fatalf("field %s: bad value %#v for %s", ce.Field, ce.Value, ce.Target)
+    }
+    log.Fatal(err)
+}
+```
 
 ## Migrating from v0.x
 
@@ -406,33 +462,35 @@ different:
   struct-name-based prefixing is gone.
 - `ChangeLogLevel`/`ChangeLogFormatter` (global `logrus` config) →
   `gostructor.WithLogger(*slog.Logger)`, passed per call.
+- **Numeric conversions are now strict.** Where v0.x silently truncated a
+  fractional number into an integer field or let an out-of-range value wrap
+  around, v1.0 returns a `*ConvertError`. Configs that relied on `3.9` landing
+  in an `int` as `3` will now fail loudly; make the field a float, or round
+  the value in a `WithHook`, to keep the old behavior explicitly.
 
 ## Roadmap
 
-`cf_server_file` and `cf_server_kv` (a remote config-server and a
-key/value-store backend, Spring Cloud Config Server style) were on earlier
-versions' roadmap and remain unimplemented. They're intentionally left out
-of core v1.0 scope — the plan is to ship them the same way YAML/TOML/HOCON/
-Vault work today: as separate, explicitly-opted-into modules implementing
-`Source`, once there's a concrete design for the network/auth/retry
-surface a remote source needs. Not yet scheduled:
+See [ROADMAP.md](ROADMAP.md) for the full plan. Headlines:
 
-- A key/value store backend module, with change callbacks
-- A config-server-fetching module
-- Sentinel/wrapped error types for `errors.Is`/`errors.As`
-- Live-reloading a struct's values when its backing source changes
+- **Observability & masking** — a resolution trace showing, per field, which
+  source won and why the others lost, toggled by debug flags, with secret
+  fields masked in every output (logs, trace, errors).
+- **Hot reload** — a `Watchable` source interface and a `Watch` helper that
+  re-fills the struct when a backing source changes.
+- **Git as source of truth** — a branch/tag as a config version, snapshotted
+  and polled for drift, switchable at runtime.
+- **Config-server adapters** — Spring Cloud Config Server and generic
+  HTTP/kv backends, each a `Source`-implementing module like Vault.
+- **Ergonomics** — self-documenting config (`cf_desc` + usage text),
+  whole-struct validation, custom time layouts, in-memory override source.
 
 ## Development
 
-Each module (core, `yaml`, `toml`, `hocon`, `vault`) is verified
-independently:
-
 ```sh
-go build ./... && go vet ./... && go test ./... -cover        # from the repo root (core)
-cd yaml  && go build ./... && go vet ./... && go test ./... -cover
-cd toml  && go build ./... && go vet ./... && go test ./... -cover
-cd hocon && go build ./... && go vet ./... && go test ./... -cover
-cd vault && go build ./... && go vet ./... && go test ./... -cover
+make build   # go build ./... in every module (core, yaml, toml, hocon, vault, examples/multisource)
+make vet
+make test    # go test ./... -race -cover in every module
+make all     # build + vet + test
 ```
 
 Each submodule's `go.mod` carries a local `replace` directive pointing at
@@ -440,12 +498,11 @@ Each submodule's `go.mod` carries a local `replace` directive pointing at
 release; that line is a no-op for anyone importing the module normally,
 since Go only applies `replace` directives from the main module of a build.
 
+Runnable usage examples live in [`examples/`](examples/).
+
 ## Contributing
 
-Issues and pull requests are welcome. If you're picking up one of the
-roadmap items above or fixing a bug, a short description of the approach in
-the PR body is appreciated so reviewers don't have to reverse-engineer
-intent from the diff.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
+	"time"
 )
 
 type basicConfig struct {
@@ -297,7 +299,7 @@ type iniConfig struct {
 }
 
 func TestConfigureINISourceEndToEnd(t *testing.T) {
-	cfg, err := Configure(&iniConfig{}, WithSources(INIFile("test_configs/config.ini")))
+	cfg, err := Configure(&iniConfig{}, WithSources(INIFile("testdata/config.ini")))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -336,4 +338,193 @@ type panicSource struct{}
 func (panicSource) Tag() string { return "cf_boom" }
 func (panicSource) Resolve(FieldContext) (any, bool, error) {
 	panic("boom")
+}
+
+func TestConfigureUnresolvedFieldMatchesSentinel(t *testing.T) {
+	_, err := Configure(&requiredConfig{})
+	if !errors.Is(err, ErrFieldNotResolved) {
+		t.Fatalf("err = %v, want it to wrap ErrFieldNotResolved", err)
+	}
+	var nre *NotResolvedError
+	if !errors.As(err, &nre) {
+		t.Fatalf("err = %v, want a *NotResolvedError", err)
+	}
+	if len(nre.Tags) == 0 {
+		t.Errorf("NotResolvedError.Tags is empty; want the tags that were tried")
+	}
+}
+
+func TestConfigureInvalidTargetSentinel(t *testing.T) {
+	if _, err := Configure[basicConfig](nil); !errors.Is(err, ErrInvalidTarget) {
+		t.Fatalf("nil target: err = %v, want ErrInvalidTarget", err)
+	}
+}
+
+func TestConfigureSourceError(t *testing.T) {
+	type cfgT struct {
+		Host string `cf_json:"server.host"`
+	}
+	_, err := Configure(&cfgT{}, WithSources(JSONFile("testdata/does-not-exist.json")))
+	var se *SourceError
+	if !errors.As(err, &se) {
+		t.Fatalf("err = %v, want a *SourceError", err)
+	}
+	if se.Tag != "cf_json" || se.Field != "Host" {
+		t.Errorf("SourceError = %+v, want Field=Host Tag=cf_json", se)
+	}
+}
+
+func TestConfigureHookError(t *testing.T) {
+	type cfgT struct {
+		Name string `cf_default:"x"`
+	}
+	sentinel := errors.New("rejected")
+	_, err := Configure(&cfgT{}, WithHook(func(_ FieldContext, _ any) (any, error) {
+		return nil, sentinel
+	}))
+	var he *HookError
+	if !errors.As(err, &he) {
+		t.Fatalf("err = %v, want a *HookError", err)
+	}
+	if he.Field != "Name" {
+		t.Errorf("HookError.Field = %q, want Name", he.Field)
+	}
+	if !errors.Is(err, sentinel) {
+		t.Errorf("expected the hook's own error to be reachable via errors.Is")
+	}
+}
+
+func TestConfigureErrorsSatisfyFieldError(t *testing.T) {
+	type cfgT struct {
+		Port int `cf_default:"nope"`
+	}
+	_, err := Configure(&cfgT{})
+	var fe FieldError
+	if !errors.As(err, &fe) {
+		t.Fatalf("err = %v, want it to satisfy FieldError", err)
+	}
+	if fe.FieldName() != "Port" {
+		t.Errorf("FieldName() = %q, want Port", fe.FieldName())
+	}
+}
+
+func TestConfigureConvertErrorCarriesContext(t *testing.T) {
+	type cfgT struct {
+		Port int `cf_default:"not-a-number"`
+	}
+	_, err := Configure(&cfgT{})
+	var ce *ConvertError
+	if !errors.As(err, &ce) {
+		t.Fatalf("err = %v, want a *ConvertError", err)
+	}
+	if ce.Field != "Port" {
+		t.Errorf("ConvertError.Field = %q, want Port", ce.Field)
+	}
+	var numErr *strconv.NumError
+	if !errors.As(err, &numErr) {
+		t.Errorf("expected the underlying strconv error to be reachable, got %v", err)
+	}
+}
+
+func TestConfigureDurationAndNamedType(t *testing.T) {
+	type level int
+	type cfgT struct {
+		Timeout time.Duration `cf_default:"1h30m"`
+		Level   level         `cf_default:"5"`
+	}
+	cfg, err := Configure(&cfgT{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Timeout != 90*time.Minute {
+		t.Errorf("Timeout = %v, want 1h30m", cfg.Timeout)
+	}
+	if cfg.Level != 5 {
+		t.Errorf("Level = %v, want 5", cfg.Level)
+	}
+}
+
+func TestConfigureTextUnmarshalerField(t *testing.T) {
+	type cfgT struct {
+		Created time.Time `cf_default:"2020-01-02T03:04:05Z"`
+	}
+	cfg, err := Configure(&cfgT{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC)
+	if !cfg.Created.Equal(want) {
+		t.Errorf("Created = %v, want %v", cfg.Created, want)
+	}
+}
+
+func TestConfigurePointerField(t *testing.T) {
+	type cfgT struct {
+		Port *int `cf_default:"8080"`
+	}
+	cfg, err := Configure(&cfgT{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Port == nil || *cfg.Port != 8080 {
+		t.Errorf("Port = %v, want *8080", cfg.Port)
+	}
+}
+
+func TestConfigureRejectsOverflow(t *testing.T) {
+	type cfgT struct {
+		Small int8 `cf_default:"300"`
+	}
+	_, err := Configure(&cfgT{})
+	if err == nil {
+		t.Fatal("expected an overflow error converting 300 into int8")
+	}
+}
+
+func TestConfigureJSONExactIntAndFractionalError(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "big.json")
+	if err := os.WriteFile(path, []byte(`{"id":9007199254740993}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	type cfgT struct {
+		ID int64 `cf_json:"id"`
+	}
+	cfg, err := Configure(&cfgT{}, WithSources(JSONFile(path)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.ID != 9007199254740993 {
+		t.Errorf("ID = %d, want 9007199254740993 (exact, no float rounding)", cfg.ID)
+	}
+
+	fracPath := filepath.Join(dir, "frac.json")
+	if err := os.WriteFile(fracPath, []byte(`{"id":3.9}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Configure(&cfgT{}, WithSources(JSONFile(fracPath))); err == nil {
+		t.Fatal("expected an error converting 3.9 into int64")
+	}
+}
+
+func TestConfigureJSONSliceOfStructs(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "servers.json")
+	if err := os.WriteFile(path, []byte(`{"servers":[{"host":"a","port":1},{"host":"b","port":2}]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	type server struct {
+		Host string
+		Port int
+	}
+	type cfgT struct {
+		Servers []server `cf_json:"servers"`
+	}
+	cfg, err := Configure(&cfgT{}, WithSources(JSONFile(path)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(cfg.Servers) != 2 || cfg.Servers[0].Host != "a" || cfg.Servers[1].Port != 2 {
+		t.Errorf("Servers = %+v, want [{a 1} {b 2}]", cfg.Servers)
+	}
 }

@@ -13,7 +13,7 @@ import (
 
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/goreflect/gostructor"
-	"github.com/goreflect/gostructor/tools"
+	"github.com/goreflect/gostructor/internal/tools"
 )
 
 // Tag is the struct tag this source responds to: `cf_yaml:"server.host"`.

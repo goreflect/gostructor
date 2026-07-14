@@ -7,13 +7,12 @@
 package gostructor
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"reflect"
 	"strings"
 
-	"github.com/goreflect/gostructor/convert"
+	"github.com/goreflect/gostructor/internal/convert"
 	"github.com/goreflect/gostructor/internal/priority"
 	"github.com/goreflect/gostructor/internal/structplan"
 )
@@ -42,13 +41,13 @@ func Configure[T any](target *T, opts ...Option) (result *T, err error) {
 	}()
 
 	if target == nil {
-		return nil, errors.New("gostructor: target must not be nil")
+		return nil, fmt.Errorf("%w: got nil", ErrInvalidTarget)
 	}
 	cfg := newConfig(opts)
 
 	structValue := reflect.ValueOf(target).Elem()
 	if structValue.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("gostructor: target must point to a struct, got *%s", structValue.Kind())
+		return nil, fmt.Errorf("%w: got *%s", ErrInvalidTarget, structValue.Kind())
 	}
 
 	plan := structplan.For(structValue.Type())
@@ -65,24 +64,24 @@ func Configure[T any](target *T, opts ...Option) (result *T, err error) {
 func resolveField(cfg *config, field structplan.Field, structValue reflect.Value) error {
 	fieldCtx := FieldContext{StructField: field.Struct}
 	sources := sourcesForField(cfg, fieldCtx)
-	anyTagPresent := false
+	var presentTags []string
 
 	for _, source := range sources {
 		if fieldCtx.TagValue(source.Tag()) == "" {
 			continue
 		}
-		anyTagPresent = true
+		presentTags = append(presentTags, source.Tag())
 		raw, found, err := source.Resolve(fieldCtx)
 		if err != nil {
-			return fmt.Errorf("gostructor: field %q via %s: %w", field.Struct.Name, source.Tag(), err)
+			return &SourceError{Field: field.Struct.Name, Tag: source.Tag(), Cause: err}
 		}
 		if !found {
 			continue
 		}
 		destination := structValue.FieldByIndex(field.Index)
-		converted, err := setValue(destination, raw)
+		converted, err := convert.Value(reflect.ValueOf(raw), destination.Type())
 		if err != nil {
-			return fmt.Errorf("gostructor: field %q: %w", field.Struct.Name, err)
+			return &ConvertError{Field: field.Struct.Name, Value: raw, Target: destination.Type(), Cause: err}
 		}
 
 		// Hooks run on the converted, field-typed value (an actual int,
@@ -92,33 +91,23 @@ func resolveField(cfg *config, field structplan.Field, structValue reflect.Value
 		for _, hook := range cfg.hooks {
 			hookValue, err = hook(fieldCtx, hookValue)
 			if err != nil {
-				return fmt.Errorf("gostructor: field %q hook: %w", field.Struct.Name, err)
+				return &HookError{Field: field.Struct.Name, Cause: err}
 			}
 		}
 		finalValue := reflect.ValueOf(hookValue)
 		if !finalValue.Type().AssignableTo(destination.Type()) {
-			return fmt.Errorf("gostructor: field %q: hook returned %s, want %s", field.Struct.Name, finalValue.Type(), destination.Type())
+			return &HookError{Field: field.Struct.Name, Cause: fmt.Errorf("hook returned %s, want %s", finalValue.Type(), destination.Type())}
 		}
 		destination.Set(finalValue)
 		cfg.logger.Debug("resolved field", "field", field.Struct.Name, "source", source.Tag())
 		return nil
 	}
 
-	if anyTagPresent {
-		return fmt.Errorf("gostructor: field %q: no configured source produced a value", field.Struct.Name)
+	if len(presentTags) > 0 {
+		return &NotResolvedError{Field: field.Struct.Name, Tags: presentTags}
 	}
 	cfg.logger.Debug("skipping untagged field", "field", field.Struct.Name)
 	return nil
-}
-
-func setValue(destination reflect.Value, raw any) (reflect.Value, error) {
-	source := reflect.ValueOf(raw)
-	switch destination.Kind() {
-	case reflect.Slice, reflect.Array, reflect.Map:
-		return convert.ToComplex(source, destination)
-	default:
-		return convert.ToPrimitive(source, destination)
-	}
 }
 
 // sourcesForField returns the source order to use for one field: the
