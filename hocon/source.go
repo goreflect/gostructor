@@ -9,11 +9,10 @@ import (
 	"github.com/goreflect/gostructor/internal/tools"
 )
 
-// Tag is the struct tag this source responds to:
-// `cf_hocon:"MyStruct.Field1"`. Nested objects are flattened to dotted
-// keys, so a value nested three objects deep is addressed the same way a
-// nested YAML/JSON value would be.
-const Tag = "cf_hocon"
+// Name is this source's identity, used as the per-source override key in a cfg
+// tag: `cfg:"field1,hocon:MyStruct.Field1"`. Nested objects are addressed by
+// dotted keys, the same way a nested YAML/JSON value would be.
+const Name = "hocon"
 
 // FileEnvVar names the environment variable New reads its file path from,
 // unless a path was given explicitly to File.
@@ -34,15 +33,15 @@ func New() gostructor.Source { return &source{} }
 // environment variable.
 func File(path string) gostructor.Source { return &source{fileName: path} }
 
-func (*source) Tag() string { return Tag }
+func (*source) Name() string { return Name }
 
 func (s *source) Resolve(field gostructor.FieldContext) (any, bool, error) {
-	if err := s.load(); err != nil {
-		return nil, false, err
-	}
-	name := field.TagValue(Tag)
+	name := field.SourceKey(Name, gostructor.Identity)
 	if name == "" {
 		return nil, false, nil
+	}
+	if err := s.load(); err != nil {
+		return nil, false, err
 	}
 	value, found := tools.LookupPath(s.data, name)
 	if !found || value == nil {
@@ -58,7 +57,7 @@ func (s *source) load() error {
 			fileName = os.Getenv(FileEnvVar)
 		}
 		if fileName == "" {
-			s.loadErr = fmt.Errorf("gostructor/hocon: cf_hocon used but neither an explicit path nor %s is set", FileEnvVar)
+			s.loadErr = fmt.Errorf("gostructor/hocon: hocon source used but neither an explicit path nor %s is set", FileEnvVar)
 			return
 		}
 		buf, err := tools.ReadFromFile(fileName)

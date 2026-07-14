@@ -1,9 +1,8 @@
 // Package ini is a small, hand-written INI parser covering the practical
-// subset gostructor needs: `[section]` headers, `key = value` or
-// `key: value` pairs, `;`/`#` line comments, and quoted values. It does not
-// support key interpolation (`%(name)s`), multi-line values, or duplicate
-// key merging beyond "last one wins" - none of which gostructor's own usage
-// of INI relies on.
+// subset gostructor needs: `[section]` headers, `key = value` or `key: value`
+// pairs, `;`/`#` line comments, and quoted values. It does not support key
+// interpolation (`%(name)s`), multi-line values, or duplicate-key merging
+// beyond "last one wins".
 package ini
 
 import (

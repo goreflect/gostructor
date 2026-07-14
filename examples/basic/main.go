@@ -1,5 +1,6 @@
-// Command basic shows the minimum gostructor setup: env vars with
-// cf_default fallbacks, using only the core module.
+// Command basic shows the minimum gostructor setup: env vars (named from each
+// field via the cfg tag) with gos default fallbacks, using only the core
+// module. With no env var set, the default wins; set one and it takes over.
 package main
 
 import (
@@ -11,13 +12,15 @@ import (
 )
 
 type Config struct {
-	Host  string `cf_env:"APP_HOST" cf_default:"0.0.0.0"`
-	Port  int    `cf_env:"APP_PORT" cf_default:"8080"`
-	Debug bool   `cf_env:"APP_DEBUG" cf_default:"false"`
+	Host  string `cfg:"host" gos:"default:0.0.0.0"`
+	Port  int    `cfg:"port" gos:"default:8080"`
+	Debug bool   `cfg:"debug" gos:"default:false"`
 }
 
 func main() {
-	os.Setenv("APP_PORT", "9090")
+	// The env source names the variable from the field's base name in
+	// SCREAMING_SNAKE_CASE: "port" -> PORT. No per-field env name needed.
+	os.Setenv("PORT", "9090")
 
 	cfg, err := gostructor.Configure(&Config{})
 	if err != nil {

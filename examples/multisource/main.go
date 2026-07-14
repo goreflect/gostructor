@@ -1,5 +1,6 @@
-// Command multisource shows a field with several possible sources (env,
-// then a YAML file), a cf_priority override, and a validation hook.
+// Command multisource shows a field with several possible sources (env, then a
+// YAML file) and a validation hook. Priority is the WithSources order: Env is
+// listed first, so an env var wins over the YAML file when both have a value.
 package main
 
 import (
@@ -12,13 +13,12 @@ import (
 )
 
 type Config struct {
-	Host string `cf_env:"APP_HOST" cf_yaml:"server.host"`
-	Port int    `cf_env:"APP_PORT" cf_yaml:"server.port" cf_priority:"prod:cf_env,cf_yaml;dev:cf_yaml,cf_env"`
+	Host string `cfg:"host,yaml:server.host"`
+	Port int    `cfg:"port,yaml:server.port"`
 }
 
 func main() {
 	os.Setenv(yaml.FileEnvVar, "config.yml")
-	os.Setenv(gostructor.PriorityEnvVar, "dev")
 
 	cfg, err := gostructor.Configure(&Config{},
 		gostructor.WithSources(gostructor.Env(), yaml.New()),

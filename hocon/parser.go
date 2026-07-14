@@ -1,14 +1,12 @@
 // Package hocon is a small, hand-written parser for the practical subset of
 // HOCON gostructor needs: JSON-shaped objects/arrays/strings/numbers/bools,
-// plus HOCON's ergonomic extras that real-world config files actually use -
-// an optional root object (no outer `{ }` required), unquoted keys and
-// bareword string values, `=` as an alias for `:`, `#`/`//` comments, and
-// the on/off/yes/no boolean literals.
+// plus the common HOCON extras: an optional root object (no outer `{ }`
+// required), unquoted keys and bareword string values, `=` as an alias for
+// `:`, `#`/`//` comments, and the on/off/yes/no boolean literals.
 //
 // Not supported: `${}` substitutions, `include` statements, duration/size
-// unit literals (e.g. `10m`, `5 MB`), and string concatenation across
-// values. Fields needing those should go through HOCON's file directly with
-// a different tool, or avoid those features in the source file.
+// unit literals (e.g. `10m`, `5 MB`), and string concatenation across values.
+// A file needing those must avoid them or use a different tool.
 package hocon
 
 import (

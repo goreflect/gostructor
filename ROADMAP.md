@@ -11,8 +11,10 @@ worth building on the road to 2.0, and what we deliberately won't.
 
 Shipped and stable — the baseline everything below builds on:
 
-- **Tag-driven fill** from any mix of sources, with **per-field priority**
-  (`cf_priority`) — the core differentiator vs. merge-everything-into-one-map
+- **Two-tag, tag-driven fill** from any mix of sources: `cfg` for routing &
+  naming, `gos` for behavior (default, secret, optional, sep). **Priority is
+  composition** — the order of the sources passed to `WithSources`, first that
+  resolves wins — the differentiator vs. merge-everything-into-one-map
   libraries.
 - **Strict, lossless conversion**: fractional-float-into-int, width overflow,
   negative-into-unsigned, and non-finite floats are hard errors, never silent
@@ -23,8 +25,11 @@ Shipped and stable — the baseline everything below builds on:
   (wraps `ErrFieldNotResolved`), `*SourceError`, `*ConvertError`,
   `*HookError`, all satisfying `FieldError` and unwrapping to the real cause.
 - **Zero-dependency core**; YAML/TOML/HOCON/Vault each in their own module.
-- **`Source` interface** (`Tag()` + `Resolve()`) as the public extension
-  point, registered via `WithSources`.
+- **`Source` interface** (`Name()` + `Resolve()`) as the public extension
+  point, registered via `WithSources`; each source names its key from the base
+  name via a naming strategy, overridable per source in the `cfg` tag.
+- **Focused resolution trace** (`ConfigureWithReport`) highlighting the primary
+  source, overrides, and masked secrets (see Theme 1, now shipped).
 
 ## Guiding principles (what fits this library)
 
@@ -35,14 +40,22 @@ These are the yardsticks for every proposal below:
    it ships as `gostructor/<feature>`.
 2. **Explicit, no global singleton.** Everything is a per-call `Option`. We do
    not adopt viper's package-level global state.
-3. **Per-field priority stays the spine.** Features compose with the
-   source-ordering model rather than around it.
+3. **Composition priority stays the spine.** Priority is the `WithSources`
+   order; features compose with the source-ordering model rather than around it.
 4. **Typed and predictable.** No case-insensitive key magic, no silent
    coercion. Surprises are errors.
 
 ---
 
-## Theme 1 — Observability & debugging (priority)
+## Theme 1 — Observability & debugging (largely shipped ✅)
+
+**Status.** 1a (resolution trace) and 1c (secret masking) are shipped:
+`ConfigureWithReport` returns a `Report` whose `String()` renders a *focused*
+trace — primary source, defaults count, and an Overrides & Secrets section —
+and `WithMasker` covers every value-printing path including `*ConvertError`.
+1b (runtime debug flags / `RegisterFlags`) is still open. The sketches below
+are the original design notes; the shipped `Report`/`Attempt` shape uses source
+*names* (`Source`/`Sources`) rather than the old struct-tag strings.
 
 **Motivation.** A config layer is a black box exactly when you most need to
 trust it ("why is `Port` 8080 and not what's in my file?"). Users should be
@@ -108,7 +121,7 @@ messages. Mark fields sensitive and mask everywhere their value would print.
 
 ```go
 type Config struct {
-    APIKey string `cf_vault:"svc/prod#api-key" cf_secret:""`
+    APIKey string `cfg:"apiKey,vault:svc/prod#api-key" gos:"secret"`
 }
 
 gostructor.WithMasker(func(field gostructor.FieldContext, v any) string {

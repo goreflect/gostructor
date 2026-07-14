@@ -1,7 +1,7 @@
-// Command types shows the breadth of field types gostructor fills from a
-// single structured source (a JSON file here): durations, slices and arrays,
+// Command types shows the range of field types gostructor fills from a single
+// structured source (a JSON file here): durations, slices and arrays,
 // TextUnmarshaler types (time.Time, net.IP), named scalar types, pointers,
-// maps, and slices/maps of structs - all with strict, lossless conversion.
+// maps, and slices/maps of structs, all with strict, lossless conversion.
 //
 // Run it:
 //
@@ -22,23 +22,23 @@ import (
 type LogLevel string
 
 // Backend is filled as a struct element by matching JSON object keys to
-// exported field names (case-insensitively) - no per-field tags needed.
+// exported field names, case-insensitively; no per-field tags needed.
 type Backend struct {
 	URL    string
 	Weight int
 }
 
 type Config struct {
-	Timeout   time.Duration      `cf_json:"timeout"`   // "1h30m" duration string
-	Retries   []int              `cf_json:"retries"`   // slice
-	Coords    [2]float64         `cf_json:"coords"`    // fixed-size array
-	StartedAt time.Time          `cf_json:"startedAt"` // TextUnmarshaler
-	BindIP    net.IP             `cf_json:"bindIp"`    // TextUnmarshaler
-	Level     LogLevel           `cf_json:"level"`     // named scalar type
-	MaxConns  *int               `cf_json:"maxConns"`  // pointer, allocated + set
-	Backends  []Backend          `cf_json:"backends"`  // []Struct
-	Shards    map[string]Backend `cf_json:"shards"`    // map[string]Struct
-	Labels    map[string]string  `cf_json:"labels"`    // map[string]string
+	Timeout   time.Duration      `cfg:"timeout"`   // "1h30m" duration string
+	Retries   []int              `cfg:"retries"`   // slice
+	Coords    [2]float64         `cfg:"coords"`    // fixed-size array
+	StartedAt time.Time          `cfg:"startedAt"` // TextUnmarshaler
+	BindIP    net.IP             `cfg:"bindIp"`    // TextUnmarshaler
+	Level     LogLevel           `cfg:"level"`     // named scalar type
+	MaxConns  *int               `cfg:"maxConns"`  // pointer, allocated + set
+	Backends  []Backend          `cfg:"backends"`  // []Struct
+	Shards    map[string]Backend `cfg:"shards"`    // map[string]Struct
+	Labels    map[string]string  `cfg:"labels"`    // map[string]string
 }
 
 const configJSON = `{

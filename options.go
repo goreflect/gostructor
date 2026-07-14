@@ -2,10 +2,9 @@ package gostructor
 
 import "log/slog"
 
-// SecretTag marks a field whose value is sensitive: `cf_secret:""`. A tagged
-// field's value is masked everywhere it would otherwise print - the
-// resolution Report, slog trace records, and *ConvertError messages.
-const SecretTag = "cf_secret"
+// A field marked with the gos secret flag (`gos:"secret"`) is masked
+// everywhere its value would otherwise print: the Report, slog trace records,
+// and *ConvertError messages. See FieldContext.IsSecret.
 
 type config struct {
 	sources    []Source
@@ -17,24 +16,17 @@ type config struct {
 }
 
 // Masker renders a sensitive field's value for display. It is called for any
-// field carrying the cf_secret tag before its value reaches a log, the
+// field carrying the gos secret flag before its value reaches a log, the
 // resolution report, or an error message. The default fully redacts.
 type Masker func(field FieldContext, value any) string
 
 // defaultMasker fully redacts, revealing nothing about the value.
 func defaultMasker(FieldContext, any) string { return "••••••" }
 
-// isSecret reports whether field carries the cf_secret tag (present with any
-// value, including empty: `cf_secret:""`).
-func (f FieldContext) isSecret() bool {
-	_, ok := f.Tag.Lookup(SecretTag)
-	return ok
-}
-
 // display returns v for a normal field, or the masked rendering for a secret
-// one - the value safe to put in a report or log.
+// one: the value safe to put in a report or log.
 func (c *config) display(field FieldContext, v any) any {
-	if field.isSecret() {
+	if field.IsSecret() {
 		return c.masker(field, v)
 	}
 	return v
@@ -50,9 +42,10 @@ type Option func(*config)
 
 // WithSources replaces the default source list with an explicit, ordered
 // one. Sources are tried in the order given; the first one that reports
-// found=true for a field wins (unless overridden per-field by a cf_priority
-// tag). Use this to bring in external sources such as yaml.New() or
-// vault.New(), since the core module only ships Env, Default, and JSON.
+// found=true for a field wins. This slice order is how priority is expressed:
+// put the source that should win first. Use this to bring in external sources
+// such as yaml.New() or vault.New(), since the core module only ships Env,
+// JSON, INI, and Default.
 func WithSources(sources ...Source) Option {
 	return func(c *config) {
 		c.sources = sources
@@ -78,10 +71,10 @@ func WithHook(h Hook) Option {
 	}
 }
 
-// WithMasker overrides how cf_secret fields are rendered for display. The
-// default fully redacts ("••••••"); pass your own to, say, reveal the last
-// four characters. The masker is only ever called for fields carrying the
-// cf_secret tag.
+// WithMasker overrides how secret fields (gos:"secret") are rendered for
+// display. The default fully redacts ("••••••"); pass your own to, say, reveal
+// the last four characters. The masker is only ever called for fields carrying
+// the gos secret flag.
 func WithMasker(m Masker) Option {
 	return func(c *config) {
 		if m != nil {
@@ -109,7 +102,10 @@ func newConfig(opts []Option) *config {
 		opt(c)
 	}
 	if !c.sourcesSet {
-		c.sources = []Source{Env(), JSON(), INI(), Default()}
+		// Minimal, dependency-free default: env vars then gos defaults.
+		// File and secret sources are opt-in via WithSources, so a bare cfg
+		// base name never triggers an unexpected file load.
+		c.sources = []Source{Env(), Default()}
 	}
 	return c
 }

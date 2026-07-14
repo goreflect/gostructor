@@ -1,7 +1,6 @@
-// Command errors tours gostructor's typed error taxonomy: it deliberately
-// triggers each failure mode and classifies it with errors.Is / errors.As,
-// the way real error-handling code would - so a caller can tell exactly what
-// went wrong and whose fault it is.
+// Command errors tours gostructor's typed error taxonomy: it triggers each
+// failure mode and classifies it with errors.Is / errors.As, so a caller can
+// tell what went wrong and whose fault it is.
 //
 // Run it:
 //
@@ -18,7 +17,7 @@ import (
 func main() {
 	classify("unresolved field (no source produced a value)", func() error {
 		type C struct {
-			APIKey string `cf_env:"DEFINITELY_UNSET_VAR_XYZ"`
+			APIKey string `cfg:"apiKey,env:DEFINITELY_UNSET_VAR_XYZ"`
 		}
 		_, err := gostructor.Configure(&C{})
 		return err
@@ -26,7 +25,7 @@ func main() {
 
 	classify("convert error (value doesn't fit the field type)", func() error {
 		type C struct {
-			Port int `cf_default:"not-a-number"`
+			Port int `gos:"default:not-a-number"`
 		}
 		_, err := gostructor.Configure(&C{})
 		return err
@@ -34,7 +33,7 @@ func main() {
 
 	classify("source error (backing store failed)", func() error {
 		type C struct {
-			Name string `cf_json:"service.name"`
+			Name string `cfg:"name,json:service.name"`
 		}
 		// Point the JSON source at a file that doesn't exist.
 		_, err := gostructor.Configure(&C{},
@@ -44,7 +43,7 @@ func main() {
 
 	classify("hook error (validation rejected the value)", func() error {
 		type C struct {
-			Port int `cf_default:"80"`
+			Port int `gos:"default:80"`
 		}
 		_, err := gostructor.Configure(&C{},
 			gostructor.WithHook(func(_ gostructor.FieldContext, v any) (any, error) {
@@ -73,7 +72,7 @@ func classify(label string, run func() error) {
 	case errors.Is(err, gostructor.ErrFieldNotResolved):
 		var e *gostructor.NotResolvedError
 		errors.As(err, &e)
-		fmt.Printf("  → NotResolvedError on %q, tried %v\n", e.Field, e.Tags)
+		fmt.Printf("  → NotResolvedError on %q, tried %v\n", e.Field, e.Sources)
 	default:
 		// Every field-scoped error implements FieldError, so we can always
 		// recover which field failed without knowing the concrete type.
@@ -88,7 +87,7 @@ func classify(label string, run func() error) {
 			case errors.As(err, &ce):
 				fmt.Printf("  → ConvertError on %q (bad value in config)\n", fe.FieldName())
 			case errors.As(err, &se):
-				fmt.Printf("  → SourceError on %q via %s (backing store)\n", fe.FieldName(), se.Tag)
+				fmt.Printf("  → SourceError on %q via %s (backing store)\n", fe.FieldName(), se.Source)
 			case errors.As(err, &he):
 				fmt.Printf("  → HookError on %q (your validation)\n", fe.FieldName())
 			}

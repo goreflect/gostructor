@@ -14,9 +14,11 @@ import (
 	"github.com/goreflect/gostructor"
 )
 
-// Tag is the struct tag this source responds to:
-// `cf_vault:"path/to/secret#key"`.
-const Tag = "cf_vault"
+// Name is this source's identity, used as the per-source override key in a cfg
+// tag: `cfg:"password,vault:path/to/secret#key"`. Vault has no name-based
+// default (a secret path cannot be derived from a field's base name), so Vault
+// resolves a field only when it carries an explicit vault: override.
+const Name = "vault"
 
 // logicalReader is the slice of *vaultapi.Client's surface this source
 // actually needs, so tests can substitute a fake instead of hitting a real
@@ -32,9 +34,8 @@ type source struct {
 	initErr   error
 }
 
-// New resolves fields from Vault secrets, using a client configured from
-// the environment (VAULT_ADDR, VAULT_TOKEN, and friends - see
-// vaultapi.DefaultConfig).
+// New resolves fields from Vault secrets, using a client configured from the
+// environment (VAULT_ADDR, VAULT_TOKEN, and the rest of vaultapi.DefaultConfig).
 func New() gostructor.Source {
 	return &source{newClient: func() (logicalReader, error) {
 		client, err := vaultapi.NewClient(vaultapi.DefaultConfig())
@@ -45,15 +46,15 @@ func New() gostructor.Source {
 	}}
 }
 
-func (*source) Tag() string { return Tag }
+func (*source) Name() string { return Name }
 
 func (s *source) Resolve(field gostructor.FieldContext) (any, bool, error) {
+	tagValue, ok := field.Override(Name)
+	if !ok || tagValue == "" {
+		return nil, false, nil
+	}
 	if err := s.init(); err != nil {
 		return nil, false, err
-	}
-	tagValue := field.TagValue(Tag)
-	if tagValue == "" {
-		return nil, false, nil
 	}
 	path, key, err := parseTag(tagValue)
 	if err != nil {
@@ -85,8 +86,8 @@ func (s *source) init() error {
 	return s.initErr
 }
 
-// parseTag splits a cf_vault tag ("secret/path#key") into a Vault path and
-// secret key, returning an error instead of panicking on a malformed tag.
+// parseTag splits a vault override ("secret/path#key") into a Vault path and
+// secret key, returning an error instead of panicking on a malformed value.
 func parseTag(tagValue string) (path string, key string, err error) {
 	parts := strings.SplitN(tagValue, "#", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
@@ -96,7 +97,8 @@ func parseTag(tagValue string) (path string, key string, err error) {
 }
 
 // splitIfSlice mirrors the core module's env/default/ini sources: a slice
-// destination field's secret value is a single comma-separated string.
+// destination field's secret value is a single string split on the field's
+// separator (gos sep, default comma).
 func splitIfSlice(field gostructor.FieldContext, raw any) any {
 	kind := field.Type.Kind()
 	if kind != reflect.Slice && kind != reflect.Array {
@@ -106,7 +108,7 @@ func splitIfSlice(field gostructor.FieldContext, raw any) any {
 	if !ok {
 		return raw
 	}
-	parts := strings.Split(str, ",")
+	parts := strings.Split(str, field.Separator())
 	result := make([]any, len(parts))
 	for i, p := range parts {
 		result[i] = strings.TrimSpace(p)

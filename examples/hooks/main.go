@@ -16,13 +16,13 @@ import (
 )
 
 type Config struct {
-	Env  string `cf_env:"APP_ENV" cf_default:"Production"`
-	Port int    `cf_env:"APP_PORT" cf_default:"8080"`
+	Env  string `cfg:"env" gos:"default:Production"`
+	Port int    `cfg:"port" gos:"default:8080"`
 }
 
 func main() {
-	os.Setenv("APP_ENV", "  Staging  ") // messy input to be normalised
-	os.Setenv("APP_PORT", "9090")
+	os.Setenv("ENV", "  Staging  ") // messy input to be normalised
+	os.Setenv("PORT", "9090")
 
 	cfg, err := gostructor.Configure(&Config{},
 		// Transform: trim + lowercase every string field.
@@ -50,7 +50,7 @@ func main() {
 	fmt.Printf("normalised + validated: Env=%q Port=%d\n", cfg.Env, cfg.Port)
 
 	// Now show the validation hook rejecting a bad value.
-	os.Setenv("APP_PORT", "80") // privileged, below 1024
+	os.Setenv("PORT", "80") // privileged, below 1024
 	if _, err := gostructor.Configure(&Config{},
 		gostructor.WithHook(func(f gostructor.FieldContext, v any) (any, error) {
 			if f.Name == "Port" && v.(int) < 1024 {

@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 )
 
-//ReadFromFile - read from file to byte buffer
+// ReadFromFile reads fileName into a byte buffer.
 func ReadFromFile(fileName string) (*bytes.Buffer, error) {
 	bts, err := ioutil.ReadFile(fileName)
 	if err != nil {

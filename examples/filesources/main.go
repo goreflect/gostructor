@@ -1,7 +1,7 @@
-// Command filesources shows the two core file sources - JSON and INI - used
-// together on one struct, with env and cf_default in the same priority chain.
-// Each field declares several sources; the first that resolves wins. No
-// external modules required.
+// Command filesources shows the two core file sources, JSON and INI, used
+// together on one struct with env and a gos default in the same priority
+// chain. Priority is the WithSources order: the first source that resolves a
+// field wins. No external modules required.
 //
 // Run it:
 //
@@ -17,12 +17,12 @@ import (
 )
 
 type Config struct {
-	// From the JSON file (nested key), overridable by env.
-	Host string `cf_env:"APP_HOST" cf_json:"server.host" cf_default:"127.0.0.1"`
+	// From the JSON file (nested key), overridable by env (HOST).
+	Host string `cfg:"host,json:server.host" gos:"default:127.0.0.1"`
 	// From the INI file (section#key).
-	Port int `cf_ini:"server#port" cf_default:"8080"`
+	Port int `cfg:"port,ini:server#port" gos:"default:8080"`
 	// Not present in either file → falls through to the default.
-	MaxConns int `cf_json:"server.maxConns" cf_ini:"server#max_conns" cf_default:"256"`
+	MaxConns int `cfg:"maxConns,json:server.maxConns,ini:server#max_conns" gos:"default:256"`
 }
 
 const jsonFile = `{"server": {"host": "0.0.0.0"}}`
@@ -55,5 +55,5 @@ func main() {
 
 	fmt.Printf("Host     %-10s (from JSON file)\n", cfg.Host)
 	fmt.Printf("Port     %-10d (from INI file)\n", cfg.Port)
-	fmt.Printf("MaxConns %-10d (from cf_default — absent in both files)\n", cfg.MaxConns)
+	fmt.Printf("MaxConns %-10d (from gos default — absent in both files)\n", cfg.MaxConns)
 }

@@ -11,11 +11,14 @@ import (
 )
 
 type fixtureConfig struct {
-	Test  int      `cf_yaml:"test"`
-	Test2 []string `cf_yaml:"test2"`
-	Test3 []int    `cf_yaml:"test3"`
-	Test4 string   `cf_yaml:"test5.test4"`
-	Test6 []int    `cf_yaml:"test5.test6"`
+	// Test..Test3 use a bare base name: the yaml source's Identity naming maps
+	// "test" -> the top-level "test" key. Nested values use an explicit
+	// yaml: override with a dotted path.
+	Test  int      `cfg:"test"`
+	Test2 []string `cfg:"test2"`
+	Test3 []int    `cfg:"test3"`
+	Test4 string   `cfg:"test4,yaml:test5.test4"`
+	Test6 []int    `cfg:"test6,yaml:test5.test6"`
 }
 
 func TestYAMLSourceEndToEndFixture(t *testing.T) {
@@ -41,7 +44,7 @@ func TestYAMLSourceEndToEndFixture(t *testing.T) {
 }
 
 type mapConfig struct {
-	Nested map[string]string `cf_yaml:"test5"`
+	Nested map[string]string `cfg:"nested,yaml:test5"`
 }
 
 func TestYAMLSourceMapDestination(t *testing.T) {
@@ -62,7 +65,7 @@ func TestYAMLSourceMapDestination(t *testing.T) {
 
 func TestYAMLSourceMissingFileEnvVar(t *testing.T) {
 	type cfgT struct {
-		Value string `cf_yaml:"x"`
+		Value string `cfg:"value,yaml:x"`
 	}
 	os.Unsetenv(yaml.FileEnvVar)
 	_, err := gostructor.Configure(&cfgT{}, gostructor.WithSources(yaml.New()))

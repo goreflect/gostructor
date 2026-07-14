@@ -9,10 +9,10 @@ import (
 )
 
 type myStruct struct {
-	Field1 []string  `cf_hocon:"MyStruct.Field1"`
-	Field2 []int32   `cf_hocon:"MyStruct.field2"`
-	Field3 []float32 `cf_hocon:"MyStruct.Field3"`
-	Field4 []bool    `cf_hocon:"MyStruct.field4"`
+	Field1 []string  `cfg:"field1,hocon:MyStruct.Field1"`
+	Field2 []int32   `cfg:"field2,hocon:MyStruct.field2"`
+	Field3 []float32 `cfg:"field3,hocon:MyStruct.Field3"`
+	Field4 []bool    `cfg:"field4,hocon:MyStruct.field4"`
 }
 
 func TestHOCONSourceEndToEndSlices(t *testing.T) {
@@ -35,9 +35,9 @@ func TestHOCONSourceEndToEndSlices(t *testing.T) {
 }
 
 type nestedFromHocon struct {
-	Nested   string         `cf_hocon:"planC.tururu.tratatat.planZ.Field1"`
-	MapValue map[string]int `cf_hocon:"TestHocon.myMap"`
-	Base     int            `cf_hocon:"TestHocon.myBaseType"`
+	Nested   string         `cfg:"nested,hocon:planC.tururu.tratatat.planZ.Field1"`
+	MapValue map[string]int `cfg:"mapValue,hocon:TestHocon.myMap"`
+	Base     int            `cfg:"base,hocon:TestHocon.myBaseType"`
 }
 
 func TestHOCONSourceEndToEndDeepNestingAndMap(t *testing.T) {
@@ -59,7 +59,7 @@ func TestHOCONSourceEndToEndDeepNestingAndMap(t *testing.T) {
 
 func TestHOCONSourceMissingFileEnvVar(t *testing.T) {
 	type cfgT struct {
-		Value string `cf_hocon:"x"`
+		Value string `cfg:"value,hocon:x"`
 	}
 	_, err := gostructor.Configure(&cfgT{}, gostructor.WithSources(hocon.New()))
 	if err == nil {

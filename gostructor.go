@@ -1,44 +1,38 @@
-// Package gostructor fills the fields of a Go struct from any mix of
-// configuration sources - environment variables, files, secret stores - all
-// driven by struct tags. See the README for the full guide; this file holds
-// the engine: the generic Configure entry point and the field-resolution
-// loop that walks a cached structplan.Plan and asks each configured Source,
-// in order, for a value.
+// Package gostructor fills the fields of a Go struct from a mix of
+// configuration sources (environment variables, files, secret stores),
+// driven by two struct tags: cfg for routing/naming and gos for behavior.
+// See the README for the full guide. This file holds the engine: the
+// Configure entry point and the resolution loop that walks a cached
+// structplan.Plan and asks each Source, in slice order, for a value.
+//
+// Sources are tried in the order passed to WithSources; the first that
+// reports found=true wins. There is no per-field priority tag and no global
+// selector: the slice order decides priority.
 package gostructor
 
 import (
 	"fmt"
-	"os"
 	"reflect"
-	"strings"
 
 	"github.com/goreflect/gostructor/internal/convert"
-	"github.com/goreflect/gostructor/internal/priority"
 	"github.com/goreflect/gostructor/internal/structplan"
 )
 
-// PriorityEnvVar is the environment variable read to pick which cf_priority
-// stage applies, e.g. GOSTRUCTOR_PRIORITY=prod.
-const PriorityEnvVar = "GOSTRUCTOR_PRIORITY"
-
-// PriorityTag is the struct tag used to declare a per-field source order,
-// e.g. `cf_priority:"prod:cf_env,cf_default;dev:cf_default,cf_env"`.
-const PriorityTag = "cf_priority"
-
-// Configure fills target's fields in place from the configured sources and
-// returns target back for convenient chaining. With no options, it uses the
-// core module's built-in sources: Env, JSON, then Default. Bring in
-// external sources (yaml.New(), vault.New(), ...) via WithSources.
+// Configure fills target's fields in place and returns target for chaining.
+// With no options it uses a minimal default source list: Env then Default.
+// Add file and secret sources (JSON(), INI(), yaml.New(), vault.New(), ...)
+// via WithSources; they are opt-in, so a bare cfg base name never triggers
+// an unexpected file load.
 func Configure[T any](target *T, opts ...Option) (*T, error) {
 	result, _, err := configure(target, false, opts)
 	return result, err
 }
 
-// ConfigureWithReport is Configure plus a structured resolution trace: for
-// every field it records which sources were tried, in what order, which one
-// won, and the raw and converted values (secrets masked). The Report is the
-// machine view; its String() renders a human-readable per-field tree. On
-// error the report is returned as far as resolution got, alongside the error.
+// ConfigureWithReport is Configure plus a resolution trace: for every field
+// it records which sources were tried, in what order, which won, and the raw
+// and converted values (secrets masked). Report is the machine view; its
+// String() renders a human summary. On error the report is returned as far
+// as resolution got.
 func ConfigureWithReport[T any](target *T, opts ...Option) (*T, *Report, error) {
 	return configure(target, true, opts)
 }
@@ -64,18 +58,18 @@ func configure[T any](target *T, withReport bool, opts []Option) (result *T, rep
 		return nil, nil, fmt.Errorf("%w: got *%s", ErrInvalidTarget, structValue.Kind())
 	}
 
-	// A report is built when explicitly requested or when tracing to a
-	// logger is on; otherwise it stays nil for zero overhead.
+	// Build a report when the caller asked for one or tracing is on;
+	// otherwise leave it nil for zero overhead.
 	var rep *Report
 	if withReport || cfg.trace {
-		rep = &Report{}
+		rep = &Report{Type: structValue.Type().String()}
 	}
 
 	plan := structplan.For(structValue.Type())
 	cfg.logger.Debug("configuring struct", "type", structValue.Type().String(), "fields", len(plan.Fields))
 
-	for _, field := range plan.Fields {
-		if err := resolveField(cfg, field, structValue, rep); err != nil {
+	for i := range plan.Fields {
+		if err := resolveField(cfg, &plan.Fields[i], structValue, rep); err != nil {
 			if cfg.trace && rep != nil {
 				cfg.logger.Debug("resolution trace (partial)", "trace", rep.String())
 			}
@@ -88,8 +82,8 @@ func configure[T any](target *T, withReport bool, opts []Option) (result *T, rep
 	return target, reportIf(withReport, rep), nil
 }
 
-// reportIf returns rep only to callers that asked for it; a trace-only report
-// (built for logging) is not surfaced through the return value.
+// reportIf returns rep only when the caller asked for it, so a trace-only
+// report built for logging is not leaked through the return value.
 func reportIf(withReport bool, rep *Report) *Report {
 	if withReport {
 		return rep
@@ -97,13 +91,13 @@ func reportIf(withReport bool, rep *Report) *Report {
 	return nil
 }
 
-func resolveField(cfg *config, field structplan.Field, structValue reflect.Value, rep *Report) error {
-	fieldCtx := FieldContext{StructField: field.Struct}
-	sources := sourcesForField(cfg, fieldCtx)
+func resolveField(cfg *config, field *structplan.Field, structValue reflect.Value, rep *Report) error {
+	fieldCtx := newFieldContext(field)
+	sources := cfg.sources
 
 	var fr *FieldResolution
 	if rep != nil {
-		fr = &FieldResolution{Field: field.Struct.Name, Type: field.Struct.Type.String()}
+		fr = &FieldResolution{Field: field.Struct.Name, Type: field.Struct.Type.String(), IsSecret: fieldCtx.IsSecret()}
 	}
 	record := func(outcome string) {
 		if fr != nil {
@@ -112,24 +106,20 @@ func resolveField(cfg *config, field structplan.Field, structValue reflect.Value
 		}
 	}
 
-	var presentTags []string
+	var tried []string
 	for i, source := range sources {
-		key := fieldCtx.TagValue(source.Tag())
-		if key == "" {
-			continue
-		}
-		presentTags = append(presentTags, source.Tag())
 		raw, found, err := source.Resolve(fieldCtx)
 		if err != nil {
 			if fr != nil {
-				fr.Attempts = append(fr.Attempts, Attempt{Tag: source.Tag(), Status: statusError, Detail: err.Error()})
+				fr.Attempts = append(fr.Attempts, Attempt{Source: source.Name(), Status: statusError, Detail: err.Error()})
 			}
 			record(outcomeError)
-			return &SourceError{Field: field.Struct.Name, Tag: source.Tag(), Cause: err}
+			return &SourceError{Field: field.Struct.Name, Source: source.Name(), Cause: err}
 		}
+		tried = append(tried, source.Name())
 		if !found {
 			if fr != nil {
-				fr.Attempts = append(fr.Attempts, Attempt{Tag: source.Tag(), Status: statusNotFound, Detail: key})
+				fr.Attempts = append(fr.Attempts, Attempt{Source: source.Name(), Status: statusNotFound, Detail: effectiveKey(fieldCtx, source.Name())})
 			}
 			continue
 		}
@@ -137,24 +127,21 @@ func resolveField(cfg *config, field structplan.Field, structValue reflect.Value
 		converted, err := convert.Value(reflect.ValueOf(raw), destination.Type())
 		if err != nil {
 			if fr != nil {
-				fr.Attempts = append(fr.Attempts, Attempt{Tag: source.Tag(), Status: statusError, Detail: key})
+				fr.Attempts = append(fr.Attempts, Attempt{Source: source.Name(), Status: statusError, Detail: effectiveKey(fieldCtx, source.Name())})
 			}
 			record(outcomeError)
-			// Mask the offending value for secret fields so the error is
-			// safe to log or surface to a user. The underlying cause
-			// (e.g. *strconv.NumError) embeds the raw value in its own
-			// message, so for a secret field we drop it entirely rather
-			// than leak it through Unwrap - security wins over the errors.As
-			// chain here.
-			if fieldCtx.isSecret() {
+			// Mask the value for secret fields so the error is safe to
+			// log. The cause (e.g. *strconv.NumError) embeds the raw value
+			// in its own message, so for a secret field we drop the cause
+			// rather than leak it through Unwrap.
+			if fieldCtx.IsSecret() {
 				return &ConvertError{Field: field.Struct.Name, Value: cfg.masker(fieldCtx, raw), Target: destination.Type(), Cause: nil}
 			}
 			return &ConvertError{Field: field.Struct.Name, Value: raw, Target: destination.Type(), Cause: err}
 		}
 
-		// Hooks run on the converted, field-typed value (an actual int,
-		// not the string "80" cf_default produced it from) since that's
-		// what's actually useful to validate or transform.
+		// Hooks run on the converted, field-typed value (a real int, not the
+		// string "80" it was parsed from), which is what you validate.
 		hookValue := converted.Interface()
 		for _, hook := range cfg.hooks {
 			hookValue, err = hook(fieldCtx, hookValue)
@@ -170,68 +157,49 @@ func resolveField(cfg *config, field structplan.Field, structValue reflect.Value
 		}
 		destination.Set(finalValue)
 		if fr != nil {
-			fr.Attempts = append(fr.Attempts, Attempt{Tag: source.Tag(), Status: statusUsed, Detail: key})
-			markSkipped(fr, fieldCtx, sources[i+1:])
-			fr.Winner = source.Tag()
+			fr.Attempts = append(fr.Attempts, Attempt{Source: source.Name(), Status: statusUsed, Detail: effectiveKey(fieldCtx, source.Name())})
+			markSkipped(fr, sources[i+1:])
+			fr.Winner = source.Name()
 			fr.Raw = cfg.display(fieldCtx, raw)
 			fr.Value = cfg.display(fieldCtx, hookValue)
-			if source.Tag() == DefaultTag {
+			if source.Name() == SourceDefault {
 				record(outcomeDefault)
 			} else {
 				record(outcomeResolved)
 			}
 		}
-		cfg.logger.Debug("resolved field", "field", field.Struct.Name, "source", source.Tag())
+		cfg.logger.Debug("resolved field", "field", field.Struct.Name, "source", source.Name())
 		return nil
 	}
 
-	if len(presentTags) > 0 {
+	if fieldCtx.configured() {
+		if fieldCtx.Optional() {
+			cfg.logger.Debug("optional field left unresolved", "field", field.Struct.Name)
+			record(outcomeUnresolved)
+			return nil
+		}
 		record(outcomeUnresolved)
-		return &NotResolvedError{Field: field.Struct.Name, Tags: presentTags}
+		return &NotResolvedError{Field: field.Struct.Name, Sources: tried}
 	}
-	cfg.logger.Debug("skipping untagged field", "field", field.Struct.Name)
+	cfg.logger.Debug("skipping unconfigured field", "field", field.Struct.Name)
 	record(outcomeSkipped)
 	return nil
 }
 
-// markSkipped records the still-tagged sources that never got a turn because
-// an earlier source already won, so the report shows the full source order.
-func markSkipped(fr *FieldResolution, fieldCtx FieldContext, remaining []Source) {
-	for _, s := range remaining {
-		if key := fieldCtx.TagValue(s.Tag()); key != "" {
-			fr.Attempts = append(fr.Attempts, Attempt{Tag: s.Tag(), Status: statusSkipped, Detail: key})
-		}
+// effectiveKey is a key hint for the trace: the field's per-source override
+// if set, else its base name. It is informational only (a source may
+// transform the base further, e.g. env upper-cases it), never used for lookup.
+func effectiveKey(field FieldContext, source string) string {
+	if v, ok := field.Override(source); ok {
+		return v
 	}
+	return field.Base()
 }
 
-// sourcesForField returns the source order to use for one field: the
-// cf_priority-selected order if the field carries that tag and it resolves
-// against the current PriorityEnvVar selection, otherwise cfg.sources as-is.
-func sourcesForField(cfg *config, field FieldContext) []Source {
-	tag := field.TagValue(PriorityTag)
-	if tag == "" {
-		return cfg.sources
+// markSkipped records the sources that never got a turn because an earlier
+// source already won, so the report shows the full source order.
+func markSkipped(fr *FieldResolution, remaining []Source) {
+	for _, s := range remaining {
+		fr.Attempts = append(fr.Attempts, Attempt{Source: s.Name(), Status: statusSkipped})
 	}
-	ast, err := priority.NewParser(strings.NewReader(tag)).Parse()
-	if err != nil {
-		cfg.logger.Error("could not parse cf_priority tag", "field", field.Name, "error", err)
-		return cfg.sources
-	}
-	selected := priority.GetPriorityChains(ast, os.Getenv(PriorityEnvVar))
-	if len(selected) == 0 {
-		return cfg.sources
-	}
-	ordered := make([]Source, 0, len(selected))
-	for _, tagName := range selected {
-		for _, source := range cfg.sources {
-			if source.Tag() == tagName {
-				ordered = append(ordered, source)
-				break
-			}
-		}
-	}
-	if len(ordered) == 0 {
-		return cfg.sources
-	}
-	return ordered
 }

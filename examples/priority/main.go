@@ -1,8 +1,8 @@
-// Command priority shows gostructor's headline feature: the SAME struct
-// resolving DIFFERENTLY depending on a per-field source order chosen at
-// runtime. In prod the environment wins; in dev the baked-in default wins -
-// all from one cf_priority tag and the GOSTRUCTOR_PRIORITY selector, no code
-// branches.
+// Command priority shows how gostructor expresses priority: the SAME struct
+// resolves DIFFERENTLY purely from the ORDER of sources passed to WithSources.
+// There is no priority tag and no global selector - whoever is listed first
+// and reports a value wins. In "prod" the operator's env override leads; in
+// "dev" the baked-in default leads and any stray env var is ignored.
 //
 // Run it:
 //
@@ -17,11 +17,10 @@ import (
 )
 
 type Config struct {
-	// prod: try cf_env first (an operator override), fall back to default.
-	// dev:  ignore any stray env var and pin the safe local default first.
-	LogLevel string `cf_env:"LOG_LEVEL" cf_default:"info" cf_priority:"prod:cf_env,cf_default;dev:cf_default,cf_env"`
-	// Same idea for the sampling rate the two environments want differently.
-	TraceRate string `cf_env:"TRACE_RATE" cf_default:"0.01" cf_priority:"prod:cf_env,cf_default;dev:cf_default,cf_env"`
+	// Env name derives from the base ("logLevel" -> LOG_LEVEL); the default
+	// lives on the gos tag. Which one wins is decided by source order below.
+	LogLevel  string `cfg:"logLevel" gos:"default:info"`
+	TraceRate string `cfg:"traceRate" gos:"default:0.01"`
 }
 
 func main() {
@@ -30,10 +29,16 @@ func main() {
 	os.Setenv("LOG_LEVEL", "debug")
 	os.Setenv("TRACE_RATE", "1.0")
 
-	for _, env := range []string{"prod", "dev"} {
-		os.Setenv(gostructor.PriorityEnvVar, env) // GOSTRUCTOR_PRIORITY=prod|dev
+	orders := map[string][]gostructor.Source{
+		// prod: env override leads, default is the fallback.
+		"prod": {gostructor.Env(), gostructor.Default()},
+		// dev: default leads, so the stray env vars are ignored.
+		"dev": {gostructor.Default(), gostructor.Env()},
+	}
 
-		cfg, err := gostructor.Configure(&Config{})
+	for _, env := range []string{"prod", "dev"} {
+		cfg, err := gostructor.Configure(&Config{},
+			gostructor.WithSources(orders[env]...))
 		if err != nil {
 			fmt.Println("configure failed:", err)
 			os.Exit(1)
@@ -41,6 +46,6 @@ func main() {
 		fmt.Printf("[%-4s] LogLevel=%-5s TraceRate=%s\n", env, cfg.LogLevel, cfg.TraceRate)
 	}
 
-	fmt.Println("\nSame struct, same env vars — only GOSTRUCTOR_PRIORITY changed:")
+	fmt.Println("\nSame struct, same env vars — only the WithSources order changed:")
 	fmt.Println("  prod trusts the operator's env override; dev pins the local default.")
 }
