@@ -1,17 +1,39 @@
-on: [push, pull_request]
+on: [pull_request]
 name: CI
 
 jobs:
   test:
+    name: test (${{ matrix.module }})
     strategy:
+      fail-fast: false
       matrix:
-        module: [., yaml, toml, hocon, vault, examples/multisource]
+        module:
+          # Library modules.
+          - .
+          - yaml
+          - toml
+          - hocon
+          - vault
+          - snapshot
+          - git
+          - consul
+          - etcd
+          - springcloud
+          - watch
+          # Runnable examples (build/vet only — no tests, some need Docker to run).
+          - examples/multisource
+          - examples/hotreload-file
+          - examples/consul
+          - examples/etcd
+          - examples/vault
+          - examples/git
+          - examples/springcloud
     runs-on: ubuntu-latest
     steps:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.25"
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Build
@@ -23,3 +45,35 @@ jobs:
       - name: Test
         working-directory: ${{ matrix.module }}
         run: go test ./... -race -cover
+
+  lint:
+    name: lint (${{ matrix.module }})
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - .
+          - yaml
+          - toml
+          - hocon
+          - vault
+          - snapshot
+          - git
+          - consul
+          - etcd
+          - springcloud
+          - watch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.12.2
+          working-directory: ${{ matrix.module }}
+          args: --config=${{ github.workspace }}/.golangci.yml

@@ -1,10 +1,29 @@
 package gostructor
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/goreflect/gostructor/internal/structplan"
 )
+
+// Watchable is an optional interface a Source may implement to signal that its
+// backing data can change while the program runs. Watch (see watch.go)
+// subscribes to every configured source that implements it and re-fills the
+// target struct whenever any of them reports a change.
+//
+// Watch (the method) blocks until ctx is cancelled, calling onChange each time
+// the underlying data changes. It must honour ctx — returning ctx.Err() once
+// cancelled — and return any fatal error otherwise. onChange may be invoked
+// from any goroutine and must be safe to call repeatedly; the Watch driver
+// coalesces bursts through WithDebounce, so a source need not debounce itself.
+//
+// A source that caches a snapshot for Resolve should refresh that snapshot
+// *before* calling onChange, so the re-fill triggered by onChange reads the
+// new data rather than the old.
+type Watchable interface {
+	Watch(ctx context.Context, onChange func()) error
+}
 
 // Source resolves one struct field's value from a single configuration
 // origin: an environment variable, a parsed file, a secret store, and so on.

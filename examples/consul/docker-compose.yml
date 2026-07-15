@@ -1,0 +1,32 @@
+# Reproducible Consul for the example: a dev-mode agent plus a one-shot seeder
+# that writes the demo keys. `docker compose up -d` then `go run .`.
+services:
+  consul:
+    image: hashicorp/consul:1.20
+    command: agent -dev -client=0.0.0.0
+    ports:
+      - "8500:8500"
+    healthcheck:
+      test: ["CMD", "consul", "info"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  seed:
+    image: hashicorp/consul:1.20
+    depends_on:
+      consul:
+        condition: service_healthy
+    environment:
+      CONSUL_HTTP_ADDR: "consul:8500"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        consul kv put config/orders/host 10.0.0.5
+        consul kv put config/orders/port 5432
+        consul kv put config/orders/tags "eu,primary"
+        consul kv put config/orders/level info
+        echo "seeded config/orders/*"
+    restart: "no"

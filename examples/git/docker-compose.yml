@@ -1,0 +1,44 @@
+# Reproducible git server for the example: an alpine/git container that seeds a
+# repo with two versions (branch `main` and tag `v1`) and serves it over the git
+# protocol on :9418. `docker compose up -d` then `go run .`.
+services:
+  gitserver:
+    image: alpine/git:latest
+    ports:
+      - "9418:9418"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        export HOME=/root
+        git config --global user.email demo@example.com
+        git config --global user.name demo
+        git config --global init.defaultBranch main
+        rm -rf /tmp/work /srv/config.git
+        mkdir -p /tmp/work && cd /tmp/work
+        git init -q
+
+        mkdir -p services/api
+        cat > services/api/config.json <<'EOF'
+        { "server": { "host": "v1.internal", "port": 8001 }, "release": "2025.10" }
+        EOF
+        git add -A && git commit -qm "v1 config"
+        git tag v1
+
+        cat > services/api/config.json <<'EOF'
+        { "server": { "host": "main.internal", "port": 9000 }, "release": "2025.11" }
+        EOF
+        git add -A && git commit -qm "main config"
+
+        cd /tmp && git clone -q --bare /tmp/work /srv/config.git
+        touch /srv/config.git/git-daemon-export-ok
+        git -C /srv/config.git update-server-info
+        echo "serving git://0.0.0.0:9418/config.git (branch main + tag v1)"
+        exec git daemon --verbose --reuseaddr --export-all \
+          --enable=upload-pack --base-path=/srv /srv
+    healthcheck:
+      test: ["CMD", "sh", "-c", "test -f /srv/config.git/git-daemon-export-ok"]
+      interval: 2s
+      timeout: 2s
+      retries: 15

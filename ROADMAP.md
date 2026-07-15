@@ -143,7 +143,14 @@ This couples with the error taxonomy: a secret field's `ConvertError` reports
 
 ---
 
-## Theme 2 — Hot reload / live configuration
+## Theme 2 — Hot reload / live configuration (shipped ✅)
+
+**Shipped.** `Watchable` (an optional `Watch(ctx, onChange)` on a `Source`),
+the `Watch[T]` driver with transactional last-known-good reload, `WithDebounce`
+and `WithValidate`, and a `PollWatch` helper for poll-based sources — all in the
+zero-dep core. File watching via `fsnotify` lives in `gostructor/watch`. See
+[docs/live-reload.md](docs/live-reload.md) and `examples/hotreload-file`. The
+sketch below is what was built.
 
 **Motivation.** Currently `Configure` runs once. Long-lived services want to
 pick up changed values without a restart. This is also the prerequisite for
@@ -199,7 +206,14 @@ Prior art: viper `WatchConfig`/`OnConfigChange`, koanf `Watch`, Argus
 
 ---
 
-## Theme 3 — Git as source of truth
+## Theme 3 — Git as source of truth (shipped ✅)
+
+**Shipped** as `gostructor/git` (pure Go via `go-git`): a `Source` + `Watchable`
+that reads a file at a ref, polls for drift, snapshots to a durable store, and
+switches version at runtime with `SetVersion`. The snapshot store is its own
+module, `gostructor/snapshot` (the "файлопомойка" — `Store` interface +
+`DirStore`). Runnable: `examples/git` (git server in docker-compose). The
+original design notes follow.
 
 **Motivation.** Store configuration in a git repo, treat **a branch/tag/ref
 as a config version**, and drive a running service from it: pull the ref,
@@ -241,7 +255,20 @@ Design points to settle:
 
 ---
 
-## Theme 4 — Config servers & remote sources
+## Theme 4 — Config servers & remote sources (shipped ✅)
+
+**Shipped** as first-class adapter modules, each a `Source` + `Watchable` with an
+optional snapshot store and a docker-compose example:
+
+- `gostructor/consul` — Consul KV, live via blocking queries (`examples/consul`).
+- `gostructor/etcd` — etcd v3, live via the native watch API (`examples/etcd`).
+- `gostructor/springcloud` — Spring Cloud Config Server over HTTP, live via
+  polling (`examples/springcloud`).
+- `gostructor/vault` — now also `Watchable` (polls referenced secrets for
+  rotation; `examples/vault`).
+
+The shared in-memory resolution core (`gostructor.Map` / `LookupKey`) lets any
+map-backed remote source reuse the built-in key addressing. Original notes below.
 
 **Motivation.** "Can I write an adapter for Spring Cloud Config Server / any
 config server?" — **yes, that's exactly what the `Source` interface is for**

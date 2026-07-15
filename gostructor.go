@@ -38,6 +38,15 @@ func ConfigureWithReport[T any](target *T, opts ...Option) (*T, *Report, error) 
 }
 
 func configure[T any](target *T, withReport bool, opts []Option) (result *T, report *Report, err error) {
+	cfg := newConfig(opts)
+	return runConfigure(cfg, target, withReport)
+}
+
+// runConfigure fills target using an already-built config. It is the shared
+// resolution path behind both Configure (which builds cfg from opts once) and
+// Watch (which reuses one cfg across many re-fills), so a live reload takes the
+// exact same trace + masking + hook path as the initial fill.
+func runConfigure[T any](cfg *config, target *T, withReport bool) (result *T, report *Report, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if asErr, ok := r.(error); ok {
@@ -51,7 +60,6 @@ func configure[T any](target *T, withReport bool, opts []Option) (result *T, rep
 	if target == nil {
 		return nil, nil, fmt.Errorf("%w: got nil", ErrInvalidTarget)
 	}
-	cfg := newConfig(opts)
 
 	structValue := reflect.ValueOf(target).Elem()
 	if structValue.Kind() != reflect.Struct {

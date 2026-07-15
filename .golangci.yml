@@ -1,0 +1,27 @@
+# golangci-lint v2 config, applied per-module by CI (run from each module dir).
+# Keeps the standard linter set and silences the well-known false positives
+# (unchecked deferred Close, os.(Un)Setenv/Remove) plus test-only ignored errors.
+version: "2"
+
+linters:
+  default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  exclusions:
+    generated: lax
+    presets:
+      # EXC0001: unchecked errors from Close/Flush/os.Remove/os.(Un)Setenv/print*.
+      - common-false-positives
+    rules:
+      # Tests deliberately ignore errors from helpers like os.Setenv and from
+      # `go src.Watch(...)` goroutines whose result the test asserts elsewhere.
+      - path: _test\.go
+        linters:
+          - errcheck
+      # Runnable examples favour readability over exhaustive error handling on
+      # cleanup (defer os.Remove) and demo plumbing.
+      - path: examples/
+        linters:
+          - errcheck
+
+formatters:
+  enable:
+    - gofmt

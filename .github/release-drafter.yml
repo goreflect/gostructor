@@ -1,0 +1,32 @@
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+
+categories:
+  - title: "Features"
+    labels:
+      - enhancement
+  - title: "Bug Fixes"
+    labels:
+      - bug
+  - title: "Documentation"
+    labels:
+      - documentation
+  - title: "Dependencies"
+    labels:
+      - dependencies
+
+# Bump minor on a feature, patch otherwise; major stays manual.
+version-resolver:
+  minor:
+    labels:
+      - enhancement
+  default: patch
+
+change-template: "- $TITLE (#$NUMBER) @$AUTHOR"
+exclude-labels:
+  - skip-changelog
+
+template: |
+  ## Changes
+
+  $CHANGES
