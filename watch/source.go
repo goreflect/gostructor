@@ -1,15 +1,12 @@
 // Package watch provides a file-backed gostructor.Source that reloads when the
-// file changes on disk, using fsnotify. It is the local, dependency-light way to
-// get hot reload: point a service at a JSON (or, with a custom decoder, any)
-// config file and have gostructor.Watch re-fill the struct on every save.
+// file changes on disk, using fsnotify — the local, dependency-light way to get
+// hot reload with gostructor.Watch.
 //
-// It watches the file's *directory* rather than the file inode, because editors
-// and atomic writers replace a file by renaming a new one over it — which drops
-// a watch on the old inode. Directory watching survives that, and the source
-// filters events down to the target file.
-//
-// This lives in its own module so the core stays dependency-free; only programs
-// that want file watching pull in fsnotify.
+// It watches the file's *directory* rather than the inode, because editors and
+// atomic writers replace a file by renaming a new one over it (which drops an
+// inode watch); the source then filters events down to the target file. It
+// lives in its own module so only programs that want file watching pull in
+// fsnotify.
 package watch
 
 import (
@@ -28,11 +25,9 @@ import (
 // DefaultName is the source identity and cfg per-source override key.
 const DefaultName = "file"
 
-// Decoder turns the file's bytes into a nested map addressable by
-// gostructor.LookupKey. The default decodes JSON; watch any other supported
-// format by passing its decoder via Options.Decoder — gostructor.DecodeINI /
-// gostructor.DecodeKeyValue (zero-dep), or yaml.Decode / toml.Decode /
-// hocon.Decode from those modules.
+// Decoder parses the file bytes into a nested map. The default is JSON; pass
+// another via Options.Decoder (gostructor.DecodeINI/DecodeKeyValue, or
+// yaml.Decode/toml.Decode/hocon.Decode).
 type Decoder = gostructor.Decoder
 
 // Options configures a watched file source.

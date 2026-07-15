@@ -1,19 +1,11 @@
-// Package snapshot is gostructor's durable last-known-good store — the
-// "файлопомойка" a remote source (git, a config server) writes its most
-// recently fetched, successfully resolved configuration to, and reads back when
-// the upstream is unreachable.
+// Package snapshot is gostructor's durable last-known-good store: a remote
+// source (git, a config server) saves each good fetch to a Store and loads it
+// back when the upstream is unreachable, so a remote hiccup doesn't take the
+// service down. The version string (a commit SHA, a KV modify-index) lets the
+// source tell whether the upstream has drifted from what it last stored.
 //
-// The point is availability: a service driven from a remote config must not go
-// down because the remote had a hiccup at the wrong moment. A remote Source
-// saves each good fetch to a Store; on a later start (or a fetch failure) it
-// Loads the last good bytes and serves from those instead of failing. The
-// version string — a commit SHA, a KV modify-index, a config-server label —
-// lets the source tell whether the upstream has drifted from what it last
-// stored.
-//
-// Store is a two-method interface so callers can keep the snapshot wherever
-// they like (an object store, a database); DirStore is the default on-disk
-// implementation.
+// Store is a two-method interface, so callers can keep snapshots anywhere;
+// DirStore is the default on-disk implementation.
 package snapshot
 
 import (
@@ -42,10 +34,9 @@ type Store interface {
 	Load() (version string, data []byte, err error)
 }
 
-// DirStore is the default file-backed Store: the "файлопомойка" on disk. It
-// keeps the payload and its version in two files under dir, writing each
-// atomically (write to a temp file, then rename) so a crash mid-Save can never
-// corrupt the last-known-good.
+// DirStore is the default file-backed Store. It keeps the payload and its
+// version in two files under dir, writing each atomically (temp file + rename)
+// so a crash mid-Save can never corrupt the last-known-good.
 type DirStore struct {
 	dir string
 }

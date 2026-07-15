@@ -5,14 +5,10 @@
 // `springcloud:` override).
 //
 // Spring Cloud Config has no change-push, so it implements gostructor.Watchable
-// by polling: on an interval it re-fetches and, when the server's version (the
-// backing git commit, for a git-backed server) or the response body changes, it
-// refreshes and signals a reload. An optional snapshot store
-// (gostructor/snapshot) serves the last-known-good properties when the server is
-// unreachable at startup.
-//
-// This adapter is the worked example behind "yes, you can point gostructor at
-// any config server" — the same Source shape as Vault, over plain HTTP.
+// by polling: it re-fetches on an interval and signals a reload when the
+// server's version or response body changes. An optional gostructor/snapshot
+// store serves the last-known-good properties when the server is unreachable at
+// startup.
 package springcloud
 
 import (
@@ -311,8 +307,7 @@ func merge(sources []propertySource) map[string]any {
 
 // normalize adapts a JSON-typed property value to what the field expects: a
 // scalar passes through, and a string bound to a slice field is split on the
-// field separator (Spring also emits indexed keys for lists, but a
-// comma-separated string is the common simple case).
+// field separator.
 func normalize(field gostructor.FieldContext, value any) any {
 	kind := field.Type.Kind()
 	if kind != reflect.Slice && kind != reflect.Array {

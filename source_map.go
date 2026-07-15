@@ -6,15 +6,12 @@ import "github.com/goreflect/gostructor/internal/tools"
 const SourceMap = "map"
 
 // LookupKey resolves field against an already-decoded, possibly nested
-// map[string]any — the shape encoding/json and go-yaml produce — using the same
-// addressing as the JSON source: the field's per-source override for sourceName
-// if it has one, otherwise its base name, traversed as a dot-separated path
-// ("server.host"). It returns found=false when the field has no key for this
-// source or the path is absent/nil.
+// map[string]any using the field's per-source override for sourceName (or its
+// base name) as a dot-separated path ("server.host"). It returns found=false
+// when the field has no key for this source or the path is absent/nil.
 //
-// It is exported so remote, map-backed sources built as separate modules (git,
-// Spring Cloud Config, and the like) resolve keys exactly the way the built-in
-// file sources do, instead of each re-implementing traversal.
+// It is exported so remote map-backed sources in separate modules (git, Spring
+// Cloud Config) resolve keys exactly like the built-in file sources.
 func LookupKey(field FieldContext, sourceName string, data map[string]any) (any, bool) {
 	key := field.SourceKey(sourceName, Identity)
 	if key == "" {
@@ -33,11 +30,10 @@ func LookupKey(field FieldContext, sourceName string, data map[string]any) (any,
 }
 
 // Map returns a Source backed by an in-memory map, resolving fields with the
-// same nested-key addressing as the JSON source (see LookupKey). It is useful
-// as a highest-priority override source in tests and programmatic setups — put
-// it first in WithSources — and is the shared resolution core the remote
-// map-backed adapters delegate to. name is the source's identity and its cfg
-// per-source override key; an empty name defaults to SourceMap.
+// same nested-key addressing as the JSON source (see LookupKey). It is handy as
+// a highest-priority override in tests and programmatic setups — put it first in
+// WithSources. name is the source identity and cfg override key; empty defaults
+// to SourceMap.
 func Map(name string, data map[string]any) Source {
 	if name == "" {
 		name = SourceMap

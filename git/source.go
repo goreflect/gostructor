@@ -37,11 +37,9 @@ const DefaultName = "git"
 // DefaultPoll is the drift-check interval used when Options.Poll is zero.
 const DefaultPoll = 30 * time.Second
 
-// Decoder turns the raw bytes of the config file into a nested map, the shape
-// gostructor.LookupKey addresses. The default decodes JSON; read any other
-// format the library supports by passing its decoder via Options.Decoder —
-// gostructor.DecodeINI / gostructor.DecodeKeyValue (zero-dep), or yaml.Decode /
-// toml.Decode / hocon.Decode from those modules.
+// Decoder parses the config file bytes into a nested map. The default is JSON;
+// pass another via Options.Decoder (gostructor.DecodeINI/DecodeKeyValue, or
+// yaml.Decode/toml.Decode/hocon.Decode).
 type Decoder = gostructor.Decoder
 
 // Options configures a git Source.
@@ -296,11 +294,9 @@ func (s *source) fetchLocked() error {
 }
 
 // resolveRefLocked maps a user ref ("main", "v1.2", a SHA, "HEAD") to a commit
-// hash. It tries the remote-tracking form *first* so that a branch follows the
-// origin (which fetch advances) rather than the clone's own local branch (which
-// fetch never moves) — that ordering is what makes drift detection work. Tags
-// and raw SHAs, which have no remote-tracking ref, fall through to the later
-// candidates.
+// hash. It tries the remote-tracking form first so a branch follows origin
+// (which fetch advances) rather than the stale local branch — that ordering is
+// what makes drift detection work. Tags and raw SHAs fall through.
 func (s *source) resolveRefLocked(ref string) (plumbing.Hash, error) {
 	var candidates []string
 	if ref == "HEAD" {
