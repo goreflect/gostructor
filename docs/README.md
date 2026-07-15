@@ -25,6 +25,9 @@ you're new. Every page maps to a self-contained program under
 
 - [configuration.md](configuration.md) — the `Configure` API, `WithSources`,
   the full `cfg`/`gos` tag grammar, hooks, and logging.
+- [live-reload.md](live-reload.md) — `Watch`, the `Watchable` interface,
+  `WithDebounce`/`WithValidate`, the durable snapshot store, and the live
+  sources (file, git, Consul, etcd, Spring Cloud Config, Vault).
 - [sources.md](sources.md) — every source in detail (env, default, JSON, INI,
   YAML, TOML, HOCON, Vault), priority, and writing your own `Source`.
 - [field-types.md](field-types.md) — every supported field type and the strict

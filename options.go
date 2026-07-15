@@ -1,6 +1,10 @@
 package gostructor
 
-import "log/slog"
+import (
+	"fmt"
+	"log/slog"
+	"time"
+)
 
 // A field marked with the gos secret flag (`gos:"secret"`) is masked
 // everywhere its value would otherwise print: the Report, slog trace records,
@@ -13,6 +17,13 @@ type config struct {
 	hooks      []Hook
 	masker     Masker
 	trace      bool
+	// debounce coalesces a burst of change signals during Watch into a single
+	// reload; zero disables debouncing. See WithDebounce.
+	debounce time.Duration
+	// validate gates a live reload against the freshly filled struct before it
+	// is published; nil disables it. See WithValidate. It is stored type-erased
+	// (the *T assertion lives in the closure WithValidate builds).
+	validate func(any) error
 }
 
 // Masker renders a sensitive field's value for display. It is called for any
@@ -90,6 +101,41 @@ func WithMasker(m Masker) Option {
 func WithTrace() Option {
 	return func(c *config) {
 		c.trace = true
+	}
+}
+
+// WithDebounce sets how long Watch waits for a source's change signals to go
+// quiet before running one reload, collapsing a burst (an editor's several
+// writes for one save, a config server's batch of key events) into a single
+// re-fill. Zero disables debouncing (every signal reloads immediately). It has
+// no effect on a plain Configure call.
+func WithDebounce(d time.Duration) Option {
+	return func(c *config) {
+		c.debounce = d
+	}
+}
+
+// WithValidate registers a whole-struct validation run during Watch after a
+// reload has filled a fresh copy but before it is published. Returning an error
+// rejects that reload: the previously good config keeps serving and the error
+// is delivered to onReload rather than swapping in a broken value. It
+// complements per-field WithHook (which runs during every fill) with a check
+// that can see the whole struct at once. It has no effect on a plain Configure
+// call; validate there is the caller's own concern.
+func WithValidate[T any](fn func(*T) error) Option {
+	return func(c *config) {
+		if fn == nil {
+			return
+		}
+		c.validate = func(v any) error {
+			target, ok := v.(*T)
+			if !ok {
+				// Watch always passes the *T it just filled, so a mismatch here
+				// means WithValidate's T differs from the Watch target's T.
+				return fmt.Errorf("gostructor: WithValidate type %T does not match target %T", (*T)(nil), v)
+			}
+			return fn(target)
+		}
 	}
 }
 

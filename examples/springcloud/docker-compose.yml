@@ -1,0 +1,21 @@
+# Reproducible Spring Cloud Config Server for the example, using its native
+# (filesystem) backend over the mounted ./config directory — no external git
+# needed. `docker compose up -d` then `go run .`.
+#
+# GET http://localhost:8888/orders/production returns the merged properties from
+# config/orders-production.yml (and any config/application.yml).
+services:
+  configserver:
+    image: hyness/spring-cloud-config-server:4.1.3
+    ports:
+      - "8888:8888"
+    environment:
+      SPRING_PROFILES_ACTIVE: native
+      SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS: "file:/config"
+    volumes:
+      - ./config:/config:ro
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget -qO- http://localhost:8888/orders/production >/dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 20

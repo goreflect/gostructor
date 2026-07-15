@@ -1,0 +1,36 @@
+# Reproducible etcd for the example: the official etcd image plus a one-shot
+# seeder. `docker compose up -d` then `go run .`.
+services:
+  etcd:
+    image: gcr.io/etcd-development/etcd:v3.5.16
+    command:
+      - etcd
+      - --name=node0
+      - --advertise-client-urls=http://0.0.0.0:2379
+      - --listen-client-urls=http://0.0.0.0:2379
+    ports:
+      - "2379:2379"
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  seed:
+    image: gcr.io/etcd-development/etcd:v3.5.16
+    depends_on:
+      etcd:
+        condition: service_healthy
+    environment:
+      ETCDCTL_API: "3"
+      ETCDCTL_ENDPOINTS: "http://etcd:2379"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        etcdctl put config/orders/host 10.0.0.5
+        etcdctl put config/orders/port 5432
+        etcdctl put config/orders/level info
+        echo "seeded config/orders/*"
+    restart: "no"

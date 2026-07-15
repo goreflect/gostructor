@@ -22,6 +22,22 @@ Start at the top and work down — each one introduces a little more.
 | [`webservice`](webservice) | **The big one.** A full microservice config (~30 fields, nested sub-structs) assembled from a JSON base + env overrides + defaults, with masked secrets and a focused trace. | core only |
 | [`multisource`](multisource) | A field with several sources including a real YAML file, plus a validation hook. Priority is the source order. | `gostructor/yaml` |
 
+### Live config & remote sources
+
+These show `gostructor.Watch` — the struct re-fills when the backing source
+changes. All but `hotreload-file` bring their backend up with **docker-compose**
+and seed it, so each is fully reproducible; see the example's own README for the
+exact commands.
+
+| Example | What it shows | Backend |
+|---|---|---|
+| [`hotreload-file`](hotreload-file) | `Watch` + fsnotify file source: edit a JSON file, the struct reloads. Transactional last-known-good via `WithValidate`. | none (local file) |
+| [`git`](git) | Config from a git repo, ref = version; drift polling and runtime `SetVersion`; snapshot fallback. | `git daemon` (compose) |
+| [`consul`](consul) | Consul KV prefix, live via blocking queries. | `hashicorp/consul` (compose) |
+| [`etcd`](etcd) | etcd key prefix, live via the native watch API. | `etcd` (compose) |
+| [`springcloud`](springcloud) | Spring Cloud Config Server over HTTP, live via polling. | `spring-cloud-config-server` (compose) |
+| [`vault`](vault) | Vault secrets with live rotation (polling); secret masking. | `hashicorp/vault` (compose) |
+
 ## Suggested reading order
 
 1. **`basic`** — get the shape of `Configure` and the two tags.
@@ -33,7 +49,7 @@ Start at the top and work down — each one introduces a little more.
 6. **`webservice`** — everything at once, at production scale.
 7. **`multisource`** — bringing in an external source module (YAML).
 
-Most examples live in the root module and need no extra setup.
-`multisource` is its own module (it pulls in `gostructor/yaml`) with a
-`replace` pointing back at the repo, so run it from its own directory or via
-`go run ./examples/multisource`.
+Most core examples live in the root module and need no extra setup.
+`multisource` and every live-config example are their own modules (they pull in
+an external source module) with `replace` directives pointing back at the repo,
+so run each from its own directory: `cd examples/<name> && go run .`.

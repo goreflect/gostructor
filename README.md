@@ -58,6 +58,17 @@ go get github.com/goreflect/gostructor/hocon   # hocon source
 go get github.com/goreflect/gostructor/vault   # vault source
 ```
 
+Live-config and remote sources (each its own module, all optional):
+
+```sh
+go get github.com/goreflect/gostructor/watch        # fsnotify file source (hot reload)
+go get github.com/goreflect/gostructor/git          # git repo as config, ref = version
+go get github.com/goreflect/gostructor/consul       # Consul KV
+go get github.com/goreflect/gostructor/etcd         # etcd v3
+go get github.com/goreflect/gostructor/springcloud  # Spring Cloud Config Server
+go get github.com/goreflect/gostructor/snapshot     # durable last-known-good store
+```
+
 Requires Go 1.24+.
 
 ## Quick start
@@ -109,6 +120,7 @@ command, run it against your checkout, and see the same thing.
 | [Error taxonomy](docs/features/06-errors.md) | A closed set of typed errors, classified with `errors.Is`/`errors.As`. | `go run ./examples/errors` |
 | [Observability & masking](docs/features/07-observability.md) | A focused resolution trace, provenance map, masked secrets. | `go run ./examples/observability` |
 | [Full service config](docs/features/08-webservice.md) | ~30 fields, nested sub-structs, JSON + env + defaults at once. | `go run ./examples/webservice` |
+| [Live reload](docs/live-reload.md) | `Watch` re-fills the struct on change; transactional last-known-good; git/consul/etcd/springcloud/vault adapters. | `cd examples/hotreload-file && go run .` |
 
 ## Supported sources
 
@@ -127,9 +139,24 @@ unexpected file load.
 | `toml` | TOML file | `gostructor/toml` | `GOSTRUCTOR_TOML=...` |
 | `hocon` | HOCON file | `gostructor/hocon` | `GOSTRUCTOR_HOCON=...` |
 | `vault` | HashiCorp Vault secret | `gostructor/vault` | `VAULT_ADDR`, `VAULT_TOKEN` |
+| `map` | In-memory map (`gostructor.Map`) | core | — |
 
-Full addressing rules, per-source key derivation, and priority:
-[docs/sources.md](docs/sources.md).
+**Live / remote sources** — each implements `Watchable`, so `gostructor.Watch`
+re-fills the struct when the backing data changes (see
+[docs/live-reload.md](docs/live-reload.md)):
+
+| Source | Reads from | Module | Live via |
+|---|---|---|---|
+| `file` | JSON file on disk | `gostructor/watch` | fsnotify |
+| `git` | File in a git repo (ref = version) | `gostructor/git` | poll for drift + `SetVersion` |
+| `consul` | Consul KV prefix | `gostructor/consul` | blocking queries |
+| `etcd` | etcd v3 key prefix | `gostructor/etcd` | native watch API |
+| `springcloud` | Spring Cloud Config Server | `gostructor/springcloud` | poll |
+| `vault` | HashiCorp Vault secret | `gostructor/vault` | poll (secret rotation) |
+
+Each has a **fully reproducible, docker-compose example** under
+[`examples/`](examples/). Full addressing rules, per-source key derivation, and
+priority: [docs/sources.md](docs/sources.md).
 
 ## Documentation
 
@@ -153,14 +180,16 @@ See [ROADMAP.md](ROADMAP.md) for the full plan. Headlines:
 
 - **Observability & masking** — ✅ shipped: a focused resolution trace
   (`ConfigureWithReport`). See [docs/observability.md](docs/observability.md).
-- **Hot reload** — a `Watchable` source interface and a `Watch` helper that
-  re-fills the struct when a backing source changes.
-- **Git as source of truth** — a branch/tag as a config version, snapshotted
-  and polled for drift, switchable at runtime.
-- **Config-server adapters** — Spring Cloud Config Server and generic HTTP/kv
-  backends, each a `Source`-implementing module like Vault.
-- **Ergonomics** — self-documenting config, whole-struct validation, custom
-  time layouts, in-memory override source.
+- **Hot reload** — ✅ shipped: a `Watchable` source interface and a `Watch`
+  helper that re-fills the struct (transactionally, last-known-good) when a
+  backing source changes. See [docs/live-reload.md](docs/live-reload.md).
+- **Git as source of truth** — ✅ shipped (`gostructor/git`): a branch/tag as a
+  config version, snapshotted and polled for drift, switchable at runtime.
+- **Config-server adapters** — ✅ shipped: Consul (`gostructor/consul`), etcd
+  (`gostructor/etcd`), Spring Cloud Config (`gostructor/springcloud`), and a
+  now-`Watchable` Vault — each a `Source` module with a docker-compose example.
+- **Ergonomics** — in-memory override source (`gostructor.Map`) shipped;
+  self-documenting config, whole-struct validation, and custom time layouts next.
 
 ## Development
 
