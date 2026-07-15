@@ -7,26 +7,23 @@ import (
 	"strings"
 )
 
-// Errors returned by Configure fall into a small, closed set of categories so
-// a caller can tell exactly what went wrong and whose fault it is:
+// Errors returned by Configure fall into a small, closed set of categories, so
+// a caller can tell what went wrong and whose fault it is:
 //
-//   - ErrInvalidTarget - the call itself is wrong (target isn't a non-nil
-//     pointer to a struct). A programming bug; nothing an operator can fix at
-//     runtime.
-//   - *NotResolvedError (wraps ErrFieldNotResolved) - a field carries source
-//     tags but none of them produced a value. Usually a missing env var,
-//     file key, or secret: an operational/config gap.
-//   - *SourceError - a source failed while producing a value (file missing or
-//     malformed, Vault unreachable, ...). The backing store is the problem.
-//   - *ConvertError - a value was produced but doesn't fit the field's Go
-//     type (a fractional float into an int, an overflow, a bad duration).
-//     The value in the config is the problem.
-//   - *HookError - a WithHook callback rejected or mistyped the value. Your
-//     validation/transformation is the problem.
+//   - ErrInvalidTarget: the call itself is wrong (target isn't a non-nil
+//     pointer to a struct). A programming bug.
+//   - *NotResolvedError (wraps ErrFieldNotResolved): a configured field, not
+//     marked gos:"optional", got no value from any source. Usually a missing
+//     env var, file key, or secret.
+//   - *SourceError: a source failed while producing a value (file missing or
+//     malformed, Vault unreachable). The backing store is the problem.
+//   - *ConvertError: a value was produced but doesn't fit the field's Go type
+//     (fractional float into an int, overflow, bad duration).
+//   - *HookError: a WithHook callback rejected or mistyped the value.
 //
-// Match the sentinels with errors.Is and the struct types with errors.As;
-// every struct type unwraps to its underlying Cause, and every field-scoped
-// type satisfies FieldError so you can recover the field name uniformly:
+// Match the sentinels with errors.Is and the struct types with errors.As.
+// Every struct type unwraps to its Cause, and every field-scoped type
+// satisfies FieldError, so you can recover the field name uniformly:
 //
 //	cfg, err := gostructor.Configure(&Config{})
 //	switch {
@@ -35,7 +32,7 @@ import (
 //	case errors.Is(err, gostructor.ErrFieldNotResolved):
 //		var nre *gostructor.NotResolvedError
 //		errors.As(err, &nre)
-//		log.Fatalf("no value for %s (tried %s)", nre.Field, strings.Join(nre.Tags, ", "))
+//		log.Fatalf("no value for %s (tried %s)", nre.Field, strings.Join(nre.Sources, ", "))
 //	default:
 //		var fe gostructor.FieldError
 //		if errors.As(err, &fe) {
@@ -56,8 +53,8 @@ var ErrInvalidTarget = errors.New("gostructor: target must be a non-nil pointer 
 var ErrFieldNotResolved = errors.New("no configured source produced a value")
 
 // FieldError is implemented by every Configure error scoped to one struct
-// field - NotResolvedError, SourceError, ConvertError, and HookError. It lets
-// a caller recover which field failed without switching on the concrete type:
+// field: NotResolvedError, SourceError, ConvertError, and HookError. It lets a
+// caller recover which field failed without switching on the concrete type:
 //
 //	var fe gostructor.FieldError
 //	if errors.As(err, &fe) { ... fe.FieldName() ... }
@@ -66,20 +63,20 @@ type FieldError interface {
 	FieldName() string
 }
 
-// NotResolvedError reports that a field carried recognized source tags but
-// none produced a value. Tags lists the source tags that were present and
-// tried, so the message can say precisely what was looked at (e.g. tried
-// cf_env, cf_json). It wraps ErrFieldNotResolved.
+// NotResolvedError reports that a configured field produced no value from any
+// source. Sources lists the source names tried, in order, so the message can
+// say precisely what was looked at (e.g. tried env, json). It wraps
+// ErrFieldNotResolved.
 type NotResolvedError struct {
-	Field string   // struct field name
-	Tags  []string // the source tags present on the field, in the order tried
+	Field   string   // struct field name
+	Sources []string // the source names tried, in order
 }
 
 func (e *NotResolvedError) Error() string {
-	if len(e.Tags) == 0 {
+	if len(e.Sources) == 0 {
 		return fmt.Sprintf("gostructor: field %q: %v", e.Field, ErrFieldNotResolved)
 	}
-	return fmt.Sprintf("gostructor: field %q: %v (tried %s)", e.Field, ErrFieldNotResolved, strings.Join(e.Tags, ", "))
+	return fmt.Sprintf("gostructor: field %q: %v (tried %s)", e.Field, ErrFieldNotResolved, strings.Join(e.Sources, ", "))
 }
 
 func (e *NotResolvedError) Unwrap() error { return ErrFieldNotResolved }
@@ -87,19 +84,18 @@ func (e *NotResolvedError) Unwrap() error { return ErrFieldNotResolved }
 // FieldName reports the struct field this error concerns.
 func (e *NotResolvedError) FieldName() string { return e.Field }
 
-// SourceError reports that a configured Source failed while resolving a field
-// - a JSON file that doesn't exist or doesn't parse, a Vault server that
-// can't be reached, and so on. Tag names the failing source (e.g. "cf_json")
-// so you can tell which of several sources on a field went wrong. It unwraps
-// to the error the Source itself returned.
+// SourceError reports that a configured Source failed while resolving a field:
+// a JSON file that doesn't exist or parse, an unreachable Vault server, and so
+// on. Source names the failing source (e.g. "json") so you can tell which of
+// several sources went wrong. It unwraps to the error the Source returned.
 type SourceError struct {
-	Field string // struct field name being resolved
-	Tag   string // the failing source's tag, e.g. "cf_json"
-	Cause error  // the error the Source returned
+	Field  string // struct field name being resolved
+	Source string // the failing source's name, e.g. "json"
+	Cause  error  // the error the Source returned
 }
 
 func (e *SourceError) Error() string {
-	return fmt.Sprintf("gostructor: field %q: source %s failed: %v", e.Field, e.Tag, e.Cause)
+	return fmt.Sprintf("gostructor: field %q: source %s failed: %v", e.Field, e.Source, e.Cause)
 }
 
 func (e *SourceError) Unwrap() error { return e.Cause }
@@ -107,12 +103,11 @@ func (e *SourceError) Unwrap() error { return e.Cause }
 // FieldName reports the struct field this error concerns.
 func (e *SourceError) FieldName() string { return e.Field }
 
-// ConvertError reports a failure to convert a resolved raw value into a
-// struct field's Go type - a fractional float into an int field, an
-// out-of-range number, a malformed duration string, and so on. It carries
-// the offending value and target type for diagnostics and unwraps to the
-// underlying cause (a *strconv.NumError, a time.ParseDuration error, a
-// TextUnmarshaler error, ...), reachable with a further errors.As.
+// ConvertError reports a failure to convert a resolved raw value into a struct
+// field's Go type: a fractional float into an int, an out-of-range number, a
+// malformed duration string, and so on. It carries the offending value and
+// target type, and unwraps to the underlying cause (a *strconv.NumError, a
+// time.ParseDuration error, a TextUnmarshaler error) for a further errors.As.
 type ConvertError struct {
 	Field  string       // struct field name being filled
 	Value  any          // the raw value a source produced

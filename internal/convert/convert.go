@@ -1,17 +1,15 @@
 // Package convert turns the loosely-typed values a config source parses
-// (strings, float64s from JSON, []interface{} from YAML, ...) into the
-// concrete Go types of the struct fields gostructor is filling.
+// (strings, float64s from JSON, []interface{} from YAML) into the concrete Go
+// types of the struct fields gostructor is filling.
 //
 // It lives under internal/ but is imported by the Source implementations in
-// the separate gostructor/yaml, gostructor/toml, ... modules, which share the
-// github.com/goreflect/gostructor import prefix; it is not part of the public
-// API for external callers.
+// the gostructor/yaml, gostructor/toml, and sibling modules; it is not part
+// of the public API for external callers.
 //
-// Value is the single entry point: it handles pointers, encoding.TextUnmarshaler
-// types, time.Duration, primitives, and the slice/array/map/struct composites,
-// recursing through itself for element and field conversion. The exported
-// ToPrimitive/ToComplex wrappers remain for callers (and tests) that already
-// hold a destination reflect.Value.
+// Value is the single entry point: it handles pointers, TextUnmarshaler types,
+// time.Duration, primitives, and slice/array/map/struct composites, recursing
+// for elements and fields. The exported ToPrimitive/ToComplex wrappers are for
+// callers (and tests) that already hold a destination reflect.Value.
 package convert
 
 import (
@@ -28,11 +26,11 @@ var (
 	textUnmarshalerType = reflect.TypeOf((*encoding.TextUnmarshaler)(nil)).Elem()
 )
 
-// Value converts source into a new value of destType, applying (in order)
+// Value converts source into a new value of destType, applying in order:
 // pointer allocation, TextUnmarshaler parsing, the time.Duration special
-// case, and finally kind-based primitive/composite conversion. The returned
-// value already has destType's exact (possibly named) type, so callers can
-// Set it onto a field of that type directly.
+// case, and finally kind-based primitive/composite conversion. The result
+// already has destType's exact (possibly named) type, ready to Set onto a
+// field of that type.
 func Value(source reflect.Value, destType reflect.Type) (reflect.Value, error) {
 	if destType.Kind() == reflect.Pointer {
 		if destType.Elem().Kind() == reflect.Pointer {
@@ -158,12 +156,11 @@ func toMap(source reflect.Value, destType reflect.Type) (reflect.Value, error) {
 	return result, nil
 }
 
-// toStruct fills a struct value from an object source (map[string]any, the
-// shape JSON/YAML/TOML/HOCON produce for nested objects), matching each
-// exported field to a map key by name, case-insensitively. Unknown keys are
-// ignored and absent fields are left zero, since a struct here is an element
-// of a collection or a whole-object field, not the top-level target whose
-// missing values are a hard error.
+// toStruct fills a struct from an object source (map[string]any, the shape
+// JSON/YAML/TOML/HOCON produce for nested objects), matching each exported
+// field to a key by name, case-insensitively. Unknown keys are ignored and
+// absent fields left zero: a struct here is a collection element or a
+// whole-object field, not the top-level target whose missing values are fatal.
 func toStruct(source reflect.Value, destType reflect.Type) (reflect.Value, error) {
 	if source.Kind() != reflect.Map {
 		return reflect.Value{}, conversionError(source, destType, errors.New("expected an object"))

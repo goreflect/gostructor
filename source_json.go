@@ -10,9 +10,6 @@ import (
 	"github.com/goreflect/gostructor/internal/tools"
 )
 
-// JSONTag is the struct tag JSON responds to: `cf_json:"server.host"`.
-const JSONTag = "cf_json"
-
 // JSONFileEnvVar names the environment variable JSON reads its file path
 // from, unless a path was given explicitly to JSONFile.
 const JSONFileEnvVar = "GOSTRUCTOR_JSON"
@@ -25,24 +22,26 @@ type jsonSource struct {
 }
 
 // JSON resolves fields from the JSON file named by the GOSTRUCTOR_JSON
-// environment variable. `cf_json:"server.host"` addresses a nested "host"
-// key inside a "server" object; `cf_json:"server"` addresses the whole
-// nested object, for map[string]T destination fields.
+// environment variable. The key is the field's base name (`cfg:"host"` -> the
+// top-level "host" key); a nested value is addressed by overriding the key with
+// a dotted path (`cfg:"host,json:server.host"` -> "host" inside "server").
+// A bare object key like `cfg:"server"` addresses the whole nested object, for
+// map[string]T destination fields.
 func JSON() Source { return &jsonSource{} }
 
 // JSONFile is like JSON but reads from path instead of the
 // GOSTRUCTOR_JSON environment variable.
 func JSONFile(path string) Source { return &jsonSource{fileName: path} }
 
-func (*jsonSource) Tag() string { return JSONTag }
+func (*jsonSource) Name() string { return SourceJSON }
 
 func (s *jsonSource) Resolve(field FieldContext) (any, bool, error) {
-	if err := s.load(); err != nil {
-		return nil, false, err
-	}
-	name := field.TagValue(JSONTag)
+	name := field.SourceKey(SourceJSON, Identity)
 	if name == "" {
 		return nil, false, nil
+	}
+	if err := s.load(); err != nil {
+		return nil, false, err
 	}
 	value, found := tools.LookupPath(s.data, name)
 	if !found || value == nil {
@@ -58,7 +57,7 @@ func (s *jsonSource) load() error {
 			fileName = os.Getenv(JSONFileEnvVar)
 		}
 		if fileName == "" {
-			s.loadErr = fmt.Errorf("gostructor: cf_json used but neither an explicit path nor %s is set", JSONFileEnvVar)
+			s.loadErr = fmt.Errorf("gostructor: json source used but neither an explicit path nor %s is set", JSONFileEnvVar)
 			return
 		}
 		buf, err := tools.ReadFromFile(fileName)
@@ -67,10 +66,9 @@ func (s *jsonSource) load() error {
 			return
 		}
 		parsed := map[string]any{}
-		// UseNumber keeps integers exact (as json.Number, a string kind
-		// convert parses base-10) instead of routing every number through
-		// float64, which loses precision above 2^53 and would turn a
-		// fractional JSON value silently into a truncated int.
+		// UseNumber decodes numbers as json.Number (a string) rather than
+		// float64, so convert parses them base-10 and keeps integers exact
+		// above 2^53 instead of silently truncating.
 		dec := json.NewDecoder(bytes.NewReader(buf.Bytes()))
 		dec.UseNumber()
 		if err := dec.Decode(&parsed); err != nil {

@@ -11,8 +11,8 @@ import (
 )
 
 type basicConfig struct {
-	Host string `cf_env:"GOSTRUCTOR_TEST_HOST" cf_default:"0.0.0.0"`
-	Port int    `cf_env:"GOSTRUCTOR_TEST_PORT" cf_default:"8080"`
+	Host string `cfg:"host,env:GOSTRUCTOR_TEST_HOST" gos:"default:0.0.0.0"`
+	Port int    `cfg:"port,env:GOSTRUCTOR_TEST_PORT" gos:"default:8080"`
 }
 
 func TestConfigureEnvOverridesDefault(t *testing.T) {
@@ -44,23 +44,41 @@ func TestConfigureFallsBackToDefaultWhenEnvUnset(t *testing.T) {
 	}
 }
 
+// TestConfigureEnvNamingFromBase checks the env source derives its variable
+// name from the base name in SCREAMING_SNAKE_CASE when there's no override.
+func TestConfigureEnvNamingFromBase(t *testing.T) {
+	type cfgT struct {
+		MaxConns int `cfg:"maxConns" gos:"default:1"`
+	}
+	os.Setenv("MAX_CONNS", "42")
+	defer os.Unsetenv("MAX_CONNS")
+
+	cfg, err := Configure(&cfgT{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.MaxConns != 42 {
+		t.Errorf("MaxConns = %d, want 42 from MAX_CONNS", cfg.MaxConns)
+	}
+}
+
 // TestConfigureAllNumericKinds guards against a regression where the
 // unsized `uint` destination kind was routed through the same code path as
 // uint32, producing a reflect.Value of Kind Uint32 instead of Uint - which
 // panics at destination.Set() because the kinds don't match.
 type numericConfig struct {
-	I   int     `cf_default:"1"`
-	I8  int8    `cf_default:"2"`
-	I16 int16   `cf_default:"3"`
-	I32 int32   `cf_default:"4"`
-	I64 int64   `cf_default:"5"`
-	U   uint    `cf_default:"6"`
-	U8  uint8   `cf_default:"7"`
-	U16 uint16  `cf_default:"8"`
-	U32 uint32  `cf_default:"9"`
-	U64 uint64  `cf_default:"10"`
-	F32 float32 `cf_default:"1.5"`
-	F64 float64 `cf_default:"2.5"`
+	I   int     `gos:"default:1"`
+	I8  int8    `gos:"default:2"`
+	I16 int16   `gos:"default:3"`
+	I32 int32   `gos:"default:4"`
+	I64 int64   `gos:"default:5"`
+	U   uint    `gos:"default:6"`
+	U8  uint8   `gos:"default:7"`
+	U16 uint16  `gos:"default:8"`
+	U32 uint32  `gos:"default:9"`
+	U64 uint64  `gos:"default:10"`
+	F32 float32 `gos:"default:1.5"`
+	F64 float64 `gos:"default:2.5"`
 }
 
 func TestConfigureAllNumericKinds(t *testing.T) {
@@ -79,18 +97,15 @@ func TestConfigureAllNumericKinds(t *testing.T) {
 	}
 }
 
-type sliceConfig struct {
-	Flags []bool `cf_default:"true,false,true"`
-	Names []string
-}
-
 func TestConfigureSlices(t *testing.T) {
 	os.Setenv("GOSTRUCTOR_TEST_NAMES", "a,b,c")
 	defer os.Unsetenv("GOSTRUCTOR_TEST_NAMES")
 
 	type withEnvSlice struct {
-		Flags []bool   `cf_default:"true,false,true"`
-		Names []string `cf_env:"GOSTRUCTOR_TEST_NAMES"`
+		// Comma is the gos separator, so a comma-valued default needs a
+		// non-comma sep, used for both the default and any source value.
+		Flags []bool   `gos:"sep:|,default:true|false|true"`
+		Names []string `cfg:"names,env:GOSTRUCTOR_TEST_NAMES"`
 	}
 	cfg, err := Configure(&withEnvSlice{})
 	if err != nil {
@@ -113,9 +128,9 @@ func TestConfigureSlices(t *testing.T) {
 
 type nestedConfig struct {
 	Server struct {
-		Host string `cf_default:"localhost"`
+		Host string `gos:"default:localhost"`
 	}
-	Name string `cf_default:"svc"`
+	Name string `gos:"default:svc"`
 }
 
 func TestConfigureNestedStruct(t *testing.T) {
@@ -132,14 +147,30 @@ func TestConfigureNestedStruct(t *testing.T) {
 }
 
 type requiredConfig struct {
-	APIKey string `cf_env:"GOSTRUCTOR_TEST_MISSING_KEY"`
+	APIKey string `cfg:"apiKey,env:GOSTRUCTOR_TEST_MISSING_KEY"`
 }
 
-func TestConfigureErrorsWhenTaggedFieldUnresolved(t *testing.T) {
+func TestConfigureErrorsWhenConfiguredFieldUnresolved(t *testing.T) {
 	os.Unsetenv("GOSTRUCTOR_TEST_MISSING_KEY")
 	_, err := Configure(&requiredConfig{})
 	if err == nil {
-		t.Fatal("expected an error for a tagged field with no source able to resolve it")
+		t.Fatal("expected an error for a configured field with no source able to resolve it")
+	}
+}
+
+// TestConfigureOptionalFieldStaysZero verifies gos:"optional" turns an
+// otherwise-required unresolved field into a silent zero value.
+func TestConfigureOptionalFieldStaysZero(t *testing.T) {
+	type cfgT struct {
+		APIKey string `cfg:"apiKey,env:GOSTRUCTOR_TEST_MISSING_OPTIONAL" gos:"optional"`
+	}
+	os.Unsetenv("GOSTRUCTOR_TEST_MISSING_OPTIONAL")
+	cfg, err := Configure(&cfgT{})
+	if err != nil {
+		t.Fatalf("optional unresolved field should not error, got: %v", err)
+	}
+	if cfg.APIKey != "" {
+		t.Errorf("APIKey = %q, want zero value", cfg.APIKey)
 	}
 }
 
@@ -147,7 +178,7 @@ type untaggedConfig struct {
 	Internal string // no tags at all: gostructor has nothing to say about it
 }
 
-func TestConfigureSkipsUntaggedFields(t *testing.T) {
+func TestConfigureSkipsUnconfiguredFields(t *testing.T) {
 	cfg, err := Configure(&untaggedConfig{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -164,38 +195,37 @@ func TestConfigureNilTarget(t *testing.T) {
 	}
 }
 
-type priorityConfig struct {
-	Value string `cf_env:"GOSTRUCTOR_TEST_PRIORITY_VALUE" cf_default:"fallback" cf_priority:"prod:cf_env,cf_default;dev:cf_default,cf_env"`
-}
-
-func TestConfigurePriorityTag(t *testing.T) {
+// TestConfigureCompositionPriority replaces the old cf_priority behavior:
+// the SAME struct resolves differently based purely on the WithSources order.
+func TestConfigureCompositionPriority(t *testing.T) {
+	type cfgT struct {
+		Value string `cfg:"value,env:GOSTRUCTOR_TEST_PRIORITY_VALUE" gos:"default:fallback"`
+	}
 	os.Setenv("GOSTRUCTOR_TEST_PRIORITY_VALUE", "from-env")
 	defer os.Unsetenv("GOSTRUCTOR_TEST_PRIORITY_VALUE")
 
-	os.Setenv(PriorityEnvVar, "dev")
-	defer os.Unsetenv(PriorityEnvVar)
-
-	cfg, err := Configure(&priorityConfig{})
+	// Default first: the env override never gets a turn.
+	devCfg, err := Configure(&cfgT{}, WithSources(Default(), Env()))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if cfg.Value != "fallback" {
-		t.Errorf("Value = %q, want %q (dev stage prefers cf_default)", cfg.Value, "fallback")
+	if devCfg.Value != "fallback" {
+		t.Errorf("Value = %q, want %q (Default listed first wins)", devCfg.Value, "fallback")
 	}
 
-	os.Setenv(PriorityEnvVar, "prod")
-	cfg2, err := Configure(&priorityConfig{})
+	// Env first: the operator override wins.
+	prodCfg, err := Configure(&cfgT{}, WithSources(Env(), Default()))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if cfg2.Value != "from-env" {
-		t.Errorf("Value = %q, want %q (prod stage prefers cf_env)", cfg2.Value, "from-env")
+	if prodCfg.Value != "from-env" {
+		t.Errorf("Value = %q, want %q (Env listed first wins)", prodCfg.Value, "from-env")
 	}
 }
 
 func TestConfigureWithHookTransform(t *testing.T) {
 	type cfgT struct {
-		Name string `cf_default:"world"`
+		Name string `gos:"default:world"`
 	}
 	cfg, err := Configure(&cfgT{}, WithHook(func(_ FieldContext, value any) (any, error) {
 		if s, ok := value.(string); ok {
@@ -213,12 +243,12 @@ func TestConfigureWithHookTransform(t *testing.T) {
 
 // TestConfigureWithHookReceivesTypedValue guards against a regression where
 // hooks ran on the raw, pre-conversion value a source produced (e.g. the
-// string "80" from a cf_default tag) instead of the field-typed value
-// (int(80)) - which made a type assertion like value.(int) panic for any
-// field not natively sourced as that Go type.
+// string "80" from a gos default) instead of the field-typed value (int(80)) -
+// which made a type assertion like value.(int) panic for any field not
+// natively sourced as that Go type.
 func TestConfigureWithHookReceivesTypedValue(t *testing.T) {
 	type cfgT struct {
-		Port int `cf_default:"80"`
+		Port int `gos:"default:80"`
 	}
 	var sawType string
 	_, err := Configure(&cfgT{}, WithHook(func(_ FieldContext, value any) (any, error) {
@@ -238,7 +268,7 @@ func TestConfigureWithHookReceivesTypedValue(t *testing.T) {
 
 func TestConfigureWithHookValidationError(t *testing.T) {
 	type cfgT struct {
-		Name string `cf_default:"bad"`
+		Name string `gos:"default:bad"`
 	}
 	_, err := Configure(&cfgT{}, WithHook(func(_ FieldContext, value any) (any, error) {
 		return nil, errors.New("rejected")
@@ -250,12 +280,12 @@ func TestConfigureWithHookValidationError(t *testing.T) {
 
 func TestConfigureWithExplicitSources(t *testing.T) {
 	type cfgT struct {
-		Name string `cf_default:"unused" cf_env:"GOSTRUCTOR_TEST_EXPLICIT"`
+		Name string `cfg:"name,env:GOSTRUCTOR_TEST_EXPLICIT" gos:"default:unused"`
 	}
 	os.Setenv("GOSTRUCTOR_TEST_EXPLICIT", "from-env")
 	defer os.Unsetenv("GOSTRUCTOR_TEST_EXPLICIT")
 
-	// Only Default in the source list: cf_env should be ignored entirely.
+	// Only Default in the source list: the env source should be absent entirely.
 	cfg, err := Configure(&cfgT{}, WithSources(Default()))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -266,8 +296,8 @@ func TestConfigureWithExplicitSources(t *testing.T) {
 }
 
 type jsonConfig struct {
-	Host string `cf_json:"server.host"`
-	Tags []int  `cf_json:"server.tags"`
+	Host string `cfg:"host,json:server.host"`
+	Tags []int  `cfg:"tags,json:server.tags"`
 }
 
 func TestConfigureJSONSourceEndToEnd(t *testing.T) {
@@ -291,11 +321,11 @@ func TestConfigureJSONSourceEndToEnd(t *testing.T) {
 }
 
 type iniConfig struct {
-	Test  string   `cf_ini:"TEST#test"`
-	Test2 int32    `cf_ini:"TEST#test2"`
-	Test3 float32  `cf_ini:"TEST#test3"`
-	Test4 []string `cf_ini:"TEST#test4"`
-	Test5 int16    `cf_ini:"TEST#test5"`
+	Test  string   `cfg:"test,ini:TEST#test"`
+	Test2 int32    `cfg:"test2,ini:TEST#test2"`
+	Test3 float32  `cfg:"test3,ini:TEST#test3"`
+	Test4 []string `cfg:"test4,ini:TEST#test4"`
+	Test5 int16    `cfg:"test5,ini:TEST#test5"`
 }
 
 func TestConfigureINISourceEndToEnd(t *testing.T) {
@@ -325,7 +355,7 @@ func TestConfigureINISourceEndToEnd(t *testing.T) {
 
 func TestConfigureRecoversFromPanicInSource(t *testing.T) {
 	type cfgT struct {
-		Name string `cf_boom:"x"`
+		Name string `cfg:"name"`
 	}
 	_, err := Configure(&cfgT{}, WithSources(panicSource{}))
 	if err == nil {
@@ -335,7 +365,7 @@ func TestConfigureRecoversFromPanicInSource(t *testing.T) {
 
 type panicSource struct{}
 
-func (panicSource) Tag() string { return "cf_boom" }
+func (panicSource) Name() string { return "boom" }
 func (panicSource) Resolve(FieldContext) (any, bool, error) {
 	panic("boom")
 }
@@ -349,8 +379,8 @@ func TestConfigureUnresolvedFieldMatchesSentinel(t *testing.T) {
 	if !errors.As(err, &nre) {
 		t.Fatalf("err = %v, want a *NotResolvedError", err)
 	}
-	if len(nre.Tags) == 0 {
-		t.Errorf("NotResolvedError.Tags is empty; want the tags that were tried")
+	if len(nre.Sources) == 0 {
+		t.Errorf("NotResolvedError.Sources is empty; want the sources that were tried")
 	}
 }
 
@@ -362,21 +392,21 @@ func TestConfigureInvalidTargetSentinel(t *testing.T) {
 
 func TestConfigureSourceError(t *testing.T) {
 	type cfgT struct {
-		Host string `cf_json:"server.host"`
+		Host string `cfg:"host,json:server.host"`
 	}
 	_, err := Configure(&cfgT{}, WithSources(JSONFile("testdata/does-not-exist.json")))
 	var se *SourceError
 	if !errors.As(err, &se) {
 		t.Fatalf("err = %v, want a *SourceError", err)
 	}
-	if se.Tag != "cf_json" || se.Field != "Host" {
-		t.Errorf("SourceError = %+v, want Field=Host Tag=cf_json", se)
+	if se.Source != SourceJSON || se.Field != "Host" {
+		t.Errorf("SourceError = %+v, want Field=Host Source=json", se)
 	}
 }
 
 func TestConfigureHookError(t *testing.T) {
 	type cfgT struct {
-		Name string `cf_default:"x"`
+		Name string `gos:"default:x"`
 	}
 	sentinel := errors.New("rejected")
 	_, err := Configure(&cfgT{}, WithHook(func(_ FieldContext, _ any) (any, error) {
@@ -396,7 +426,7 @@ func TestConfigureHookError(t *testing.T) {
 
 func TestConfigureErrorsSatisfyFieldError(t *testing.T) {
 	type cfgT struct {
-		Port int `cf_default:"nope"`
+		Port int `gos:"default:nope"`
 	}
 	_, err := Configure(&cfgT{})
 	var fe FieldError
@@ -410,7 +440,7 @@ func TestConfigureErrorsSatisfyFieldError(t *testing.T) {
 
 func TestConfigureConvertErrorCarriesContext(t *testing.T) {
 	type cfgT struct {
-		Port int `cf_default:"not-a-number"`
+		Port int `gos:"default:not-a-number"`
 	}
 	_, err := Configure(&cfgT{})
 	var ce *ConvertError
@@ -429,8 +459,8 @@ func TestConfigureConvertErrorCarriesContext(t *testing.T) {
 func TestConfigureDurationAndNamedType(t *testing.T) {
 	type level int
 	type cfgT struct {
-		Timeout time.Duration `cf_default:"1h30m"`
-		Level   level         `cf_default:"5"`
+		Timeout time.Duration `gos:"default:1h30m"`
+		Level   level         `gos:"default:5"`
 	}
 	cfg, err := Configure(&cfgT{})
 	if err != nil {
@@ -446,7 +476,7 @@ func TestConfigureDurationAndNamedType(t *testing.T) {
 
 func TestConfigureTextUnmarshalerField(t *testing.T) {
 	type cfgT struct {
-		Created time.Time `cf_default:"2020-01-02T03:04:05Z"`
+		Created time.Time `gos:"default:2020-01-02T03:04:05Z"`
 	}
 	cfg, err := Configure(&cfgT{})
 	if err != nil {
@@ -460,7 +490,7 @@ func TestConfigureTextUnmarshalerField(t *testing.T) {
 
 func TestConfigurePointerField(t *testing.T) {
 	type cfgT struct {
-		Port *int `cf_default:"8080"`
+		Port *int `gos:"default:8080"`
 	}
 	cfg, err := Configure(&cfgT{})
 	if err != nil {
@@ -473,7 +503,7 @@ func TestConfigurePointerField(t *testing.T) {
 
 func TestConfigureRejectsOverflow(t *testing.T) {
 	type cfgT struct {
-		Small int8 `cf_default:"300"`
+		Small int8 `gos:"default:300"`
 	}
 	_, err := Configure(&cfgT{})
 	if err == nil {
@@ -488,7 +518,7 @@ func TestConfigureJSONExactIntAndFractionalError(t *testing.T) {
 		t.Fatal(err)
 	}
 	type cfgT struct {
-		ID int64 `cf_json:"id"`
+		ID int64 `cfg:"id,json:id"`
 	}
 	cfg, err := Configure(&cfgT{}, WithSources(JSONFile(path)))
 	if err != nil {
@@ -518,7 +548,7 @@ func TestConfigureJSONSliceOfStructs(t *testing.T) {
 		Port int
 	}
 	type cfgT struct {
-		Servers []server `cf_json:"servers"`
+		Servers []server `cfg:"servers,json:servers"`
 	}
 	cfg, err := Configure(&cfgT{}, WithSources(JSONFile(path)))
 	if err != nil {

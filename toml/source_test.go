@@ -11,12 +11,12 @@ import (
 )
 
 type postgresConfig struct {
-	User     string   `cf_toml:"postgres#user"`
-	Password string   `cf_toml:"postgres#password"`
-	Test1    int32    `cf_toml:"postgres#test1"`
-	Test2    float32  `cf_toml:"postgres#test2"`
-	Test3    []string `cf_toml:"postgres#test3"`
-	Test4    int      `cf_toml:"postgres#test4"`
+	User     string   `cfg:"user,toml:postgres#user"`
+	Password string   `cfg:"password,toml:postgres#password"`
+	Test1    int32    `cfg:"test1,toml:postgres#test1"`
+	Test2    float32  `cfg:"test2,toml:postgres#test2"`
+	Test3    []string `cfg:"test3,toml:postgres#test3"`
+	Test4    int      `cfg:"test4,toml:postgres#test4"`
 }
 
 func TestTOMLSourceEndToEnd(t *testing.T) {
@@ -42,7 +42,7 @@ func TestTOMLSourceEndToEnd(t *testing.T) {
 }
 
 type nestedTableConfig struct {
-	Value bool `cf_toml:"a.b.c#key"`
+	Value bool `cfg:"value,toml:a.b.c#key"`
 }
 
 func TestTOMLSourceNestedTable(t *testing.T) {
@@ -62,7 +62,7 @@ func TestTOMLSourceNestedTable(t *testing.T) {
 
 func TestTOMLSourceMissingFileEnvVar(t *testing.T) {
 	type cfgT struct {
-		Value string `cf_toml:"x"`
+		Value string `cfg:"value,toml:x"`
 	}
 	os.Unsetenv(toml.FileEnvVar)
 	_, err := gostructor.Configure(&cfgT{}, gostructor.WithSources(toml.New()))

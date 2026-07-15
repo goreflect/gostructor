@@ -61,7 +61,7 @@ func newTestSource(l logicalReader) *source {
 func fieldWithVaultTag(tagValue string, fieldType reflect.Type) gostructor.FieldContext {
 	return gostructor.FieldContext{StructField: reflect.StructField{
 		Name: "Value",
-		Tag:  reflect.StructTag(`cf_vault:"` + tagValue + `"`),
+		Tag:  reflect.StructTag(`cfg:"value,vault:` + tagValue + `"`),
 		Type: fieldType,
 	}}
 }
@@ -109,12 +109,28 @@ func TestSourceResolveNoTag(t *testing.T) {
 	}
 }
 
+// TestSourceResolveBaseNameWithoutOverride verifies vault does NOT apply to a
+// field that only has a base name - a secret path cannot be derived from it,
+// so the field must carry an explicit vault: override.
+func TestSourceResolveBaseNameWithoutOverride(t *testing.T) {
+	s := newTestSource(fakeLogical{})
+	field := gostructor.FieldContext{StructField: reflect.StructField{
+		Name: "APIKey",
+		Tag:  reflect.StructTag(`cfg:"apiKey"`), // base only, no vault override
+		Type: reflect.TypeOf(""),
+	}}
+	_, found, err := s.Resolve(field)
+	if err != nil || found {
+		t.Errorf("expected found=false, no error for a base-only field; got found=%v err=%v", found, err)
+	}
+}
+
 func TestSourceResolveMalformedTag(t *testing.T) {
 	s := newTestSource(fakeLogical{})
 	field := fieldWithVaultTag("no-hash", reflect.TypeOf(""))
 	_, _, err := s.Resolve(field)
 	if err == nil {
-		t.Fatal("expected an error for a malformed cf_vault tag")
+		t.Fatal("expected an error for a malformed vault override")
 	}
 }
 
@@ -148,8 +164,8 @@ func TestSourceResolveReadError(t *testing.T) {
 }
 
 type secretConfig struct {
-	APIKey    string `cf_vault:"my-service/stage#api-key"`
-	RateLimit int16  `cf_vault:"my-service/stage#rate"`
+	APIKey    string `cfg:"apiKey,vault:my-service/stage#api-key"`
+	RateLimit int16  `cfg:"rateLimit,vault:my-service/stage#rate"`
 }
 
 func TestConfigureEndToEndWithFakeVault(t *testing.T) {

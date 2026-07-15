@@ -1,0 +1,323 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" role="img" aria-labelledby="cardTitle cardDesc">
+  <title id="cardTitle">gostructor — the snap</title>
+  <desc id="cardDesc">Cinematic clash: a titan gopher and an armored iron gopher both lunge for the floating gostructor gauntlet, its four source-stones (env, yaml, json, vault) blazing at the moment of the snap.</desc>
+
+  <defs>
+    <radialGradient id="skyNebula" cx="55%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#5A2A0A"/>
+      <stop offset="38%" stop-color="#2A1836"/>
+      <stop offset="75%" stop-color="#0E1030"/>
+      <stop offset="100%" stop-color="#05061A"/>
+    </radialGradient>
+    <radialGradient id="snapGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="12%" stop-color="#FFF0C0"/>
+      <stop offset="30%" stop-color="#FFC24D"/>
+      <stop offset="56%" stop-color="#F5871F" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#F5871F" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="50%" cy="44%" r="62%">
+      <stop offset="0%" stop-color="#05061A" stop-opacity="0"/>
+      <stop offset="58%" stop-color="#05061A" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#040414" stop-opacity="0.85"/>
+    </radialGradient>
+    <radialGradient id="burstCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#FFE39A"/>
+      <stop offset="100%" stop-color="#F5871F"/>
+    </radialGradient>
+    <linearGradient id="ironArmor" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFC24D"/>
+      <stop offset="45%" stop-color="#E8630A"/>
+      <stop offset="100%" stop-color="#8A2A06"/>
+    </linearGradient>
+    <linearGradient id="ironGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFE39A"/>
+      <stop offset="100%" stop-color="#D9971E"/>
+    </linearGradient>
+    <linearGradient id="titanSkin" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9B5CF0"/>
+      <stop offset="100%" stop-color="#5A28A8"/>
+    </linearGradient>
+    <linearGradient id="titanGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFDE8A"/>
+      <stop offset="100%" stop-color="#B8841E"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFC24D"/>
+      <stop offset="50%" stop-color="#E8630A"/>
+      <stop offset="100%" stop-color="#7A2E06"/>
+    </linearGradient>
+    <linearGradient id="reactor" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#CFF6FF"/>
+      <stop offset="100%" stop-color="#29B6D8"/>
+    </linearGradient>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="2" fill="#FFFFFF" fill-opacity="0.05"/>
+    </pattern>
+
+    <!-- soft stone glow helper -->
+    <radialGradient id="gEnv" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFD9A6"/><stop offset="45%" stop-color="#F5871F"/><stop offset="100%" stop-color="#F5871F" stop-opacity="0"/></radialGradient>
+    <radialGradient id="gYaml" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#CFF6FF"/><stop offset="45%" stop-color="#29B6D8"/><stop offset="100%" stop-color="#29B6D8" stop-opacity="0"/></radialGradient>
+    <radialGradient id="gJson" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFF3C0"/><stop offset="45%" stop-color="#FFD27A"/><stop offset="100%" stop-color="#FFD27A" stop-opacity="0"/></radialGradient>
+    <radialGradient id="gVault" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#E6CCFF"/><stop offset="45%" stop-color="#A855F7"/><stop offset="100%" stop-color="#A855F7" stop-opacity="0"/></radialGradient>
+
+    <!-- distinct background hero silhouette (generic) -->
+    <g id="ghost">
+      <ellipse cx="0" cy="0" rx="34" ry="44" fill="currentColor"/>
+      <circle cx="-22" cy="-46" r="10" fill="currentColor"/>
+      <circle cx="22" cy="-46" r="10" fill="currentColor"/>
+      <circle cx="0" cy="-30" r="28" fill="currentColor"/>
+    </g>
+  </defs>
+
+  <!-- ===== sky ===== -->
+  <rect x="0" y="0" width="1280" height="720" fill="url(#skyNebula)"/>
+  <rect x="0" y="0" width="1280" height="720" fill="url(#dots)"/>
+
+  <!-- ===== god rays from the gauntlet ===== -->
+  <g fill="#FFC24D" fill-opacity="0.12">
+    <path d="M710,320 L-100,-120 L-100,140 Z"/>
+    <path d="M710,320 L1420,-120 L1420,120 Z"/>
+    <path d="M710,320 L-160,520 L-160,760 Z"/>
+    <path d="M710,320 L1460,540 L1460,820 Z"/>
+    <path d="M710,320 L360,-140 L820,-140 Z"/>
+    <path d="M710,320 L520,900 L1000,900 Z"/>
+  </g>
+
+  <!-- ===== vignette for character contrast ===== -->
+  <rect x="0" y="0" width="1280" height="720" fill="url(#vignette)"/>
+
+  <!-- ===== distant charging heroes (silhouettes, varied) ===== -->
+  <g>
+    <!-- villain minions behind the titan (dark purple) -->
+    <use href="#ghost" transform="translate(150,470) scale(0.7)" fill="#2A1245" opacity="0.9"/>
+    <use href="#ghost" transform="translate(70,520) scale(0.55)" fill="#2A1245" opacity="0.8"/>
+    <!-- allied gophers rallying behind the iron hero (silhouettes) -->
+    <use href="#ghost" transform="translate(1175,475) scale(0.62)" fill="#2A1206" opacity="0.8"/>
+    <use href="#ghost" transform="translate(1238,525) scale(0.5)" fill="#2A1206" opacity="0.7"/>
+  </g>
+
+  <!-- rubble ground -->
+  <path d="M0,660 L120,616 L230,648 L360,604 L520,652 L700,612 L880,656 L1040,608 L1180,650 L1280,616 L1280,720 L0,720 Z" fill="#0A0818"/>
+  <path d="M0,690 L200,660 L430,692 L680,656 L920,694 L1160,660 L1280,690 L1280,720 L0,720 Z" fill="#050410"/>
+
+  <!-- =================================================== -->
+  <!-- ===== TITAN GOPHER (villain, left) ===== -->
+  <!-- =================================================== -->
+  <g transform="translate(345,420)">
+    <!-- back shoulder pauldron -->
+    <ellipse cx="-92" cy="-6" rx="52" ry="46" fill="url(#titanGold)" stroke="#12100A" stroke-width="7"/>
+    <path d="M-130,-6 a40,40 0 0 1 76,0 Z" fill="#8A5A0E"/>
+    <!-- torso -->
+    <path d="M-118,10 Q-120,-70 -40,-88 Q40,-98 108,-58 Q132,20 108,150 L-110,150 Z"
+          fill="url(#titanSkin)" stroke="#12100A" stroke-width="8"/>
+    <!-- gold chest armor -->
+    <path d="M-96,6 Q-30,-40 60,-24 Q96,-4 96,52 Q20,30 -70,58 Q-96,34 -96,6 Z"
+          fill="url(#titanGold)" stroke="#12100A" stroke-width="7"/>
+    <line x1="-40" y1="-18" x2="-24" y2="46" stroke="#12100A" stroke-width="4" stroke-opacity="0.5"/>
+    <line x1="24" y1="-18" x2="30" y2="40" stroke="#12100A" stroke-width="4" stroke-opacity="0.5"/>
+
+    <!-- head -->
+    <!-- ears -->
+    <circle cx="-58" cy="-150" r="20" fill="url(#titanSkin)" stroke="#12100A" stroke-width="6"/>
+    <circle cx="58" cy="-150" r="20" fill="url(#titanSkin)" stroke="#12100A" stroke-width="6"/>
+    <circle cx="-58" cy="-150" r="8" fill="#3A1A6E"/>
+    <circle cx="58" cy="-150" r="8" fill="#3A1A6E"/>
+    <!-- skull -->
+    <path d="M-78,-120 Q-88,-176 0,-186 Q88,-176 78,-120 Q84,-58 40,-40 Q0,-30 -40,-40 Q-84,-58 -78,-120 Z"
+          fill="url(#titanSkin)" stroke="#12100A" stroke-width="8"/>
+    <!-- golden crown ridges -->
+    <g fill="url(#titanGold)" stroke="#12100A" stroke-width="5">
+      <path d="M-70,-150 q-6,-40 10,-46 q10,26 6,50 z"/>
+      <path d="M-44,-162 q-4,-46 12,-50 q8,30 4,58 z"/>
+      <path d="M-16,-170 q-2,-52 10,-54 q8,32 2,62 z"/>
+      <path d="M14,-170 q4,-52 -8,-54 q-8,32 -2,62 z"/>
+      <path d="M42,-162 q6,-46 -10,-50 q-10,30 -4,58 z"/>
+      <path d="M68,-150 q8,-40 -8,-46 q-12,26 -6,50 z"/>
+    </g>
+    <!-- brow ridge -->
+    <path d="M-72,-118 Q0,-140 72,-118 L60,-96 Q0,-114 -60,-96 Z" fill="url(#titanGold)" stroke="#12100A" stroke-width="5"/>
+    <!-- angry glowing eyes -->
+    <path d="M-58,-96 L-16,-84 L-20,-66 L-56,-74 Z" fill="#FFE39A" stroke="#12100A" stroke-width="5"/>
+    <path d="M58,-96 L16,-84 L20,-66 L56,-74 Z" fill="#FFE39A" stroke="#12100A" stroke-width="5"/>
+    <circle cx="-34" cy="-80" r="6" fill="#12100A"/>
+    <circle cx="34" cy="-80" r="6" fill="#12100A"/>
+    <!-- snout + chin cleft -->
+    <ellipse cx="0" cy="-52" rx="10" ry="7" fill="#12100A"/>
+    <line x1="0" y1="-40" x2="0" y2="-16" stroke="#12100A" stroke-width="5" stroke-opacity="0.6"/>
+    <!-- grim mouth + tusks + teeth -->
+    <path d="M-30,-40 Q0,-30 30,-40 Q28,-20 0,-18 Q-28,-20 -30,-40 Z" fill="#2A0E1E" stroke="#12100A" stroke-width="4"/>
+    <rect x="-12" y="-42" width="10" height="16" rx="2" fill="#FFFFFF" stroke="#12100A" stroke-width="2"/>
+    <rect x="2" y="-42" width="10" height="16" rx="2" fill="#FFFFFF" stroke="#12100A" stroke-width="2"/>
+    <path d="M-26,-34 l-6,16 l10,-2 z" fill="#FFFFFF" stroke="#12100A" stroke-width="3"/>
+    <path d="M26,-34 l6,16 l-10,-2 z" fill="#FFFFFF" stroke="#12100A" stroke-width="3"/>
+
+    <!-- reaching right arm toward the gauntlet -->
+    <path d="M80,-30 Q220,-70 300,-118" fill="none" stroke="#12100A" stroke-width="56" stroke-linecap="round"/>
+    <path d="M80,-30 Q220,-70 300,-118" fill="none" stroke="url(#titanSkin)" stroke-width="42" stroke-linecap="round"/>
+    <!-- forearm gold band -->
+    <path d="M210,-70 Q250,-92 292,-112" fill="none" stroke="url(#titanGold)" stroke-width="40" stroke-linecap="round"/>
+    <path d="M210,-70 Q250,-92 292,-112" fill="none" stroke="#12100A" stroke-width="40" stroke-linecap="round" stroke-opacity="0.15"/>
+    <!-- grasping hand -->
+    <g transform="translate(300,-120) rotate(-24)">
+      <path d="M-14,20 Q-30,-30 6,-40 Q40,-44 44,-8 Q46,26 12,30 Z" fill="url(#titanSkin)" stroke="#12100A" stroke-width="7"/>
+      <path d="M4,-38 q30,-24 40,-6" fill="none" stroke="url(#titanSkin)" stroke-width="16" stroke-linecap="round"/>
+      <path d="M4,-38 q30,-24 40,-6" fill="none" stroke="#12100A" stroke-width="16" stroke-linecap="round" stroke-opacity="0.001"/>
+      <g stroke="#12100A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M40,-40 q34,-6 40,18"/>
+        <path d="M42,-18 q36,0 44,20"/>
+        <path d="M40,2 q34,6 40,28"/>
+      </g>
+      <g stroke="url(#titanSkin)" stroke-width="13" stroke-linecap="round" fill="none">
+        <path d="M40,-40 q34,-6 40,18"/>
+        <path d="M42,-18 q36,0 44,20"/>
+        <path d="M40,2 q34,6 40,28"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- =================================================== -->
+  <!-- ===== IRON GOPHER (hero, right) ===== -->
+  <!-- =================================================== -->
+  <g transform="translate(955,415)">
+    <!-- back pauldron -->
+    <ellipse cx="86" cy="-8" rx="48" ry="42" fill="url(#ironGold)" stroke="#12100A" stroke-width="7"/>
+    <!-- torso armor -->
+    <path d="M104,8 Q108,-64 34,-84 Q-44,-92 -100,-52 Q-120,20 -98,150 L96,150 Z"
+          fill="url(#ironArmor)" stroke="#12100A" stroke-width="8"/>
+    <!-- gold ab plates -->
+    <g fill="url(#ironGold)" stroke="#12100A" stroke-width="5">
+      <path d="M-70,60 Q0,44 78,62 L74,86 Q0,68 -66,86 Z"/>
+      <path d="M-60,96 Q0,80 66,98 L62,120 Q0,104 -56,120 Z"/>
+    </g>
+    <!-- arc reactor -->
+    <circle cx="0" cy="4" r="30" fill="#0A2230" stroke="#12100A" stroke-width="6"/>
+    <circle cx="0" cy="4" r="20" fill="url(#reactor)"/>
+    <circle cx="0" cy="4" r="42" fill="#8FE3F5" opacity="0.25"/>
+    <path d="M0,-12 L6,-2 L18,-2 L8,6 L12,18 L0,10 L-12,18 L-8,6 L-18,-2 L-6,-2 Z" fill="#EAFBFF"/>
+
+    <!-- head / helmet -->
+    <!-- ear fins -->
+    <path d="M-64,-150 q-22,10 -6,44 q22,-6 22,-30 z" fill="url(#ironGold)" stroke="#12100A" stroke-width="6"/>
+    <path d="M64,-150 q22,10 6,44 q-22,-6 -22,-30 z" fill="url(#ironGold)" stroke="#12100A" stroke-width="6"/>
+    <!-- helmet dome -->
+    <path d="M-66,-104 Q-76,-176 0,-184 Q76,-176 66,-104 Q68,-58 30,-42 Q0,-34 -30,-42 Q-68,-58 -66,-104 Z"
+          fill="url(#ironArmor)" stroke="#12100A" stroke-width="8"/>
+    <!-- gold faceplate -->
+    <path d="M-58,-108 Q-64,-168 0,-176 Q64,-168 58,-108 Q60,-72 30,-58 L-30,-58 Q-60,-72 -58,-108 Z"
+          fill="url(#ironGold)" stroke="#12100A" stroke-width="6"/>
+    <!-- brow -->
+    <path d="M-52,-108 Q0,-122 52,-108 L40,-92 Q0,-104 -40,-92 Z" fill="#12100A"/>
+    <!-- glowing slit eyes -->
+    <path d="M-54,-98 L-12,-88 L-15,-70 L-52,-78 Z" fill="#0A2230"/>
+    <path d="M54,-98 L12,-88 L15,-70 L52,-78 Z" fill="#0A2230"/>
+    <path d="M-50,-96 L-14,-86 L-16,-74 L-48,-80 Z" fill="#EAFCFF"/>
+    <path d="M50,-96 L14,-86 L16,-74 L48,-80 Z" fill="#EAFCFF"/>
+    <!-- mouth vent -->
+    <g stroke="#12100A" stroke-width="4">
+      <line x1="-26" y1="-58" x2="-26" y2="-44"/>
+      <line x1="-12" y1="-56" x2="-12" y2="-42"/>
+      <line x1="0" y1="-55" x2="0" y2="-41"/>
+      <line x1="12" y1="-56" x2="12" y2="-42"/>
+      <line x1="26" y1="-58" x2="26" y2="-44"/>
+    </g>
+
+    <!-- reaching left arm toward gauntlet -->
+    <path d="M-86,-24 Q-210,-62 -286,-104" fill="none" stroke="#12100A" stroke-width="52" stroke-linecap="round"/>
+    <path d="M-86,-24 Q-210,-62 -286,-104" fill="none" stroke="url(#ironArmor)" stroke-width="38" stroke-linecap="round"/>
+    <path d="M-190,-56 Q-238,-80 -280,-100" fill="none" stroke="url(#ironGold)" stroke-width="36" stroke-linecap="round"/>
+    <!-- open repulsor palm -->
+    <g transform="translate(-292,-108) rotate(20)">
+      <path d="M14,18 Q30,-28 -6,-38 Q-40,-42 -44,-6 Q-46,24 -12,28 Z" fill="url(#ironArmor)" stroke="#12100A" stroke-width="7"/>
+      <circle cx="-14" cy="-4" r="13" fill="url(#reactor)" stroke="#12100A" stroke-width="4"/>
+      <circle cx="-14" cy="-4" r="24" fill="#8FE3F5" opacity="0.3"/>
+      <g stroke="#12100A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M-40,-38 q-32,-8 -40,14"/>
+        <path d="M-42,-16 q-34,-2 -44,18"/>
+        <path d="M-38,6 q-30,8 -34,30"/>
+      </g>
+      <g stroke="url(#ironArmor)" stroke-width="12" stroke-linecap="round" fill="none">
+        <path d="M-40,-38 q-32,-8 -40,14"/>
+        <path d="M-42,-16 q-34,-2 -44,18"/>
+        <path d="M-38,6 q-30,8 -34,30"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- =================================================== -->
+  <!-- ===== CENTER: THE SNAP — floating gostructor gauntlet ===== -->
+  <!-- =================================================== -->
+  <ellipse cx="710" cy="315" rx="430" ry="330" fill="url(#snapGlow)"/>
+  <!-- shockwave rings -->
+  <ellipse cx="710" cy="315" rx="250" ry="230" fill="none" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="6"/>
+  <ellipse cx="710" cy="315" rx="330" ry="300" fill="none" stroke="#FFD27A" stroke-opacity="0.25" stroke-width="10"/>
+  <!-- radiant burst -->
+  <g transform="translate(710,315)">
+    <path fill="url(#burstCore)" opacity="0.95"
+      d="M0,-210 L34,-96 L150,-150 L86,-44 L214,-30 L96,20 L182,120 L60,74 L54,205 L0,96
+         L-54,205 L-60,74 L-182,120 L-96,20 L-214,-30 L-86,-44 L-150,-150 L-34,-96 Z"/>
+    <circle r="46" fill="#FFFFFF"/>
+    <circle r="74" fill="#FFFFFF" opacity="0.22"/>
+  </g>
+
+  <!-- gauntlet, tilted, blazing -->
+  <g transform="translate(700,330) rotate(-18)">
+    <!-- forearm -->
+    <rect x="-34" y="14" width="68" height="120" rx="18" fill="url(#metal)" stroke="#12100A" stroke-width="6"/>
+    <rect x="-46" y="6" width="92" height="30" rx="10" fill="#7A2E06" stroke="#12100A" stroke-width="6"/>
+    <text x="0" y="28" font-family="Menlo,Consolas,monospace" font-size="15" font-weight="800" fill="#FFD27A" text-anchor="middle">gostructor</text>
+    <!-- fist -->
+    <rect x="-40" y="-52" width="80" height="66" rx="22" fill="url(#metal)" stroke="#12100A" stroke-width="6"/>
+    <g stroke="#12100A" stroke-width="4" stroke-opacity="0.55">
+      <line x1="-18" y1="-52" x2="-18" y2="10"/>
+      <line x1="2" y1="-52" x2="2" y2="10"/>
+      <line x1="22" y1="-52" x2="22" y2="10"/>
+    </g>
+    <ellipse cx="46" cy="-4" rx="15" ry="22" fill="url(#metal)" stroke="#12100A" stroke-width="6"/>
+    <!-- 4 source-stones blazing -->
+    <circle cx="-29" cy="-52" r="30" fill="url(#gEnv)"/>
+    <circle cx="-10" cy="-56" r="30" fill="url(#gYaml)"/>
+    <circle cx="10" cy="-56" r="30" fill="url(#gJson)"/>
+    <circle cx="29" cy="-52" r="30" fill="url(#gVault)"/>
+    <g stroke="#12100A" stroke-width="3">
+      <circle cx="-29" cy="-52" r="11" fill="#F5871F"/>
+      <circle cx="-10" cy="-56" r="11" fill="#29B6D8"/>
+      <circle cx="10" cy="-56" r="11" fill="#FFD27A"/>
+      <circle cx="29" cy="-52" r="11" fill="#A855F7"/>
+    </g>
+    <g fill="#FFFFFF">
+      <circle cx="-32" cy="-55" r="3"/><circle cx="-13" cy="-59" r="3"/>
+      <circle cx="7" cy="-59" r="3"/><circle cx="26" cy="-55" r="3"/>
+    </g>
+  </g>
+
+  <!-- sparks / embers -->
+  <g fill="#FFD27A">
+    <circle cx="560" cy="180" r="4"/><circle cx="880" cy="200" r="5"/><circle cx="500" cy="360" r="3"/>
+    <circle cx="920" cy="380" r="4"/><circle cx="640" cy="140" r="3"/><circle cx="780" cy="150" r="4"/>
+    <circle cx="470" cy="250" r="3"/><circle cx="960" cy="260" r="3"/>
+  </g>
+  <g fill="#F5871F" opacity="0.8">
+    <circle cx="600" cy="470" r="4"/><circle cx="820" cy="480" r="5"/><circle cx="710" cy="510" r="4"/>
+    <circle cx="540" cy="430" r="3"/><circle cx="900" cy="450" r="3"/>
+  </g>
+
+  <!-- foreground smoke -->
+  <g fill="#0A0818" opacity="0.55">
+    <path d="M-20,720 Q160,560 320,660 Q420,720 260,720 Z"/>
+    <path d="M1300,720 Q1120,560 940,660 Q860,720 1020,720 Z"/>
+  </g>
+
+  <!-- ===== title lockup ===== -->
+  <g transform="translate(640,648)">
+    <text x="0" y="0" font-family="'Arial Black','Segoe UI',sans-serif" font-size="72" font-weight="900"
+          fill="#FFFFFF" text-anchor="middle" stroke="#12100A" stroke-width="6" paint-order="stroke">go<tspan fill="#FFB03A">structor</tspan></text>
+    <text x="0" y="38" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="24" font-weight="700"
+          fill="#EAF7FF" text-anchor="middle">Fill any Go struct from any source. <tspan fill="#FFB03A" font-weight="800">Surprises are errors.</tspan></text>
+  </g>
+
+  <!-- ===== cinematic frame ===== -->
+  <rect x="8" y="8" width="1264" height="704" rx="20" fill="none" stroke="#12100A" stroke-width="12"/>
+  <rect x="8" y="8" width="1264" height="704" rx="20" fill="none" stroke="#F5871F" stroke-width="3"/>
+</svg>

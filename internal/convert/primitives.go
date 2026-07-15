@@ -8,12 +8,11 @@ import (
 )
 
 // toPrimitive converts source into a new value of destType for the scalar
-// kinds. The result is constructed via reflect.New(destType) so it carries
-// destType's exact (possibly named) type - the reason a `type Level int` or
-// a time.Duration field can be Set directly without a further Convert. Every
-// numeric conversion is checked: fractional floats, NaN/Inf, sign mismatches,
-// and values that overflow the destination width are errors, never silent
-// truncation or wraparound.
+// kinds. reflect.New(destType) gives the result destType's exact (possibly
+// named) type, so a `type Level int` or a time.Duration field can be Set
+// directly without a further Convert. Every numeric conversion is checked:
+// fractional floats, NaN/Inf, sign mismatches, and values that overflow the
+// destination width are errors, never silent truncation or wraparound.
 func toPrimitive(source reflect.Value, destType reflect.Type) (reflect.Value, error) {
 	switch destType.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:

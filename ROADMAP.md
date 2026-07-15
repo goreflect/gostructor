@@ -11,8 +11,10 @@ worth building on the road to 2.0, and what we deliberately won't.
 
 Shipped and stable — the baseline everything below builds on:
 
-- **Tag-driven fill** from any mix of sources, with **per-field priority**
-  (`cf_priority`) — the core differentiator vs. merge-everything-into-one-map
+- **Two-tag, tag-driven fill** from any mix of sources: `cfg` for routing &
+  naming, `gos` for behavior (default, secret, optional, sep). **Priority is
+  composition** — the order of the sources passed to `WithSources`, first that
+  resolves wins — the differentiator vs. merge-everything-into-one-map
   libraries.
 - **Strict, lossless conversion**: fractional-float-into-int, width overflow,
   negative-into-unsigned, and non-finite floats are hard errors, never silent
@@ -23,8 +25,11 @@ Shipped and stable — the baseline everything below builds on:
   (wraps `ErrFieldNotResolved`), `*SourceError`, `*ConvertError`,
   `*HookError`, all satisfying `FieldError` and unwrapping to the real cause.
 - **Zero-dependency core**; YAML/TOML/HOCON/Vault each in their own module.
-- **`Source` interface** (`Tag()` + `Resolve()`) as the public extension
-  point, registered via `WithSources`.
+- **`Source` interface** (`Name()` + `Resolve()`) as the public extension
+  point, registered via `WithSources`; each source names its key from the base
+  name via a naming strategy, overridable per source in the `cfg` tag.
+- **Focused resolution trace** (`ConfigureWithReport`) highlighting the primary
+  source, overrides, and masked secrets (see Theme 1, now shipped).
 
 ## Guiding principles (what fits this library)
 
@@ -35,14 +40,22 @@ These are the yardsticks for every proposal below:
    it ships as `gostructor/<feature>`.
 2. **Explicit, no global singleton.** Everything is a per-call `Option`. We do
    not adopt viper's package-level global state.
-3. **Per-field priority stays the spine.** Features compose with the
-   source-ordering model rather than around it.
+3. **Composition priority stays the spine.** Priority is the `WithSources`
+   order; features compose with the source-ordering model rather than around it.
 4. **Typed and predictable.** No case-insensitive key magic, no silent
    coercion. Surprises are errors.
 
 ---
 
-## Theme 1 — Observability & debugging (priority)
+## Theme 1 — Observability & debugging (largely shipped ✅)
+
+**Status.** 1a (resolution trace) and 1c (secret masking) are shipped:
+`ConfigureWithReport` returns a `Report` whose `String()` renders a *focused*
+trace — primary source, defaults count, and an Overrides & Secrets section —
+and `WithMasker` covers every value-printing path including `*ConvertError`.
+1b (runtime debug flags / `RegisterFlags`) is still open. The sketches below
+are the original design notes; the shipped `Report`/`Attempt` shape uses source
+*names* (`Source`/`Sources`) rather than the old struct-tag strings.
 
 **Motivation.** A config layer is a black box exactly when you most need to
 trust it ("why is `Port` 8080 and not what's in my file?"). Users should be
@@ -108,7 +121,7 @@ messages. Mark fields sensitive and mask everywhere their value would print.
 
 ```go
 type Config struct {
-    APIKey string `cf_vault:"svc/prod#api-key" cf_secret:""`
+    APIKey string `cfg:"apiKey,vault:svc/prod#api-key" gos:"secret"`
 }
 
 gostructor.WithMasker(func(field gostructor.FieldContext, v any) string {
@@ -527,6 +540,87 @@ keeps the ergonomic tagged struct *and* gets the reflection-free speed).
 **Value: high (headline perf story vs. viper; compile-time-safe answer to
 Enflag). Effort: large. Deps: none at runtime; `go/ast`+`go/types` in the
 generator tool.**
+
+### 7a. Codegen-only ergonomics (the config pains codegen uniquely fixes)
+
+**Motivation.** Four recurring complaints from teams doing config in Go are
+awkward to solve well in the reflective engine but fall out almost for free once
+we parse the struct at `go generate` time. Codegen "develops our hands": the
+generator has the full AST + type info, so it can infer, check, and emit code
+that reflection would have to pay for at runtime (or couldn't do at all). These
+land **with** Theme 7's generator, reusing the same `Source`/priority/convert
+semantics.
+
+**1. Kill tag duplication — convention-first mapping (not one mega-tag).**
+The pain is `cf_env:"DB" cf_json:"db" cf_dyn:"DB"` — visual noise, three keys to
+keep in sync. **Decision (settled): keep several conventional `cf_*` tags, infer
+their values from the field name, and require a tag only for exceptions.** We
+deliberately reject folding everything into one `gostructor:"key=…,sources=…"`
+tag, because a single shared key can't express gostructor's defining feature —
+*a different key per source with a per-field priority order* (`cf_env:"DB_URL"`
+vs `cf_json:"db.url"`, tried in a chosen order). A mega-tag would force an
+immediate escape hatch and give us two syntaxes; it's also less `go vet`- and
+IDE-legible than plain tag keys. Instead:
+
+```go
+//gostructor:naming=snake_case   // file-level default: DatabasePort → DATABASE_PORT / database_port
+
+type Config struct {
+    DatabasePort int                              // inferred for every enabled source, no tags
+    LegacyDSN    string `cf_env:"OLD_DB_URL"`     // exception: override only the source that breaks the convention
+    APIKey       string `cf_secret:"" cf_required:""`
+}
+```
+
+- A file-level `//gostructor:naming=<snake_case|kebab|screaming_snake|…>` sets
+  the default derivation per source (env → `SCREAMING_SNAKE`, yaml/json →
+  `snake_case`, etc.). The generator emits the concrete key into the generated
+  `Fill`, so there's no runtime name-mangling cost.
+- An explicit `cf_*` tag always wins over the inferred key — you annotate only
+  the fields whose real key deviates. Net effect: ~90% fewer tags, and every
+  surviving tag stays a plain, tool-legible key.
+- Reflective engine parity: the same inference can run in the reflective path
+  behind an opt-in (`WithNaming(...)`), so behavior matches whether or not you
+  ran `go generate`.
+
+**2. `required` out of the box — a real check, not a convention.** Today
+"tagged ⇒ required" is enforced only as `*NotResolvedError` when *no* source
+produced anything; there's no way to say "must be non-zero after all sources
+run." Add `cf_required:""`. The generated `Fill` emits a direct post-resolution
+`if` per required field: if the field is still the zero value for its type after
+every source (and default) was tried, return a precise error naming the field
+and the sources checked:
+
+```go
+fmt.Errorf("gostructor: missing required config field %q (checked: cf_yaml, cf_env)", "DB")
+```
+
+No panics, no reflection at check time — just generated straight-line code. Maps
+onto the existing taxonomy as a distinct `*RequiredError` (satisfies
+`FieldError`), so callers classify it with `errors.As`.
+
+**3. Auto-wire `Validate()` — never forget to call it.** The generator inspects
+the target (and its nested structs) for a `Validate() error` method; if present,
+it **emits the call at the tail of `Fill`**, after all fields resolve and all
+`cf_required` checks pass. `cfg, err := LoadConfig()` with `err == nil` then
+guarantees the struct is both fully assembled *and* business-rule-valid — the
+`WithValidate` (Theme 5) hook made zero-cost and un-forgettable via codegen.
+Reflective-engine equivalent stays the explicit `WithValidate(...)` option.
+
+**4. Config/test drift — generate the canonical sample artifact.** This is
+Theme 5a (`GenerateTemplate`) turned into a **build-time artifact** by the
+generator: on `go generate`, also emit `config.sample.yaml` / `.env.example`
+straight from the struct's fields, tags, `cf_default` values, and `cf_desc`
+comments. Because it regenerates from the single source of truth, a test can
+diff a committed golden sample against the freshly generated one and **fail CI
+when someone adds a field but forgets the sample** — the "green tests, prod
+panics on a missing key" class of bug becomes a build failure. The generator
+also emits an optional `TestConfigSampleUpToDate` alongside the golden test from
+Theme 7 to enforce this automatically.
+
+**Value: high (hits the four most-cited Go-config pains). Effort: medium on top
+of Theme 7's generator; small each. Deps: none at runtime; rides Theme 7's
+`go/ast`+`go/types`.**
 
 ---
 

@@ -2,18 +2,17 @@ package gostructor
 
 import "os"
 
-// EnvTag is the struct tag Env responds to: `cf_env:"MY_VAR"`.
-const EnvTag = "cf_env"
-
 type envSource struct{}
 
-// Env resolves fields from environment variables named by the cf_env tag.
+// Env resolves fields from environment variables. The variable name is the
+// field's base name in SCREAMING_SNAKE_CASE (`cfg:"port"` -> PORT), unless the
+// cfg tag overrides it (`cfg:"port,env:DB_PORT_LEGACY"` -> DB_PORT_LEGACY).
 func Env() Source { return envSource{} }
 
-func (envSource) Tag() string { return EnvTag }
+func (envSource) Name() string { return SourceEnv }
 
 func (envSource) Resolve(field FieldContext) (any, bool, error) {
-	name := field.TagValue(EnvTag)
+	name := field.SourceKey(SourceEnv, ScreamingSnake)
 	if name == "" {
 		return nil, false, nil
 	}

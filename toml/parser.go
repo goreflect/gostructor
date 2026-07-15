@@ -4,8 +4,8 @@
 // comments.
 //
 // Not supported: datetimes, inline tables (`{ a = 1 }`), arrays of tables
-// (`[[table]]`), multiline/triple-quoted strings, and dotted keys inline
-// (`a.b = 1`) - none of which gostructor's own usage of TOML relies on.
+// (`[[table]]`), multiline/triple-quoted strings, and inline dotted keys
+// (`a.b = 1`).
 package toml
 
 import (
@@ -20,10 +20,9 @@ import (
 // level per `[table.path]` segment, with values as string/int64/float64/
 // bool/[]interface{}.
 //
-// This is a type alias, not a distinct named type: nested tables must be
-// indistinguishable from plain map[string]interface{} values so that
-// tools.LookupPath's type assertions (which check against
-// map[string]interface{} exactly) can descend into them.
+// It is a type alias, not a distinct named type, so nested tables stay
+// indistinguishable from plain map[string]interface{} and tools.LookupPath's
+// exact type assertions can descend into them.
 type Document = map[string]any
 
 // Parse reads a TOML document from data.
