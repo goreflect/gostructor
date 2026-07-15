@@ -1,23 +1,17 @@
-// Package git resolves gostructor fields from a configuration file kept in a
-// git repository, treating a branch or tag as a config *version*. It clones the
-// repo (in memory), reads one file at the chosen ref, and resolves fields from
-// it with the same nested-key addressing as the JSON source.
+// Package git resolves gostructor fields from a config file kept in a git
+// repository, treating a branch or tag as a config version. It clones the repo
+// in memory, reads one file at the chosen ref, and addresses fields by nested
+// key like the JSON source.
 //
-// It implements gostructor.Watchable: on an interval it re-checks the ref for
-// drift (a new commit) and, when the SHA changes, re-reads the file and signals
-// a reload — so a running service follows the ref without a restart. SetVersion
-// re-points to another ref at runtime and triggers the same reload.
-//
-// A durable snapshot store (gostructor/snapshot) makes it resilient: every good
-// fetch is written to the store, and if the remote is unreachable at startup
-// the last-known-good snapshot is served instead of failing. Provenance in the
-// resolution trace is the ref plus the commit SHA a value came from.
+// It implements gostructor.Watchable: it polls the ref for a new commit and
+// signals a reload when the SHA moves, so a service follows the ref without a
+// restart; SetVersion re-points to another ref at runtime. With a
+// gostructor/snapshot store, every good fetch is persisted and served as
+// last-known-good when the remote is unreachable at startup.
 package git
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -44,9 +38,11 @@ const DefaultName = "git"
 const DefaultPoll = 30 * time.Second
 
 // Decoder turns the raw bytes of the config file into a nested map, the shape
-// gostructor.LookupKey addresses. The default decodes JSON; pass a YAML/TOML
-// decoder via Options.Decoder to read those formats.
-type Decoder func([]byte) (map[string]any, error)
+// gostructor.LookupKey addresses. The default decodes JSON; read any other
+// format the library supports by passing its decoder via Options.Decoder —
+// gostructor.DecodeINI / gostructor.DecodeKeyValue (zero-dep), or yaml.Decode /
+// toml.Decode / hocon.Decode from those modules.
+type Decoder = gostructor.Decoder
 
 // Options configures a git Source.
 type Options struct {
@@ -117,7 +113,7 @@ func New(opts Options) (*source, error) {
 		s.name = DefaultName
 	}
 	if s.decode == nil {
-		s.decode = jsonDecoder
+		s.decode = gostructor.DecodeJSON
 	}
 	if s.log == nil {
 		s.log = slog.New(slog.DiscardHandler)
@@ -348,7 +344,7 @@ func (s *source) readFileLocked(hash plumbing.Hash) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("gostructor/git: opening %q: %w", s.opts.Path, err)
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 	raw, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, fmt.Errorf("gostructor/git: reading %q: %w", s.opts.Path, err)
@@ -378,16 +374,4 @@ func (s *source) loadFromSnapshotLocked(cause error) bool {
 	s.log.Warn("gostructor/git: upstream unavailable, serving last-known-good snapshot",
 		"cause", cause, "version", version)
 	return true
-}
-
-// jsonDecoder is the default Decoder: it parses JSON with numbers kept exact
-// (json.Number) so large integers survive, matching the core JSON source.
-func jsonDecoder(raw []byte) (map[string]any, error) {
-	parsed := map[string]any{}
-	dec := json.NewDecoder(bytes.NewReader(raw))
-	dec.UseNumber()
-	if err := dec.Decode(&parsed); err != nil {
-		return nil, err
-	}
-	return parsed, nil
 }

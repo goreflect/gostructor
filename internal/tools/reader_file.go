@@ -2,12 +2,12 @@ package tools
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 )
 
 // ReadFromFile reads fileName into a byte buffer.
 func ReadFromFile(fileName string) (*bytes.Buffer, error) {
-	bts, err := ioutil.ReadFile(fileName)
+	bts, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, err
 	}

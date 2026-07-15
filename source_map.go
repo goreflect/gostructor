@@ -20,11 +20,16 @@ func LookupKey(field FieldContext, sourceName string, data map[string]any) (any,
 	if key == "" {
 		return nil, false
 	}
-	value, ok := tools.LookupPath(data, key)
-	if !ok || value == nil {
-		return nil, false
+	// Dotted traversal for nested maps (JSON/YAML/TOML/HOCON), then an exact
+	// top-level match so a flat map from a key/value or INI file resolves a
+	// dotted key too (e.g. the literal key "server.host").
+	if value, ok := tools.LookupPath(data, key); ok && value != nil {
+		return value, true
 	}
-	return value, true
+	if value, ok := data[key]; ok && value != nil {
+		return value, true
+	}
+	return nil, false
 }
 
 // Map returns a Source backed by an in-memory map, resolving fields with the

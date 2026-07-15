@@ -7,34 +7,19 @@ import (
 	"time"
 )
 
-// Watch fills target once, then keeps a long-lived service's configuration live:
-// whenever any Watchable source among the configured sources reports a change,
-// it re-fills a *fresh* copy of T through the exact same resolution, hook,
-// trace, and masking path as the initial fill, and delivers the result to
-// onReload. It blocks until ctx is cancelled, then returns ctx.Err().
+// Watch fills target once, then keeps it live: whenever a Watchable source
+// reports a change, it re-fills a fresh *T (same path as the initial fill) and
+// delivers the result to onReload. It blocks until ctx is cancelled.
 //
-// The reload is transactional (last-known-good):
+// Reloads are transactional: a fresh copy is filled and validated before being
+// published, so a failed reload leaves the last-known-good config serving and
+// reports the error via onReload(nil, err) instead of crashing. onReload is
+// called with the initial fill too, so callers can publish it (typically an
+// atomic.Pointer swap) with the same code used for reloads.
 //
-//  1. Resolve into a fresh *T — the live struct is never mutated in place, so a
-//     half-applied fill is never observable.
-//  2. Run WithValidate (whole-struct) against that fresh copy.
-//  3. Only on success is it published via onReload(fresh, nil). On failure the
-//     previously good config keeps serving and the error is delivered via
-//     onReload(nil, err) (and logged if WithLogger is set) — a bad edit is a
-//     non-fatal, logged event, not a crash.
-//
-// onReload is called once with the initial fill (so a caller can publish it
-// with the same atomic-swap code it uses for reloads) and again for every
-// reload attempt thereafter. A typical caller stores the latest good *T in an
-// atomic.Pointer and swaps it on each onReload(cfg, nil).
-//
-// If the *initial* fill fails, Watch returns that error immediately without
-// calling onReload — startup misconfiguration stays fatal, just like Configure.
-//
-// WithDebounce coalesces a burst of change signals into a single reload;
-// without it every signal reloads immediately. If no configured source is
-// Watchable, Watch performs the initial fill, delivers it, and then blocks
-// until ctx is cancelled (there is nothing to watch).
+// A failed *initial* fill is fatal: Watch returns the error without calling
+// onReload, like Configure. WithDebounce coalesces a burst of signals into one
+// reload. With no Watchable source, Watch fills once and blocks until ctx ends.
 func Watch[T any](ctx context.Context, target *T, onReload func(*T, error), opts ...Option) error {
 	cfg := newConfig(opts)
 
@@ -150,16 +135,13 @@ func sourceName(w Watchable) string {
 	return "unknown"
 }
 
-// PollWatch is a helper a Watchable source can use to implement Watch by
-// polling a cheap fingerprint (a commit SHA, a KV modify-index, a secret
-// version) on an interval and calling onChange whenever it differs from the
-// previous poll. It blocks until ctx is cancelled and returns ctx.Err(); a
-// fingerprint error is logged (if log is non-nil) and retried on the next tick
-// rather than ending the watch, so a transient upstream outage doesn't stop
-// live reloads once it recovers. A non-positive interval defaults to 30s.
-//
-// The first successful fingerprint establishes the baseline and does not fire
-// onChange (the initial value is already reflected in the first fill).
+// PollWatch helps a Watchable source implement Watch by polling a cheap
+// fingerprint (a commit SHA, a KV modify-index, a secret version) on an interval
+// and calling onChange when it differs from the previous poll. It blocks until
+// ctx is cancelled. A fingerprint error is logged (if log is non-nil) and
+// retried on the next tick rather than ending the watch. A non-positive interval
+// defaults to 30s. The first poll only establishes the baseline and does not
+// fire onChange.
 func PollWatch(ctx context.Context, interval time.Duration, fingerprint func(context.Context) (string, error), onChange func(), log *slog.Logger) error {
 	if interval <= 0 {
 		interval = 30 * time.Second

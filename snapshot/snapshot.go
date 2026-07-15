@@ -111,14 +111,14 @@ func writeAtomic(path string, data []byte) error {
 		return fmt.Errorf("gostructor/snapshot: temp file in %q: %w", dir, err)
 	}
 	tmpName := tmp.Name()
-	defer os.Remove(tmpName) // no-op after a successful rename
+	defer func() { _ = os.Remove(tmpName) }() // no-op after a successful rename
 
 	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
+		_ = tmp.Close()
 		return fmt.Errorf("gostructor/snapshot: writing %q: %w", tmpName, err)
 	}
 	if err := tmp.Sync(); err != nil {
-		tmp.Close()
+		_ = tmp.Close()
 		return fmt.Errorf("gostructor/snapshot: syncing %q: %w", tmpName, err)
 	}
 	if err := tmp.Close(); err != nil {

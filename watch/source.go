@@ -13,9 +13,7 @@
 package watch
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -31,8 +29,11 @@ import (
 const DefaultName = "file"
 
 // Decoder turns the file's bytes into a nested map addressable by
-// gostructor.LookupKey. The default decodes JSON.
-type Decoder func([]byte) (map[string]any, error)
+// gostructor.LookupKey. The default decodes JSON; watch any other supported
+// format by passing its decoder via Options.Decoder — gostructor.DecodeINI /
+// gostructor.DecodeKeyValue (zero-dep), or yaml.Decode / toml.Decode /
+// hocon.Decode from those modules.
+type Decoder = gostructor.Decoder
 
 // Options configures a watched file source.
 type Options struct {
@@ -78,7 +79,7 @@ func New(opts Options) (*source, error) {
 		s.name = DefaultName
 	}
 	if s.decode == nil {
-		s.decode = jsonDecoder
+		s.decode = gostructor.DecodeJSON
 	}
 	if s.log == nil {
 		s.log = slog.New(slog.DiscardHandler)
@@ -117,7 +118,7 @@ func (s *source) Watch(ctx context.Context, onChange func()) error {
 	if err != nil {
 		return fmt.Errorf("gostructor/watch: creating watcher: %w", err)
 	}
-	defer watcher.Close()
+	defer func() { _ = watcher.Close() }()
 
 	dir := filepath.Dir(s.path)
 	if err := watcher.Add(dir); err != nil {
@@ -189,14 +190,4 @@ func (s *source) read() (map[string]any, error) {
 		return nil, fmt.Errorf("gostructor/watch: decoding %q: %w", s.path, err)
 	}
 	return data, nil
-}
-
-func jsonDecoder(raw []byte) (map[string]any, error) {
-	parsed := map[string]any{}
-	dec := json.NewDecoder(bytes.NewReader(raw))
-	dec.UseNumber()
-	if err := dec.Decode(&parsed); err != nil {
-		return nil, err
-	}
-	return parsed, nil
 }

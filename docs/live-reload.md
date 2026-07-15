@@ -119,6 +119,29 @@ Each has a runnable, docker-compose-backed example under
 [`etcd`](../examples/etcd/), [`springcloud`](../examples/springcloud/),
 [`vault`](../examples/vault/).
 
+## File formats (git & file sources)
+
+The `git` and `file` sources are format-agnostic. They default to JSON but read
+any format via a pluggable `Decoder` (`func([]byte) (map[string]any, error)`):
+
+| Format | Decoder | Dependency |
+|---|---|---|
+| JSON | `gostructor.DecodeJSON` (default) | none (core) |
+| INI | `gostructor.DecodeINI` | none (core) |
+| key/value (`.env`) | `gostructor.DecodeKeyValue` | none (core) |
+| YAML | `yaml.Decode` | `gostructor/yaml` |
+| TOML | `toml.Decode` | `gostructor/toml` |
+| HOCON | `hocon.Decode` | `gostructor/hocon` |
+
+```go
+src, _ := git.New(git.Options{Repo: ..., Path: "config.yaml", Decoder: yaml.Decode})
+src, _ := watch.New(watch.Options{Path: "app.env", Decoder: gostructor.DecodeKeyValue})
+```
+
+Flat formats (key/value, INI) resolve dotted keys by an exact top-level match,
+so `cfg:"host,file:server.host"` finds either a literal `server.host` key or the
+nested `server` → `host` a structured format produces.
+
 ## Durable last-known-good (`gostructor/snapshot`)
 
 Remote sources (git, config servers) accept an optional snapshot `Store` — the

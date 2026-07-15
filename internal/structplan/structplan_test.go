@@ -128,9 +128,9 @@ func TestForParsesCfgAndGos(t *testing.T) {
 
 func TestParseCfg(t *testing.T) {
 	cases := []struct {
-		tag       string
-		wantBase  string
-		wantOver  map[string]string
+		tag      string
+		wantBase string
+		wantOver map[string]string
 	}{
 		{"", "", nil},
 		{"port", "port", nil},

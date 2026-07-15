@@ -65,6 +65,18 @@ go run .
 - **`Snapshot`** (the `gostructor/snapshot` "файлопомойка") keeps the app up
   through a git outage.
 
+### Any format
+
+The config file needn't be JSON. Pass a decoder for the format you keep in git:
+
+```go
+git.New(git.Options{Repo: ..., Path: "config.yaml", Decoder: yaml.Decode})
+git.New(git.Options{Repo: ..., Path: "app.env",     Decoder: gostructor.DecodeKeyValue})
+```
+
+`gostructor.DecodeINI` / `gostructor.DecodeKeyValue` are zero-dep; `yaml.Decode`,
+`toml.Decode`, `hocon.Decode` come from those modules.
+
 ## Clean up
 
 ```sh

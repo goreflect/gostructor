@@ -31,6 +31,28 @@ func (f *File) Get(section, key string) (string, bool) {
 	return value, ok
 }
 
+// ToMap renders the parsed document as a nested map: global-section keys sit at
+// the top level, and each named `[section]` becomes a nested map[string]any.
+// It is the shape gostructor.LookupKey addresses, so an INI file can back a
+// remote source (git, a watched file) the same way JSON does.
+func (f *File) ToMap() map[string]any {
+	out := make(map[string]any, len(f.sections))
+	for section, kv := range f.sections {
+		if section == GlobalSection {
+			for k, v := range kv {
+				out[k] = v
+			}
+			continue
+		}
+		sub := make(map[string]any, len(kv))
+		for k, v := range kv {
+			sub[k] = v
+		}
+		out[section] = sub
+	}
+	return out
+}
+
 // Parse reads an INI document from data.
 func Parse(data []byte) (*File, error) {
 	file := &File{sections: map[string]map[string]string{GlobalSection: {}}}

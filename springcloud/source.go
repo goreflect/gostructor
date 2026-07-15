@@ -257,7 +257,7 @@ func (s *source) fetch(ctx context.Context) (*environment, []byte, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("gostructor/springcloud: requesting %s: %w", endpoint, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 16<<20))
 	if err != nil {
 		return nil, nil, fmt.Errorf("gostructor/springcloud: reading response: %w", err)

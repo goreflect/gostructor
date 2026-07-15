@@ -36,13 +36,6 @@ func newLexer(input string) *lexer {
 	return &lexer{input: []rune(input), line: 1}
 }
 
-func (l *lexer) peekRune() rune {
-	if l.pos >= len(l.input) {
-		return 0
-	}
-	return l.input[l.pos]
-}
-
 func (l *lexer) next() token {
 	l.skipInsignificant()
 	if l.pos >= len(l.input) {

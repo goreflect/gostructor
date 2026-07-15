@@ -135,6 +135,7 @@ unexpected file load.
 | `env` | Environment variable | core | — |
 | `json` | JSON file | core | `GOSTRUCTOR_JSON=...` |
 | `ini` | INI file | core | `GOSTRUCTOR_INI=...` |
+| `keyvalue` | Key/value file (`.env`/`.properties`) | core | `GOSTRUCTOR_KEYVALUE=...` |
 | `yaml` | YAML file | `gostructor/yaml` | `GOSTRUCTOR_YAML=...` |
 | `toml` | TOML file | `gostructor/toml` | `GOSTRUCTOR_TOML=...` |
 | `hocon` | HOCON file | `gostructor/hocon` | `GOSTRUCTOR_HOCON=...` |
@@ -147,8 +148,8 @@ re-fills the struct when the backing data changes (see
 
 | Source | Reads from | Module | Live via |
 |---|---|---|---|
-| `file` | JSON file on disk | `gostructor/watch` | fsnotify |
-| `git` | File in a git repo (ref = version) | `gostructor/git` | poll for drift + `SetVersion` |
+| `file` | Config file on disk (any format) | `gostructor/watch` | fsnotify |
+| `git` | File in a git repo, any format (ref = version) | `gostructor/git` | poll for drift + `SetVersion` |
 | `consul` | Consul KV prefix | `gostructor/consul` | blocking queries |
 | `etcd` | etcd v3 key prefix | `gostructor/etcd` | native watch API |
 | `springcloud` | Spring Cloud Config Server | `gostructor/springcloud` | poll |
@@ -157,6 +158,11 @@ re-fills the struct when the backing data changes (see
 Each has a **fully reproducible, docker-compose example** under
 [`examples/`](examples/). Full addressing rules, per-source key derivation, and
 priority: [docs/sources.md](docs/sources.md).
+
+The `file` and `git` sources are **format-agnostic**: they default to JSON but
+read any format the library supports via a pluggable decoder — pass
+`gostructor.DecodeINI` / `gostructor.DecodeKeyValue` (zero-dep) or `yaml.Decode`
+/ `toml.Decode` / `hocon.Decode` as the source's `Decoder`.
 
 ## Documentation
 
