@@ -82,5 +82,5 @@ cfg, err := gostructor.Configure(&Config{}, gostructor.WithSources(yaml.New()))
 
 > `gostructor/toml` and `gostructor/hocon` are hand-written parsers for a
 > practical subset of each format (no `${}` substitutions, inline tables,
-> arrays-of-tables, etc.) — see [Known limitations](../../README.md#known-limitations).
+> arrays-of-tables, etc.) — see [Known limitations](../limitations.md).
 > `gostructor/yaml` wraps `goccy/go-yaml` and has no such subset limit.

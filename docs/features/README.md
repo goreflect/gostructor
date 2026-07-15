@@ -35,4 +35,4 @@ go run ./examples/<name>
 6. **Full service config** — everything at once, at production scale.
 
 For the full API reference, the `cfg`/`gos` tag grammar, and migration notes,
-see the [root README](../../README.md).
+see the [reference docs](../README.md).
