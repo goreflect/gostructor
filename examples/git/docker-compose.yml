@@ -12,6 +12,7 @@ services:
       - |
         set -e
         export HOME=/root
+        apk add --no-cache git-daemon
         git config --global user.email demo@example.com
         git config --global user.name demo
         git config --global init.defaultBranch main

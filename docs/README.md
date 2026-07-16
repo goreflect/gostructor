@@ -32,6 +32,8 @@ you're new. Every page maps to a self-contained program under
   YAML, TOML, HOCON, Vault), priority, and writing your own `Source`.
 - [field-types.md](field-types.md) — every supported field type and the strict
   conversion rules.
+- [codegen.md](codegen.md) — `gostructor-gen`, the reflection-free `Fill` fast
+  path, the three engine modes, and how equivalence is guaranteed.
 - [observability.md](observability.md) — the resolution trace
   (`ConfigureWithReport`) and secret masking.
 - [limitations.md](limitations.md) — known limitations and the error taxonomy.

@@ -39,6 +39,11 @@ func ConfigureWithReport[T any](target *T, opts ...Option) (*T, *Report, error) 
 
 func configure[T any](target *T, withReport bool, opts []Option) (result *T, report *Report, err error) {
 	cfg := newConfig(opts)
+	// Fast path: hand off to a generated Fill when one exists and the engine
+	// permits it. Falls through to the reflective engine otherwise.
+	if handled, ferr := dispatchFiller(cfg, target, withReport, opts); handled {
+		return target, nil, ferr
+	}
 	return runConfigure(cfg, target, withReport)
 }
 

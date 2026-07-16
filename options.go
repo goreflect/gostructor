@@ -17,6 +17,9 @@ type config struct {
 	hooks      []Hook
 	masker     Masker
 	trace      bool
+	// engine selects the reflective vs generated-Fill resolution path; the zero
+	// value is EngineAdaptive. See WithEngine.
+	engine Engine
 	// debounce coalesces a burst of change signals during Watch into a single
 	// reload; zero disables debouncing. See WithDebounce.
 	debounce time.Duration
