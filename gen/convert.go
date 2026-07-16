@@ -1,14 +1,13 @@
-// Package gen is runtime support for the code that gostructor-gen (Theme 7)
-// emits. It is imported by generated <Type>_gostructor.go files, not by
-// application code written by hand — reach for the main gostructor package for
-// that. The functions here are the reflection-free, typed conversions the
-// generated Fill uses to turn a source's raw value into a concrete field value,
-// re-exported from internal/convert so generated code (which lives in your
-// module and cannot import gostructor's internal packages) can call them.
+// Package gen is runtime support for the code gostructor-gen emits. It's
+// imported by the generated <Type>.gs.go files, not by hand-written application
+// code (use the main gostructor package for that). The functions here are the
+// reflection-free typed conversions the generated Fill uses to turn a source's
+// raw value into a concrete field value, re-exported from internal/convert so
+// generated code — which lives in your module and can't import gostructor's
+// internal packages — can call them.
 //
-// Each conversion is byte-for-byte equivalent to what the reflective engine
-// would do for the same value and destination type, including the *ConvertError
-// it wraps on failure.
+// Each conversion matches what the reflective engine does for the same value and
+// destination type, including the *ConvertError it wraps on failure.
 package gen
 
 import (
@@ -67,14 +66,13 @@ func Duration(v any) (time.Duration, error) { return convert.Duration(v) }
 func StringSlice(v any) ([]string, error) { return convert.StringSlice(v) }
 
 // Reflective converts a resolved value into T through the same reflective core
-// the engine uses for compound and named field shapes — non-string slices and
+// the engine uses, for compound and named field shapes: non-string slices and
 // arrays ([]int, [3]bool), maps (map[string]int), and named types without a
-// dedicated helper. gostructor-gen emits a Reflective[T] call for exactly these
-// fields, so the generated Fill stays reflection-free for the common primitives
-// while still matching Configure byte-for-byte on the complex ones (the cost is
-// one reflect conversion for that field, the same one the reflective engine
-// would have paid). The returned error is the same *ConvertError the reflective
-// path produces.
+// dedicated helper. gostructor-gen emits a Reflective[T] call for these fields,
+// so the generated Fill stays reflection-free for the common primitives and
+// pays one reflect conversion only for the complex ones (the same conversion the
+// reflective engine would have done). The returned error is the same
+// *ConvertError the reflective path produces.
 func Reflective[T any](v any) (T, error) {
 	var zero T
 	rv, err := convert.Value(reflect.ValueOf(v), reflect.TypeFor[T]())

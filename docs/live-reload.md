@@ -1,16 +1,15 @@
 # Live reload / hot configuration
 
 `Configure` fills a struct once. For a long-lived service that should pick up
-changed configuration **without a restart**, gostructor adds a small, opt-in
-layer on top of the same resolution path:
+changed configuration without a restart, gostructor adds a small, opt-in layer
+on top of the same resolution path:
 
 - a `Watchable` interface a source may implement,
 - a `Watch[T]` driver that re-fills the struct transactionally, and
 - `WithDebounce` / `WithValidate` options that gate reloads.
 
-It composes with everything else — the same `cfg`/`gos` tags, source order,
-hooks, trace, and secret masking apply to a live reload exactly as to the first
-fill.
+The same `cfg`/`gos` tags, source order, hooks, trace, and secret masking apply
+to a live reload just as they do to the first fill.
 
 ## The `Watchable` interface
 
@@ -23,11 +22,11 @@ type Watchable interface {
 ```
 
 `Watch` blocks until `ctx` is cancelled, calling `onChange` whenever the data
-changes. A source that caches a snapshot for `Resolve` refreshes that snapshot
-**before** calling `onChange`, so the re-fill reads the new data. The core ships
+changes. A source that caches a snapshot for `Resolve` must refresh that snapshot
+before calling `onChange`, so the re-fill reads the new data. The core ships
 `PollWatch`, a helper that implements `Watch` by polling a cheap fingerprint (a
-commit SHA, a KV index, a secret version) on an interval — used by the poll-based
-adapters.
+commit SHA, a KV index, a secret version) on an interval. The poll-based adapters
+use it.
 
 ## The `Watch` driver
 
@@ -40,24 +39,23 @@ func Watch[T any](
 ) error
 ```
 
-`Watch` fills `target` once, then re-fills a **fresh** copy of `T` whenever any
+`Watch` fills `target` once, then re-fills a fresh copy of `T` whenever any
 configured `Watchable` source reports a change, delivering each result to
 `onReload`. It blocks until `ctx` is cancelled.
 
-The reload is **transactional (last-known-good)**:
+Reloads are transactional, so the app always runs on a complete config:
 
-1. Resolve into a fresh `*T` — the live struct is never mutated in place, so a
+1. Resolve into a fresh `*T`. The live struct is never mutated in place, so a
    half-applied fill is never observable.
 2. Run `WithValidate` (whole-struct) against the fresh copy.
-3. Only on success publish it via `onReload(fresh, nil)`. On failure the
-   previously good config keeps serving and the error is delivered via
-   `onReload(nil, err)` (and logged if `WithLogger` is set) — a bad change is a
-   non-fatal, logged event, not a crash.
+3. Only on success publish it via `onReload(fresh, nil)`. On failure the previous
+   config keeps serving and the error goes to `onReload(nil, err)` (and to the
+   log if `WithLogger` is set). A bad change is logged, not fatal.
 
 `onReload` is called once with the initial fill (so you can publish it with the
 same atomic-swap code you use for reloads) and again for every reload attempt.
-If the **initial** fill fails, `Watch` returns that error immediately without
-calling `onReload` — startup misconfiguration stays fatal, like `Configure`.
+If the initial fill fails, `Watch` returns that error immediately without calling
+`onReload`, so startup misconfiguration stays fatal like it is with `Configure`.
 
 ### Typical usage
 
@@ -89,15 +87,14 @@ go func() {
 
 ## Options
 
-- **`WithDebounce(d)`** — coalesce a burst of change signals into one reload. A
+- `WithDebounce(d)` — coalesce a burst of change signals into one reload. A
   single logical change often arrives as several low-level events (an editor
   writes a file in multiple syscalls; a config server pushes a batch of key
-  events). The debounce window collapses a quiet-for-`d` burst into **one**
+  events). The debounce window collapses a burst that's quiet for `d` into one
   re-fill. Zero disables it.
-- **`WithValidate(func(*T) error)`** — a whole-struct gate run after a reload
-  fills a fresh copy, before it is published. Returning an error rejects that
-  reload. Complements per-field `WithHook` with a check that sees the whole
-  struct at once.
+- `WithValidate(func(*T) error)` — a whole-struct check run after a reload fills
+  a fresh copy, before it's published. Returning an error rejects that reload.
+  Complements per-field `WithHook` by seeing the whole struct at once.
 
 Both affect `Watch` only; a plain `Configure` ignores them.
 
@@ -144,10 +141,10 @@ nested `server` → `host` a structured format produces.
 
 ## Durable last-known-good (`gostructor/snapshot`)
 
-Remote sources (git, config servers) accept an optional snapshot `Store` — the
-"файлопомойка". Every good fetch is written to it, and if the upstream is
-unreachable at startup the last-known-good snapshot is served instead of
-failing, so a transient outage doesn't take the service down.
+Remote sources (git, config servers) accept an optional snapshot `Store`. Every
+good fetch is written to it, and if the upstream is unreachable at startup the
+last snapshot is served instead of failing, so a transient outage doesn't take
+the service down.
 
 ```go
 store, _ := snapshot.NewDirStore("/var/lib/app/config")

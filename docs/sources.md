@@ -1,8 +1,8 @@
 # Sources in detail
 
-Every source shares the one `cfg` tag; the **source name** is what you target
-in a per-source override (`cfg:"port,env:DB_PORT"`) and what appears in the
-resolution trace.
+Every source shares the one `cfg` tag. The source name is what you target in a
+per-source override (`cfg:"port,env:DB_PORT"`) and what appears in the resolution
+trace.
 
 | Source name | Reads from | Module | Requires | Key from base name |
 |---|---|---|---|---|
@@ -15,11 +15,10 @@ resolution trace.
 | `hocon` | HOCON file | `gostructor/hocon` | `GOSTRUCTOR_HOCON=path/to/file.hocon` | name as written; `.` nests |
 | `vault` | HashiCorp Vault secret | `gostructor/vault` | `VAULT_ADDR`, `VAULT_TOKEN` | **override only** (`vault:path#key`) |
 
-Non-core sources must be added explicitly via `WithSources` — the core module
-has no way to know they exist (that's the whole point of the zero-dependency
-core). The core default source list is just `Env, Default`; file and secret
-sources are opt-in via `WithSources`, so a bare `cfg` base name never triggers
-an unexpected file load.
+Non-core sources must be added explicitly via `WithSources`; the core module
+doesn't import them, which is what keeps it dependency-free. The default source
+list is just `Env, Default`. File and secret sources are opt-in, so a bare `cfg`
+base name never triggers an unexpected file load.
 
 ## Defaults
 
@@ -112,18 +111,17 @@ server:
     - eu-west
 ```
 
-`gostructor/toml` and `gostructor/hocon` ship **hand-written parsers for a
-practical subset** of each format, not the full spec — see
-[limitations.md](limitations.md) for exactly what's out of scope before you
-commit a config file that needs it.
+`gostructor/toml` and `gostructor/hocon` use hand-written parsers that cover a
+practical subset of each format, not the full spec. See
+[limitations.md](limitations.md) for what's out of scope before you commit a
+config file that needs it.
 
 ## HashiCorp Vault (optional module)
 
-Set `VAULT_ADDR` and `VAULT_TOKEN` (the same variables the `vault` CLI itself
-uses), then give each field an explicit `vault:path/to/secret#key` override.
-Vault has **no** name-based default — a secret path can't be guessed from a
-field name — so a field without a `vault:` override is simply skipped by the
-vault source:
+Set `VAULT_ADDR` and `VAULT_TOKEN` (the same variables the `vault` CLI uses),
+then give each field an explicit `vault:path/to/secret#key` override. Vault has
+no name-based default, since a secret path can't be guessed from a field name, so
+a field without a `vault:` override is skipped by the vault source:
 
 ```go
 import "github.com/goreflect/gostructor/vault"
@@ -142,9 +140,9 @@ client, not a third-party wrapper.
 
 ## Priority: the source order
 
-A field can be resolvable by several sources at once. There is no priority tag
-and no global selector — **priority is the order of the sources you pass to
-`WithSources`**. The first source that reports a value wins. To flip which
+A field can be resolvable by several sources at once. There's no priority tag and
+no global selector: priority is the order of the sources you pass to
+`WithSources`, and the first source that reports a value wins. To change which
 source leads for a whole config, reorder the slice:
 
 ```go
@@ -169,10 +167,9 @@ type Source interface {
 
 `Name` is the source's identity ("yaml") and its `cfg` override key. In
 `Resolve`, ask the field for your key with
-`field.SourceKey("yaml", gostructor.Identity)` — that returns the `yaml:`
-override if present, else your naming strategy applied to the base name, else
-`""` when the field doesn't apply to you. `found=false` means "nothing to
-contribute for this field", letting `Configure` fall through to the next source
-instead of treating it as an error. Look at `gostructor/yaml`'s `source.go` for
-a complete, short example — it's about seventy lines including file loading and
-error handling.
+`field.SourceKey("yaml", gostructor.Identity)`. That returns the `yaml:` override
+if present, otherwise your naming strategy applied to the base name, otherwise
+`""` when the field doesn't apply to you. Return `found=false` when you have
+nothing for a field, and `Configure` falls through to the next source instead of
+treating it as an error. `gostructor/yaml`'s `source.go` is a short, complete
+example, about seventy lines including file loading and error handling.

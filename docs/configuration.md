@@ -9,12 +9,12 @@ For a task-first tour with runnable demos, see [`docs/features`](features/).
 func Configure[T any](target *T, opts ...Option) (*T, error)
 ```
 
-`Configure` reads the `cfg`/`gos` tags on `target`, tries each field's sources
-in order, and returns the same pointer you passed in — so the argument is also
-the result. A field with no gostructor tags is left untouched; a *configured*
-field that no source can resolve is a hard error (unless it's `gos:"optional"`).
+`Configure` reads the `cfg`/`gos` tags on `target`, tries each field's sources in
+order, and returns the same pointer you passed in, so the argument is also the
+result. A field with no gostructor tags is left untouched. A configured field
+that no source can resolve is an error, unless it's `gos:"optional"`.
 
-With no options, `Configure` uses a minimal default source list — `Env` then
+With no options, `Configure` uses a minimal default source list: `Env` then
 `Default`. Bring in file and secret sources with `WithSources`, which replaces
 the default list with an explicit, ordered one:
 
@@ -31,14 +31,14 @@ cfg, err := gostructor.Configure(&Config{}, gostructor.WithSources(
 ))
 ```
 
-Sources are tried in the order given; the first one that reports a value for a
-field wins — that order **is** the priority (see [sources.md](sources.md)).
+Sources are tried in the order given, and the first one that reports a value for
+a field wins. That order is the priority (see [sources.md](sources.md)).
 `Env()`, `Default()`, `JSON()`, and `INI()` are built into the core module;
 each file source also has a `*File(path string)` variant (`JSONFile`,
 `INIFile`, `yaml.File`, ...) to read from an explicit path instead of the
 source's environment variable.
 
-`ConfigureWithReport` fills the struct *and* returns a resolution trace — see
+`ConfigureWithReport` fills the struct and also returns a resolution trace; see
 [observability.md](observability.md).
 
 ## The `cfg` and `gos` tags
@@ -56,14 +56,15 @@ type Config struct {
 }
 ```
 
-**`cfg` — routing & naming.** `cfg:"base_name,source:override,..."`. The first
-element is the base name each source turns into its own key via a naming
-strategy (env upper-snakes it; file sources use it verbatim). A `source:override`
-pins an exact key for one source — use it for nested file paths
-(`json:server.host`), an INI/TOML section (`ini:db#password`), a legacy env
-name (`env:DB_PORT_LEGACY`), or a Vault path (`vault:secret/app#pw`).
+**`cfg` — routing and naming.** `cfg:"base_name,source:override,..."`. The first
+element is the base name each source turns into its own key via a naming strategy
+(env upper-snakes it; file sources use it verbatim). A `source:override` pins an
+exact key for one source: use it for nested file paths (`json:server.host`), an
+INI/TOML section (`ini:db#password`), a legacy env name (`env:DB_PORT_LEGACY`),
+or a Vault path (`vault:secret/app#pw`).
 
-**`gos` — behavior & metadata.** A comma-list of `key:value` meta and bare flags:
+**`gos` — behaviour and metadata.** A comma-list of `key:value` meta and bare
+flags:
 
 | Token | Kind | Effect |
 |---|---|---|
@@ -78,8 +79,8 @@ name (`env:DB_PORT_LEGACY`), or a Vault path (`vault:secret/app#pw`).
 
 ## Hooks: validation and transformation
 
-`WithHook` runs after a value is resolved but before it's set on the
-struct — return an error to reject it, or a different value to transform it:
+`WithHook` runs after a value is resolved but before it's set on the struct.
+Return an error to reject it, or a different value to transform it:
 
 ```go
 cfg, err := gostructor.Configure(&Config{}, gostructor.WithHook(

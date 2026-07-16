@@ -18,7 +18,7 @@ cfg, err := gostructor.Configure(&Config{}, gostructor.WithHook(
 ```
 
 A hook that returns an error surfaces as a `*HookError` (see
-[Error taxonomy](06-errors.md)), naming the field and your message.
+[typed errors](06-errors.md)), naming the field and your message.
 
 ## Try it
 

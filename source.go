@@ -154,3 +154,11 @@ func (f FieldContext) Separator() string {
 	}
 	return ","
 }
+
+// Layout returns the custom time layout set with the gos layout meta, as in
+// `gos:"layout:2006-01-02"` -> Layout() == "2006-01-02". It is empty when the
+// field carries no layout, in which case time.Time fields parse as RFC3339.
+func (f FieldContext) Layout() string {
+	s, _ := f.Meta("layout")
+	return s
+}

@@ -1,20 +1,20 @@
 // Command gostructor-gen generates a reflection-free Fill method for a config
-// struct (Theme 7). Point it at one or more struct types and it emits a
-// <type>.gs.go next to the source with a
+// struct. Point it at one or more struct types and it emits a <type>.gs.go next
+// to the source with a
 //
 //	func (c *T) Fill(opts ...gostructor.Option) error
 //
 // that resolves every field through the same sources, in the same slice order,
-// with the same conversion and error taxonomy as gostructor.Configure — but with
-// no per-fill reflection: fields are known at build time and each converts into
-// its concrete Go type with a direct call into gostructor/gen. gostructor.Configure
-// detects the generated Filler and dispatches to it automatically (EngineAdaptive).
+// with the same conversion and errors as gostructor.Configure, but without the
+// per-fill reflection: fields are known at build time and each converts into its
+// concrete Go type with a direct call into gostructor/gen. gostructor.Configure
+// detects the generated Filler and calls it automatically (EngineAdaptive).
 //
-// Two ways to select what to generate:
+// There are two ways to select what to generate:
 //
 //	//go:generate go run github.com/goreflect/gostructor/cmd/gostructor-gen -type Config
 //
-// or mark the struct with a doc comment and let the tool discover it — then you
+// or mark the struct with a doc comment and let the tool discover it, so you
 // only ever hand gostructor-gen a path:
 //
 //	//gostructor:gen

@@ -23,6 +23,7 @@ import (
 
 var (
 	durationType        = reflect.TypeOf(time.Duration(0))
+	timeType            = reflect.TypeOf(time.Time{})
 	textUnmarshalerType = reflect.TypeOf((*encoding.TextUnmarshaler)(nil)).Elem()
 )
 
@@ -32,17 +33,40 @@ var (
 // already has destType's exact (possibly named) type, ready to Set onto a
 // field of that type.
 func Value(source reflect.Value, destType reflect.Type) (reflect.Value, error) {
+	return value(source, destType, "")
+}
+
+// ValueWithLayout is Value with a custom time layout (from gos:"layout:...")
+// used to parse time.Time fields with time.Parse instead of the RFC3339 that
+// time.Time's own TextUnmarshaler enforces. An empty layout behaves exactly
+// like Value. The layout propagates through pointer, slice, array and map-value
+// recursion, so *time.Time, []time.Time and map[string]time.Time honor it too.
+func ValueWithLayout(source reflect.Value, destType reflect.Type, layout string) (reflect.Value, error) {
+	return value(source, destType, layout)
+}
+
+func value(source reflect.Value, destType reflect.Type, layout string) (reflect.Value, error) {
 	if destType.Kind() == reflect.Pointer {
 		if destType.Elem().Kind() == reflect.Pointer {
 			return reflect.Value{}, conversionError(source, destType, errors.New("multi-level pointers are not supported"))
 		}
-		elem, err := Value(source, destType.Elem())
+		elem, err := value(source, destType.Elem(), layout)
 		if err != nil {
 			return reflect.Value{}, err
 		}
 		ptr := reflect.New(destType.Elem())
 		ptr.Elem().Set(elem)
 		return ptr, nil
+	}
+
+	// A custom layout parses time.Time with time.Parse, overriding the RFC3339
+	// its TextUnmarshaler would otherwise enforce below.
+	if layout != "" && destType == timeType && source.Kind() == reflect.String {
+		t, err := time.Parse(layout, source.String())
+		if err != nil {
+			return reflect.Value{}, conversionError(source, destType, err)
+		}
+		return reflect.ValueOf(t), nil
 	}
 
 	// TextUnmarshaler wins for string sources so a type's own text parsing
@@ -69,7 +93,7 @@ func Value(source reflect.Value, destType reflect.Type) (reflect.Value, error) {
 
 	switch destType.Kind() {
 	case reflect.Slice, reflect.Array, reflect.Map:
-		return toComplex(source, destType)
+		return complexValue(source, destType, layout)
 	case reflect.Struct:
 		return toStruct(source, destType)
 	default:
@@ -86,30 +110,30 @@ func ToPrimitive(source reflect.Value, destination reflect.Value) (reflect.Value
 // ToComplex converts source into destination's type for slice/array/map
 // kinds, converting each element/key/value through Value.
 func ToComplex(source reflect.Value, destination reflect.Value) (reflect.Value, error) {
-	return toComplex(source, destination.Type())
+	return complexValue(source, destination.Type(), "")
 }
 
-func toComplex(source reflect.Value, destType reflect.Type) (reflect.Value, error) {
+func complexValue(source reflect.Value, destType reflect.Type, layout string) (reflect.Value, error) {
 	switch destType.Kind() {
 	case reflect.Slice:
-		return toSlice(source, destType)
+		return toSlice(source, destType, layout)
 	case reflect.Array:
-		return toArray(source, destType)
+		return toArray(source, destType, layout)
 	case reflect.Map:
-		return toMap(source, destType)
+		return toMap(source, destType, layout)
 	default:
 		return reflect.Value{}, fmt.Errorf("convert: destination kind %s is not a supported complex type", destType.Kind())
 	}
 }
 
-func toSlice(source reflect.Value, destType reflect.Type) (reflect.Value, error) {
+func toSlice(source reflect.Value, destType reflect.Type, layout string) (reflect.Value, error) {
 	if source.Kind() != reflect.Slice && source.Kind() != reflect.Array {
 		return reflect.Value{}, fmt.Errorf("convert: cannot convert %s into a slice", source.Kind())
 	}
 	result := reflect.MakeSlice(destType, source.Len(), source.Len())
 	for i := 0; i < source.Len(); i++ {
 		element := reflect.ValueOf(source.Index(i).Interface())
-		converted, err := Value(element, destType.Elem())
+		converted, err := value(element, destType.Elem(), layout)
 		if err != nil {
 			return reflect.Value{}, err
 		}
@@ -118,7 +142,7 @@ func toSlice(source reflect.Value, destType reflect.Type) (reflect.Value, error)
 	return result, nil
 }
 
-func toArray(source reflect.Value, destType reflect.Type) (reflect.Value, error) {
+func toArray(source reflect.Value, destType reflect.Type, layout string) (reflect.Value, error) {
 	if source.Kind() != reflect.Slice && source.Kind() != reflect.Array {
 		return reflect.Value{}, fmt.Errorf("convert: cannot convert %s into an array", source.Kind())
 	}
@@ -128,7 +152,7 @@ func toArray(source reflect.Value, destType reflect.Type) (reflect.Value, error)
 	result := reflect.New(destType).Elem()
 	for i := 0; i < source.Len(); i++ {
 		element := reflect.ValueOf(source.Index(i).Interface())
-		converted, err := Value(element, destType.Elem())
+		converted, err := value(element, destType.Elem(), layout)
 		if err != nil {
 			return reflect.Value{}, err
 		}
@@ -137,17 +161,17 @@ func toArray(source reflect.Value, destType reflect.Type) (reflect.Value, error)
 	return result, nil
 }
 
-func toMap(source reflect.Value, destType reflect.Type) (reflect.Value, error) {
+func toMap(source reflect.Value, destType reflect.Type, layout string) (reflect.Value, error) {
 	if source.Kind() != reflect.Map {
 		return reflect.Value{}, fmt.Errorf("convert: cannot convert %s into a map", source.Kind())
 	}
 	result := reflect.MakeMapWithSize(destType, source.Len())
 	for _, key := range source.MapKeys() {
-		convertedKey, err := Value(reflect.ValueOf(key.Interface()), destType.Key())
+		convertedKey, err := value(reflect.ValueOf(key.Interface()), destType.Key(), "")
 		if err != nil {
 			return reflect.Value{}, err
 		}
-		convertedValue, err := Value(reflect.ValueOf(source.MapIndex(key).Interface()), destType.Elem())
+		convertedValue, err := value(reflect.ValueOf(source.MapIndex(key).Interface()), destType.Elem(), layout)
 		if err != nil {
 			return reflect.Value{}, err
 		}

@@ -27,6 +27,12 @@ type config struct {
 	// is published; nil disables it. See WithValidate. It is stored type-erased
 	// (the *T assertion lives in the closure WithValidate builds).
 	validate func(any) error
+	// dumper receives the resolution report after each successful fill for
+	// out-of-band inspection; nil disables it. See WithDebugDump. dumperSet
+	// records that an explicit WithDebugDump ran, so the EnvDebugDump fallback
+	// applies only when the caller passed no dump option.
+	dumper    Dumper
+	dumperSet bool
 }
 
 // Masker renders a sensitive field's value for display. It is called for any
@@ -155,6 +161,15 @@ func newConfig(opts []Option) *config {
 		// File and secret sources are opt-in via WithSources, so a bare cfg
 		// base name never triggers an unexpected file load.
 		c.sources = []Source{Env(), Default()}
+	}
+	// The debug dump is off unless asked for. Only when the caller passed no
+	// WithDebugDump do we honor the EnvDebugDump escape hatch, so a running
+	// service can be made inspectable without a recompile.
+	if !c.dumperSet {
+		c.dumper = dumperFromEnv()
+	}
+	if c.dumper != nil {
+		attachLogger(c.dumper, c.logger)
 	}
 	return c
 }

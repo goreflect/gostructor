@@ -7,19 +7,18 @@ import (
 	"github.com/goreflect/gostructor/internal/structplan"
 )
 
-// This file is runtime support for the Fill methods gostructor-gen (Theme 7)
-// emits. A generated Fill drives resolution through a GenRuntime instead of the
-// reflective engine in gostructor.go: it builds one runtime from the caller's
-// options, then, per field, asks the runtime for the winning source value and
-// converts it into the concrete field with the typed helpers in gostructor/gen.
-// The runtime keeps the parts that must stay source-agnostic and identical to
-// the reflective path — the ordered source loop, hook application, secret
-// masking, and the not-resolved decision — so a generated Fill produces the same
-// values and the same error taxonomy as Configure, just without the per-fill
-// reflection.
+// This file is runtime support for the Fill methods gostructor-gen emits. A
+// generated Fill drives resolution through a GenRuntime instead of the reflective
+// engine in gostructor.go: it builds one runtime from the caller's options, then,
+// per field, asks the runtime for the winning source value and converts it into
+// the concrete field with the typed helpers in gostructor/gen. The runtime keeps
+// the parts that must stay identical to the reflective path (the ordered source
+// loop, hook application, secret masking, and the not-resolved decision), so a
+// generated Fill produces the same values and the same errors as Configure,
+// without the per-fill reflection.
 //
 // Everything here is exported only so generated code (which lives in the user's
-// module) can call it; it is not meant to be used by hand.
+// module) can call it; it isn't meant to be used by hand.
 
 // GenRuntime resolves fields for a generated Fill. Build one per Fill call with
 // NewGenRuntime; it carries the same configured sources, hooks, and masker a

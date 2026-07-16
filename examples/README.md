@@ -19,6 +19,7 @@ Start at the top and work down — each one introduces a little more.
 | [`hooks`](hooks) | `WithHook` for validation (reject out-of-range values) and transformation (normalise strings), on the typed value. | core only |
 | [`errors`](errors) | A tour of the typed error taxonomy — trigger each failure and classify it with `errors.Is`/`errors.As`. | core only |
 | [`observability`](observability) | `ConfigureWithReport`: the focused resolution trace (primary source, overrides & secrets), `Provenance()`, and `gos:"secret"` masking. | core only |
+| [`debugdump`](debugdump) | `WithDebugDump`: inspect a running service's live, effective config over a loopback TCP port (or a file), refreshed on every `Watch` reload; secrets masked. | `gostructor/watch` |
 | [`webservice`](webservice) | **The big one.** A full microservice config (~30 fields, nested sub-structs) assembled from a JSON base + env overrides + defaults, with masked secrets and a focused trace. | core only |
 | [`multisource`](multisource) | A field with several sources including a real YAML file, plus a validation hook. Priority is the source order. | `gostructor/yaml` |
 

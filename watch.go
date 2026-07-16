@@ -3,6 +3,7 @@ package gostructor
 import (
 	"context"
 	"errors"
+	"io"
 	"log/slog"
 	"time"
 )
@@ -23,8 +24,16 @@ import (
 func Watch[T any](ctx context.Context, target *T, onReload func(*T, error), opts ...Option) error {
 	cfg := newConfig(opts)
 
+	// A dumper that holds resources (a TCP listener) is released when the watch
+	// ends; a one-shot Configure, by contrast, leaves its endpoint serving for
+	// the life of the process.
+	if closer, ok := cfg.dumper.(io.Closer); ok {
+		defer closer.Close()
+	}
+
 	// Initial fill into the caller's target; a startup failure is fatal.
-	if _, _, err := runConfigure(cfg, target, false); err != nil {
+	_, rep, err := runConfigure(cfg, target, false)
+	if err != nil {
 		return err
 	}
 	if cfg.validate != nil {
@@ -32,6 +41,9 @@ func Watch[T any](ctx context.Context, target *T, onReload func(*T, error), opts
 			return err
 		}
 	}
+	// Feed the debug dump only after validation accepts the fill, so what an
+	// inspector sees is exactly the config being served.
+	feedDump(cfg, rep)
 	deliver(onReload, target, nil)
 
 	// Fan every Watchable source's change signals into one channel. A buffer of
@@ -78,7 +90,8 @@ func Watch[T any](ctx context.Context, target *T, onReload func(*T, error), opts
 // previously published config serving.
 func reloadOnce[T any](cfg *config, onReload func(*T, error)) {
 	fresh := new(T)
-	if _, _, err := runConfigure(cfg, fresh, false); err != nil {
+	_, rep, err := runConfigure(cfg, fresh, false)
+	if err != nil {
 		cfg.logger.Error("gostructor: reload failed, keeping last-known-good", "err", err)
 		deliver(onReload, nil, err)
 		return
@@ -90,6 +103,9 @@ func reloadOnce[T any](cfg *config, onReload func(*T, error)) {
 			return
 		}
 	}
+	// Refresh the debug dump only for a reload that passed validation, so a
+	// rejected reload leaves the last-known-good dump in place.
+	feedDump(cfg, rep)
 	cfg.logger.Debug("gostructor: config reloaded")
 	deliver(onReload, fresh, nil)
 }
