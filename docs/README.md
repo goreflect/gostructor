@@ -1,14 +1,14 @@
 # gostructor documentation
 
 The [root README](../README.md) is the quick tour. This directory holds the
-deeper reference — read a page when you actually need it.
+deeper reference.
 
 ## Learn by example
 
-The [`features/`](features/) pages are the guided tour — one capability per
-page, each with a **runnable command and its real output**. Start here if
-you're new. Every page maps to a self-contained program under
-[`examples/`](../examples/) you can `go run` directly.
+The [`features/`](features/) pages cover one capability each, with a command you
+can run and the output it produces. Start here if you're new. Every page maps to
+a self-contained program under [`examples/`](../examples/) you can `go run`
+directly.
 
 | # | Feature | Run it |
 |---|---|---|
@@ -32,8 +32,10 @@ you're new. Every page maps to a self-contained program under
   YAML, TOML, HOCON, Vault), priority, and writing your own `Source`.
 - [field-types.md](field-types.md) — every supported field type and the strict
   conversion rules.
+- [codegen.md](codegen.md) — `gostructor-gen`, the reflection-free `Fill` fast
+  path, the engine modes, and how the two paths stay equivalent.
 - [observability.md](observability.md) — the resolution trace
   (`ConfigureWithReport`) and secret masking.
-- [limitations.md](limitations.md) — known limitations and the error taxonomy.
+- [limitations.md](limitations.md) — known limitations and the typed errors.
 - [migration.md](migration.md) — what changed in v1.0 and how to migrate from
   v0.x.

@@ -44,6 +44,46 @@ func TestConfigureFallsBackToDefaultWhenEnvUnset(t *testing.T) {
 	}
 }
 
+// TestConfigureCustomTimeLayout checks a gos:"layout:..." field parses a
+// time.Time from a non-RFC3339 source value, and that a default is parsed with
+// the same layout.
+func TestConfigureCustomTimeLayout(t *testing.T) {
+	type cfgT struct {
+		StartsAt time.Time `cfg:"startsAt" gos:"layout:2006-01-02"`
+		Epoch    time.Time `cfg:"epoch" gos:"layout:2006-01-02,default:2000-01-01"`
+	}
+	os.Setenv("STARTS_AT", "2024-05-06")
+	defer os.Unsetenv("STARTS_AT")
+	os.Unsetenv("EPOCH")
+
+	cfg, err := Configure(&cfgT{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if want := time.Date(2024, 5, 6, 0, 0, 0, 0, time.UTC); !cfg.StartsAt.Equal(want) {
+		t.Errorf("StartsAt = %v, want %v", cfg.StartsAt, want)
+	}
+	if want := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC); !cfg.Epoch.Equal(want) {
+		t.Errorf("Epoch = %v, want default %v", cfg.Epoch, want)
+	}
+}
+
+// TestConfigureCustomTimeLayoutRejectsMismatch checks a value that doesn't
+// match the declared layout is a ConvertError, not silently accepted.
+func TestConfigureCustomTimeLayoutRejectsMismatch(t *testing.T) {
+	type cfgT struct {
+		StartsAt time.Time `cfg:"startsAt" gos:"layout:2006-01-02"`
+	}
+	os.Setenv("STARTS_AT", "2024-05-06T00:00:00Z") // RFC3339, not the date-only layout
+	defer os.Unsetenv("STARTS_AT")
+
+	_, err := Configure(&cfgT{})
+	var ce *ConvertError
+	if !errors.As(err, &ce) {
+		t.Fatalf("expected *ConvertError, got %v", err)
+	}
+}
+
 // TestConfigureEnvNamingFromBase checks the env source derives its variable
 // name from the base name in SCREAMING_SNAKE_CASE when there's no override.
 func TestConfigureEnvNamingFromBase(t *testing.T) {

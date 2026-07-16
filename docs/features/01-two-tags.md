@@ -2,19 +2,18 @@
 
 ← [Back to features](README.md)
 
-gostructor fills a struct's fields from two small, cleanly separated tags:
+gostructor fills a struct's fields from two small tags that split cleanly:
 
-- **`cfg`** — *routing & naming*: `cfg:"base_name,source:override,..."`. The base
+- **`cfg`** — routing and naming: `cfg:"base_name,source:override,..."`. The base
   name is what each source looks up; each source derives its own key from it (the
   env source reads `PORT` from `port`). A `source:override` pins an exact key for
   one source.
-- **`gos`** — *behavior*: `gos:"default:8080,secret,optional,sep:;"` — a literal
+- **`gos`** — behaviour: `gos:"default:8080,secret,optional,sep:;"` is a literal
   default, a masked-secret flag, an unresolved-is-ok flag, and a slice separator.
 
-With no options, `Configure` uses a minimal default source list — `Env` then
-`Default` — so an environment variable beats the baked-in default. A *configured*
-field that no source can resolve is a hard error (unless it's `gos:"optional"`):
-**surprises are errors**.
+With no options, `Configure` uses a minimal default source list, `Env` then
+`Default`, so an environment variable beats the baked-in default. A configured
+field that no source can resolve is an error unless it's `gos:"optional"`.
 
 ```go
 type Config struct {

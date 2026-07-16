@@ -96,6 +96,55 @@ func TestValueTextUnmarshaler(t *testing.T) {
 	}
 }
 
+func TestValueWithLayout(t *testing.T) {
+	got, err := ValueWithLayout(reflect.ValueOf("2020-01-02"), timeType, "2006-01-02")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := time.Date(2020, 1, 2, 0, 0, 0, 0, time.UTC)
+	if !got.Interface().(time.Time).Equal(want) {
+		t.Errorf("got %v, want %v", got.Interface(), want)
+	}
+}
+
+func TestValueWithLayoutEmptyFallsBackToRFC3339(t *testing.T) {
+	// An empty layout must behave exactly like Value: RFC3339 via TextUnmarshaler.
+	got, err := ValueWithLayout(reflect.ValueOf("2020-01-02T03:04:05Z"), timeType, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC)
+	if !got.Interface().(time.Time).Equal(want) {
+		t.Errorf("got %v, want %v", got.Interface(), want)
+	}
+	// The custom layout string, not RFC3339, is now what a value must match.
+	if _, err := ValueWithLayout(reflect.ValueOf("2020-01-02T03:04:05Z"), timeType, "2006-01-02"); err == nil {
+		t.Error("expected an error parsing an RFC3339 string with a date-only layout")
+	}
+}
+
+func TestValueWithLayoutPropagatesToSliceAndPointer(t *testing.T) {
+	// []time.Time honors the field's layout for every element.
+	sliceType := reflect.TypeOf([]time.Time(nil))
+	got, err := ValueWithLayout(reflect.ValueOf([]any{"2020-01-02", "2021-03-04"}), sliceType, "2006-01-02")
+	if err != nil {
+		t.Fatalf("unexpected slice error: %v", err)
+	}
+	times := got.Interface().([]time.Time)
+	if len(times) != 2 || !times[0].Equal(time.Date(2020, 1, 2, 0, 0, 0, 0, time.UTC)) || !times[1].Equal(time.Date(2021, 3, 4, 0, 0, 0, 0, time.UTC)) {
+		t.Errorf("got %v, want [2020-01-02 2021-03-04]", times)
+	}
+
+	// *time.Time honors it too.
+	ptr, err := ValueWithLayout(reflect.ValueOf("2020-01-02"), reflect.TypeOf((*time.Time)(nil)), "2006-01-02")
+	if err != nil {
+		t.Fatalf("unexpected pointer error: %v", err)
+	}
+	if p := ptr.Interface().(*time.Time); p == nil || !p.Equal(time.Date(2020, 1, 2, 0, 0, 0, 0, time.UTC)) {
+		t.Errorf("got %v, want *2020-01-02", ptr.Interface())
+	}
+}
+
 func TestValuePointer(t *testing.T) {
 	got, err := Value(reflect.ValueOf("7"), reflect.TypeOf((*int)(nil)))
 	if err != nil {

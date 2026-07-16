@@ -1,0 +1,8 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8080
+  },
+  "message": "Test messageaksjdhakjdhkashdkhakjsh dlas hdlaksjhdlkajh",
+  "token": "super-secret-token"
+}

@@ -1,11 +1,11 @@
-# Error taxonomy
+# Typed errors
 
 ← [Back to features](README.md)
 
 Every error `Configure` returns belongs to a small, closed set of categories, so
-you can tell exactly what went wrong — and whose fault it is — without
-string-matching. Match sentinels with `errors.Is` and struct types with
-`errors.As`; each struct unwraps to its underlying cause.
+you can tell what went wrong, and whose fault it is, without string-matching.
+Match sentinels with `errors.Is` and struct types with `errors.As`; each struct
+unwraps to its underlying cause.
 
 | Error | When | Whose problem |
 |---|---|---|
@@ -53,5 +53,5 @@ Output:
 ```
 
 Each block shows the raw error message and the concrete type you'd recover with
-`errors.As` — enough to route the failure to the right owner (operator, config
+`errors.As`, enough to route the failure to the right owner (operator, config
 author, or the calling code).

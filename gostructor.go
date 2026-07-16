@@ -39,13 +39,39 @@ func ConfigureWithReport[T any](target *T, opts ...Option) (*T, *Report, error) 
 
 func configure[T any](target *T, withReport bool, opts []Option) (result *T, report *Report, err error) {
 	cfg := newConfig(opts)
-	return runConfigure(cfg, target, withReport)
+	// Fast path: hand off to a generated Fill when one exists and the engine
+	// permits it. Falls through to the reflective engine otherwise.
+	if handled, ferr := dispatchFiller(cfg, target, withReport, opts); handled {
+		return target, nil, ferr
+	}
+	result, rep, err := runConfigure(cfg, target, withReport)
+	// A one-shot Configure has no validation gate, so a clean fill is the
+	// published config: feed the debug dump here. Watch feeds it later, after
+	// its validation passes, so a rejected reload never reaches the dump.
+	if err == nil {
+		feedDump(cfg, rep)
+	}
+	return result, reportIf(withReport, rep), err
+}
+
+// feedDump publishes rep to the configured debug dumper, if any. It is called at
+// each point a filled config becomes the published one, never merely on a fill,
+// so an inspector only ever sees a config the service actually adopted.
+func feedDump(cfg *config, rep *Report) {
+	if cfg.dumper != nil && rep != nil {
+		cfg.dumper.Update(rep)
+	}
 }
 
 // runConfigure fills target using an already-built config. It is the shared
 // resolution path behind both Configure (which builds cfg from opts once) and
 // Watch (which reuses one cfg across many re-fills), so a live reload takes the
 // exact same trace + masking + hook path as the initial fill.
+//
+// It returns the raw report (built whenever the caller wants one, tracing is on,
+// or a dumper is configured) so callers can both gate it through reportIf and
+// feed it to the debug dump at their own publish point. It never feeds the dump
+// itself: publishing is the caller's decision (after Watch's validation, say).
 func runConfigure[T any](cfg *config, target *T, withReport bool) (result *T, report *Report, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -66,10 +92,10 @@ func runConfigure[T any](cfg *config, target *T, withReport bool) (result *T, re
 		return nil, nil, fmt.Errorf("%w: got *%s", ErrInvalidTarget, structValue.Kind())
 	}
 
-	// Build a report when the caller asked for one or tracing is on;
-	// otherwise leave it nil for zero overhead.
+	// Build a report when the caller asked for one, tracing is on, or a debug
+	// dumper needs to be fed; otherwise leave it nil for zero overhead.
 	var rep *Report
-	if withReport || cfg.trace {
+	if withReport || cfg.trace || cfg.dumper != nil {
 		rep = &Report{Type: structValue.Type().String()}
 	}
 
@@ -81,13 +107,13 @@ func runConfigure[T any](cfg *config, target *T, withReport bool) (result *T, re
 			if cfg.trace && rep != nil {
 				cfg.logger.Debug("resolution trace (partial)", "trace", rep.String())
 			}
-			return nil, reportIf(withReport, rep), err
+			return nil, rep, err
 		}
 	}
 	if cfg.trace && rep != nil {
 		cfg.logger.Debug("resolution trace", "trace", rep.String())
 	}
-	return target, reportIf(withReport, rep), nil
+	return target, rep, nil
 }
 
 // reportIf returns rep only when the caller asked for it, so a trace-only
@@ -132,7 +158,7 @@ func resolveField(cfg *config, field *structplan.Field, structValue reflect.Valu
 			continue
 		}
 		destination := structValue.FieldByIndex(field.Index)
-		converted, err := convert.Value(reflect.ValueOf(raw), destination.Type())
+		converted, err := convert.ValueWithLayout(reflect.ValueOf(raw), destination.Type(), fieldCtx.Layout())
 		if err != nil {
 			if fr != nil {
 				fr.Attempts = append(fr.Attempts, Attempt{Source: source.Name(), Status: statusError, Detail: effectiveKey(fieldCtx, source.Name())})

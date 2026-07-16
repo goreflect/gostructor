@@ -9,9 +9,9 @@
 <img src="assets/card.png" alt="gostructor — fill any Go struct from any source; surprises are errors" width="820"/>
 
 **gostructor** fills the fields of a Go struct from any mix of configuration
-sources — environment variables, files, HashiCorp Vault, or plain
-defaults — driven by two small struct tags, in the priority order you choose
-via the source list.
+sources (environment variables, files, HashiCorp Vault, or plain defaults),
+driven by two small struct tags, in the priority order you set with the source
+list.
 
 ```go
 type Config struct {
@@ -23,23 +23,22 @@ type Config struct {
 cfg, err := gostructor.Configure(&Config{})
 ```
 
-Two tags, cleanly separated:
+The two tags split cleanly:
 
-- **`cfg`** — *routing & naming*: `cfg:"base_name,source:override,..."`. The
-  base name is what each source looks up (the env source reads `HOST` from
-  `host`); a `source:override` pins a specific key for one source.
-- **`gos`** — *behavior*: `gos:"default:8080,secret,optional,sep:;"` — a
-  literal default, a masked-secret flag, an unresolved-is-ok flag, and a
-  slice separator.
+- **`cfg`** — routing and naming: `cfg:"base_name,source:override,..."`. The base
+  name is what each source looks up (the env source reads `HOST` from `host`),
+  and a `source:override` pins a specific key for one source.
+- **`gos`** — behaviour: `gos:"default:8080,secret,optional,sep:;"` is a literal
+  default, a masked-secret flag, an unresolved-is-ok flag, and a slice separator.
 
-**One field, several possible sources, resolved with a priority you control**
-(the order of the source list) — rather than merging every source into one map
-and unmarshalling it once. A configured field that no source can resolve is a
-hard error unless you mark it `gos:"optional"`: **surprises are errors**.
+A field can be resolvable by several sources at once; priority is the order of
+the source list, not a merge of every source into one map. A configured field
+that no source can resolve is an error unless you mark it `gos:"optional"`, so a
+missing value fails loudly instead of shipping a silent zero.
 
 > **v1.0** replaces the old `cf_*` tag family with just `cfg` + `gos`, makes
 > priority the source order, and splits YAML/TOML/HOCON/Vault into their own
-> zero-dependency-core modules. Upgrading from v0.x? See
+> modules so the core stays dependency-free. Upgrading from v0.x? See
 > [docs/migration.md](docs/migration.md).
 
 ## Install
@@ -100,31 +99,31 @@ func main() {
 `Configure` reads the `cfg`/`gos` tags, tries each field's sources in list order
 (the default list is `Env, Default`, so an env var beats the default), and
 returns the same pointer you passed in. A field with no gostructor tags is left
-untouched; a *configured* field that no source can resolve is a hard error
-(unless it's `gos:"optional"`), so misconfiguration fails loudly instead of
-shipping a zero value.
+untouched. A configured field that no source can resolve is an error unless it's
+`gos:"optional"`, so misconfiguration fails loudly instead of shipping a zero
+value.
 
 ## Features & live demos
 
 Each feature has a short page under [`docs/features`](docs/features/) that pairs
-an explanation with a **runnable command and its real output** — copy the
-command, run it against your checkout, and see the same thing.
+an explanation with a command you can run and the output it produces. Copy the
+command, run it against your checkout, and you'll see the same thing.
 
 | Feature | What you get | Run it |
 |---|---|---|
 | [Two-tag configuration](docs/features/01-two-tags.md) | Fill a struct from `cfg` (routing) + `gos` (behavior). | `go run ./examples/basic` |
 | [Priority = source order](docs/features/02-priority.md) | The same struct resolving differently per environment, from the `WithSources` order alone. | `go run ./examples/priority` |
 | [Sources](docs/features/03-sources.md) | env, default, JSON, INI (core) + YAML/TOML/HOCON/Vault (modules). | `go run ./examples/filesources` |
-| [Field types](docs/features/04-field-types.md) | Durations, slices, `time.Time`/`net.IP`, named types, pointers, maps, structs — strict conversion. | `go run ./examples/types` |
+| [Field types](docs/features/04-field-types.md) | Durations, slices, `time.Time`/`net.IP`, named types, pointers, maps, structs, with strict conversion. | `go run ./examples/types` |
 | [Hooks](docs/features/05-hooks.md) | Validate and transform each resolved value before it lands. | `go run ./examples/hooks` |
-| [Error taxonomy](docs/features/06-errors.md) | A closed set of typed errors, classified with `errors.Is`/`errors.As`. | `go run ./examples/errors` |
+| [Typed errors](docs/features/06-errors.md) | A closed set of typed errors, classified with `errors.Is`/`errors.As`. | `go run ./examples/errors` |
 | [Observability & masking](docs/features/07-observability.md) | A focused resolution trace, provenance map, masked secrets. | `go run ./examples/observability` |
 | [Full service config](docs/features/08-webservice.md) | ~30 fields, nested sub-structs, JSON + env + defaults at once. | `go run ./examples/webservice` |
 | [Live reload](docs/live-reload.md) | `Watch` re-fills the struct on change; transactional last-known-good; git/consul/etcd/springcloud/vault adapters. | `cd examples/hotreload-file && go run .` |
 
 ## Supported sources
 
-The **source name** is what you target in a per-source override
+The source name is what you target in a per-source override
 (`cfg:"port,env:DB_PORT"`) and what appears in the resolution trace. Non-core
 sources are opt-in via `WithSources`, so a bare `cfg` name never triggers an
 unexpected file load.
@@ -142,7 +141,7 @@ unexpected file load.
 | `vault` | HashiCorp Vault secret | `gostructor/vault` | `VAULT_ADDR`, `VAULT_TOKEN` |
 | `map` | In-memory map (`gostructor.Map`) | core | — |
 
-**Live / remote sources** — each implements `Watchable`, so `gostructor.Watch`
+**Live / remote sources.** Each implements `Watchable`, so `gostructor.Watch`
 re-fills the struct when the backing data changes (see
 [docs/live-reload.md](docs/live-reload.md)):
 
@@ -155,18 +154,18 @@ re-fills the struct when the backing data changes (see
 | `springcloud` | Spring Cloud Config Server | `gostructor/springcloud` | poll |
 | `vault` | HashiCorp Vault secret | `gostructor/vault` | poll (secret rotation) |
 
-Each has a **fully reproducible, docker-compose example** under
-[`examples/`](examples/). Full addressing rules, per-source key derivation, and
-priority: [docs/sources.md](docs/sources.md).
+Each has a docker-compose example under [`examples/`](examples/). Full addressing
+rules, per-source key derivation, and priority are in
+[docs/sources.md](docs/sources.md).
 
-The `file` and `git` sources are **format-agnostic**: they default to JSON but
-read any format the library supports via a pluggable decoder — pass
+The `file` and `git` sources are format-agnostic: they default to JSON but read
+any format the library supports via a pluggable decoder. Pass
 `gostructor.DecodeINI` / `gostructor.DecodeKeyValue` (zero-dep) or `yaml.Decode`
 / `toml.Decode` / `hocon.Decode` as the source's `Decoder`.
 
 ## Documentation
 
-The [`docs/`](docs/) directory holds the deeper reference — dip in when you need it:
+The [`docs/`](docs/) directory holds the deeper reference:
 
 - **[configuration.md](docs/configuration.md)** — the `Configure` API,
   `WithSources`, the full `cfg`/`gos` tag grammar, hooks, and logging.
@@ -174,28 +173,22 @@ The [`docs/`](docs/) directory holds the deeper reference — dip in when you ne
   writing your own `Source`.
 - **[field-types.md](docs/field-types.md)** — supported field types and strict
   conversion rules.
+- **[codegen.md](docs/codegen.md)** — `gostructor-gen`, the reflection-free
+  `Fill` fast path, and the engine modes.
 - **[observability.md](docs/observability.md)** — the resolution trace
   (`ConfigureWithReport`) and secret masking.
-- **[limitations.md](docs/limitations.md)** — known limitations and the error
-  taxonomy.
+- **[limitations.md](docs/limitations.md)** — known limitations and the typed
+  errors.
 - **[migration.md](docs/migration.md)** — v1.0 changes and migrating from v0.x.
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for the full plan. Headlines:
-
-- **Observability & masking** — ✅ shipped: a focused resolution trace
-  (`ConfigureWithReport`). See [docs/observability.md](docs/observability.md).
-- **Hot reload** — ✅ shipped: a `Watchable` source interface and a `Watch`
-  helper that re-fills the struct (transactionally, last-known-good) when a
-  backing source changes. See [docs/live-reload.md](docs/live-reload.md).
-- **Git as source of truth** — ✅ shipped (`gostructor/git`): a branch/tag as a
-  config version, snapshotted and polled for drift, switchable at runtime.
-- **Config-server adapters** — ✅ shipped: Consul (`gostructor/consul`), etcd
-  (`gostructor/etcd`), Spring Cloud Config (`gostructor/springcloud`), and a
-  now-`Watchable` Vault — each a `Source` module with a docker-compose example.
-- **Ergonomics** — in-memory override source (`gostructor.Map`) shipped;
-  self-documenting config, whole-struct validation, and custom time layouts next.
+Shipped: the resolution trace and secret masking, hot reload (`Watch`), git as a
+config source, the Consul/etcd/Spring Cloud/Vault adapters, and code generation
+(`gostructor-gen`, a reflection-free `Fill`). Still ahead: self-documenting
+config, custom time layouts, config-file template generation, richer env
+handling, CLI flags from the struct, an `fx` integration, and migration tooling.
+See [ROADMAP.md](ROADMAP.md) for the full list.
 
 ## Development
 

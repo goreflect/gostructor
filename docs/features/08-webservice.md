@@ -10,7 +10,7 @@ masked secrets and a focused resolution trace.
 
 It's the combination of every other feature page:
 
-- **[Two tags](01-two-tags.md)** naming and shaping each field,
+- **[Two tags](01-two-tags.md)** naming and shaping each field, 
 - **[Priority](02-priority.md)** — env overrides layered over a JSON base over defaults,
 - **[Sources](03-sources.md)** — JSON file + env + default composed with `WithSources`,
 - **[Field types](04-field-types.md)** — durations, bools, ints, nested structs,

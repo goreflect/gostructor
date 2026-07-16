@@ -2,14 +2,14 @@
 
 ← [Back to features](README.md)
 
-A config layer is a black box exactly when you most need to trust it ("why is
-`Port` 8080 and not what's in my file?"). `ConfigureWithReport` fills the struct
-*and* returns a structured, per-field account of resolution: every source tried,
-in order, which one won, and the raw and converted values.
+When a value isn't what you expected ("why is `Port` 8080 and not what's in my
+file?"), `ConfigureWithReport` fills the struct and also returns a per-field
+account of resolution: every source tried, in order, which one won, and the raw
+and converted values.
 
-`report.String()` renders a **focused** trace — not every field, only what's
-actionable: the primary source, the count of defaults, and the fields overridden
-away from the primary config or marked secret.
+`report.String()` renders a focused trace, not every field: the primary source,
+the count of defaults, and the fields overridden away from the primary config or
+marked secret.
 
 ```go
 cfg, report, err := gostructor.ConfigureWithReport(&Config{},

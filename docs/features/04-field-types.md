@@ -14,7 +14,27 @@ any of the above, slices and fixed-size arrays (including nested), and
 
 Numeric conversions are exact: a fractional float into an integer (`3.9` → `int`),
 an overflow (`300` → `int8`), a negative into an unsigned field, and non-finite
-floats are all hard `*ConvertError`s — see [Error taxonomy](06-errors.md).
+floats are all hard `*ConvertError`s; see [typed errors](06-errors.md).
+
+## Custom time layouts
+
+A `time.Time` field parses as RFC3339 by default (`time.Time`'s own
+`TextUnmarshaler`). When your source carries a different format, name the layout
+with the gos `layout` meta — a Go reference-time layout string
+([`2006-01-02 15:04:05`](https://pkg.go.dev/time#pkg-constants)):
+
+```go
+type Cfg struct {
+    StartsAt time.Time `cfg:"startsAt" gos:"layout:2006-01-02"`
+}
+```
+
+`STARTS_AT=2024-05-06` now fills `StartsAt`; a value that doesn't match the
+layout is a `*ConvertError`, not a silent zero. The layout also parses a
+`default:` set on the same field, and propagates to `*time.Time`, `[]time.Time`
+and `map[string]time.Time`. Since comma is the gos list separator, a layout
+containing a comma (e.g. RFC1123) can't be expressed this way — rely on the
+RFC3339 default or a `TextUnmarshaler` type for those.
 
 ## Try it
 
